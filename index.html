@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CrewX</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .app {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .anchor-icon { width: 32px; height: 32px; }
+    .app-title { font-size: 20px; font-weight: 600; color: #0c3a6e; letter-spacing: -0.3px; }
+    .app-subtitle { font-size: 12px; color: #6b7280; margin-top: 1px; }
+    .current-status { text-align: right; }
+    .current-status .badge {
+      display: inline-block;
+      background: #e1f5ee;
+      color: #0f6e56;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 2px;
+    }
+    .current-status .sub { font-size: 11px; color: #6b7280; }
+
+    /* STATS */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .stat-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 600; color: #0c3a6e; line-height: 1; }
+    .stat-unit { font-size: 11px; color: #9ca3af; font-weight: 400; }
+
+    /* CALENDAR WRAPPER */
+    .calendar-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 1.25rem;
+    }
+
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .nav-btn {
+      background: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 5px 14px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .nav-btn:hover { background: #f3f4f6; }
+    .month-label { font-size: 16px; font-weight: 600; color: #0c3a6e; }
+
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .weekday {
+      font-size: 11px;
+      color: #9ca3af;
+      text-align: center;
+      padding: 4px 0;
+      font-weight: 500;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .day {
+      border-radius: 10px;
+      padding: 6px 5px;
+      min-height: 62px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .day:hover { border-color: #93c5fd; box-shadow: 0 0 0 2px #dbeafe; }
+    .day.empty { background: transparent; border-color: transparent; cursor: default; pointer-events: none; }
+    .day-num { font-size: 12px; color: #6b7280; margin-bottom: 3px; font-weight: 500; }
+    .day.today { border-color: #3b82f6; }
+    .day.today .day-num { color: #1d4ed8; font-weight: 700; }
+
+    .day-status {
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 5px;
+      display: inline-block;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .s-onboard  { background: #dcfce7; color: #166534; }
+    .s-home     { background: #dbeafe; color: #1e40af; }
+    .s-travel   { background: #fef3c7; color: #92400e; }
+
+    /* LEGEND */
+    .legend {
+      display: flex;
+      gap: 14px;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      width: 290px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal-title { font-size: 16px; font-weight: 600; color: #0c3a6e; margin-bottom: 3px; }
+    .modal-sub { font-size: 12px; color: #6b7280; margin-bottom: 1.25rem; }
+    .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+    .action-btn {
+      border: 1px solid #e5e7eb;
+      background: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #111827;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.1s;
+    }
+    .action-btn:hover { background: #f9fafb; border-color: #d1d5db; }
+    .action-icon {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 7px;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .ai-depart    { background: #fef3c7; }
+    .ai-embark    { background: #dcfce7; }
+    .ai-disembark { background: #fee2e2; }
+    .ai-arrive    { background: #dbeafe; }
+    .modal-close {
+      margin-top: 1rem;
+      width: 100%;
+      border: none;
+      background: none;
+      color: #9ca3af;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .modal-close:hover { color: #6b7280; }
+
+    @media (max-width: 520px) {
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .day { min-height: 48px; }
+      .day-status { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <svg class="anchor-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="8" r="3.5" stroke="#185FA5" stroke-width="1.8" fill="none"/>
+        <line x1="16" y1="11.5" x2="16" y2="25" stroke="#185FA5" stroke-width="1.8"/>
+        <path d="M9 16 Q7 21 9.5 25" stroke="#185FA5" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <path d="M23 16 Q25 21 22.5 25" stroke="#185FA5" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <line x1="9.5" y1="25" x2="22.5" y2="25" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="9" y1="16" x2="23" y2="16" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="app-title">CrewX</div>
+        <div class="app-subtitle">Ship rotation tracker · Brazil</div>
+      </div>
+    </div>
+    <div class="current-status">
+      <div class="badge" id="status-badge">Onboard</div>
+      <div class="sub" id="status-sub">Day 12 of 28</div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Earning days</div>
+      <div class="stat-value" id="stat-earn">0 <span class="stat-unit">days</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Days in Brazil</div>
+      <div class="stat-value" id="stat-brazil">0 <span class="stat-unit">days</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Days at home</div>
+      <div class="stat-value" id="stat-home">0 <span class="stat-unit">days</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Travel days</div>
+      <div class="stat-value" id="stat-travel">0 <span class="stat-unit">days</span></div>
+    </div>
+  </div>
+
+  <div class="calendar-card">
+    <div class="nav-row">
+      <button class="nav-btn" onclick="changeMonth(-1)">← Prev</button>
+      <span class="month-label" id="month-label"></span>
+      <button class="nav-btn" onclick="changeMonth(1)">Next →</button>
+    </div>
+
+    <div class="weekdays">
+      <div class="weekday">Mon</div>
+      <div class="weekday">Tue</div>
+      <div class="weekday">Wed</div>
+      <div class="weekday">Thu</div>
+      <div class="weekday">Fri</div>
+      <div class="weekday">Sat</div>
+      <div class="weekday">Sun</div>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#166534;"></div> Onboard</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1e40af;"></div> At home</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#92400e;"></div> Travel</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e5e7eb;"></div> Unlogged</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">3 May</div>
+    <div class="modal-sub" id="modal-sub">Log an event for this day</div>
+    <div class="modal-actions">
+      <button class="action-btn" onclick="logEvent('travel')">
+        <div class="action-icon ai-depart">🏠</div>
+        Left home (travel day)
+      </button>
+      <button class="action-btn" onclick="logEvent('onboard')">
+        <div class="action-icon ai-embark">⚓</div>
+        Embarked on ship
+      </button>
+      <button class="action-btn" onclick="logEvent('travel')">
+        <div class="action-icon ai-disembark">🔄</div>
+        Disembarked from ship
+      </button>
+      <button class="action-btn" onclick="logEvent('home')">
+        <div class="action-icon ai-arrive">🏡</div>
+        Arrived home
+      </button>
+    </div>
+    <button class="modal-close" onclick="closeModal()">cancel</button>
+  </div>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────
+  // data[year][month][day] = 'onboard' | 'home' | 'travel'
+  let data = JSON.parse(localStorage.getItem('rotationData') || '{}');
+  let currentYear = new Date().getFullYear();
+  let currentMonth = new Date().getMonth();
+  let selectedDay = null;
+
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const STATUS_LABEL = { onboard: 'onboard', home: 'at home', travel: 'travel' };
+  const STATUS_CLASS = { onboard: 's-onboard', home: 's-home', travel: 's-travel' };
+
+  // ── Save / Load ────────────────────────────────────────────
+  function save() {
+    localStorage.setItem('rotationData', JSON.stringify(data));
+  }
+
+  function getDay(y, m, d) {
+    return data[y]?.[m]?.[d] || null;
+  }
+
+  function setDay(y, m, d, status) {
+    if (!data[y]) data[y] = {};
+    if (!data[y][m]) data[y][m] = {};
+    data[y][m][d] = status;
+    save();
+  }
+
+  // ── Stats ──────────────────────────────────────────────────
+  function updateStats() {
+    let earn = 0, brazil = 0, home = 0, travel = 0;
+    for (const y in data) {
+      for (const m in data[y]) {
+        for (const d in data[y][m]) {
+          const st = data[y][m][d];
+          if (st === 'onboard') { earn++; brazil++; }
+          if (st === 'home')    { home++; }
+          if (st === 'travel')  { travel++; brazil++; }
+        }
+      }
+    }
+    document.getElementById('stat-earn').innerHTML   = `${earn} <span class="stat-unit">days</span>`;
+    document.getElementById('stat-brazil').innerHTML = `${brazil} <span class="stat-unit">days</span>`;
+    document.getElementById('stat-home').innerHTML   = `${home} <span class="stat-unit">days</span>`;
+    document.getElementById('stat-travel').innerHTML = `${travel} <span class="stat-unit">days</span>`;
+  }
+
+  // ── Calendar render ────────────────────────────────────────
+  function renderCalendar() {
+    document.getElementById('month-label').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+    const cal = document.getElementById('calendar');
+    cal.innerHTML = '';
+
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const offset = (firstDay === 0) ? 6 : firstDay - 1;
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const today = new Date();
+
+    for (let i = 0; i < offset; i++) {
+      const e = document.createElement('div');
+      e.className = 'day empty';
+      cal.appendChild(e);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const div = document.createElement('div');
+      div.className = 'day';
+      const isToday = (today.getFullYear() === currentYear &&
+                       today.getMonth() === currentMonth &&
+                       today.getDate() === d);
+      if (isToday) div.classList.add('today');
+
+      const st = getDay(currentYear, currentMonth, d);
+      div.innerHTML = `<div class="day-num">${d}</div>`;
+      if (st) {
+        div.innerHTML += `<span class="day-status ${STATUS_CLASS[st]}">${STATUS_LABEL[st]}</span>`;
+      }
+      div.addEventListener('click', () => openModal(d));
+      cal.appendChild(div);
+    }
+    updateStats();
+  }
+
+  function changeMonth(dir) {
+    currentMonth += dir;
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
+    renderCalendar();
+  }
+
+  // ── Modal ──────────────────────────────────────────────────
+  function openModal(d) {
+    selectedDay = d;
+    const st = getDay(currentYear, currentMonth, d);
+    document.getElementById('modal-title').textContent = `${d} ${MONTHS[currentMonth]} ${currentYear}`;
+    document.getElementById('modal-sub').textContent = st
+      ? `Current status: ${STATUS_LABEL[st]}`
+      : 'No event logged yet';
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    selectedDay = null;
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+  }
+
+  function logEvent(status) {
+    if (selectedDay === null) return;
+    setDay(currentYear, currentMonth, selectedDay, status);
+    closeModal();
+    renderCalendar();
+  }
+
+  // ── Init ───────────────────────────────────────────────────
+  renderCalendar();
+</script>
+</body>
+</html>
