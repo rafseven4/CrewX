@@ -847,8 +847,6 @@ function renderCalendar() {
   const trips        = getTrips();
   const onboardStays = getOnboardStays();
   const awayDates    = getRangeDates(trips, true);
-  const brazilDates  = getRangeDates(getBrazilStays(), true);
-  const onboardDates = getRangeDates(onboardStays, true);
 
   for (let i = 0; i < offset; i++) {
     const e = document.createElement('div'); e.className='day empty'; cal.appendChild(e);
@@ -871,12 +869,10 @@ function renderCalendar() {
     div.className = 'day';
 
     const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
-    if (isToday)              div.classList.add('today');
-    if (awayDates.has(ds))    div.classList.add('range-away');
-    if (brazilDates.has(ds))  div.classList.add('range-brazil');
-    if (onboardDates.has(ds)) div.classList.add('range-onboard');
-    if (d === 20)             div.classList.add('payroll-end');
-    if (d === 21)             div.classList.add('payroll-start');
+    if (isToday)           div.classList.add('today');
+    if (awayDates.has(ds)) div.classList.add('range-away');
+    if (d === 20)          div.classList.add('payroll-end');
+    if (d === 21)          div.classList.add('payroll-start');
 
     let html = `<div class="day-num">${d}</div>`;
     if (d === 20) html += `<div class="payroll-marker">✂ PAY</div>`;
