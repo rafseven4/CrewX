@@ -1,267 +1,535 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CrewX</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CrewX</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f4f6f9; color: #1a1a2e;
-      min-height: 100vh; padding: 2rem 1rem;
-    }
-    .app { max-width: 720px; margin: 0 auto; }
+:root {
+  --navy:   #0a1628;
+  --navy2:  #112240;
+  --navy3:  #1a3a5c;
+  --steel:  #2d5986;
+  --ocean:  #1d6fa4;
+  --sky:    #38bdf8;
+  --foam:   #e0f2fe;
+  --gold:   #f59e0b;
+  --gold-l: #fef3c7;
+  --green:  #10b981;
+  --green-l:#d1fae5;
+  --amber:  #f97316;
+  --amber-l:#fff7ed;
+  --red:    #ef4444;
+  --red-l:  #fee2e2;
+  --white:  #ffffff;
+  --gray50: #f8fafc;
+  --gray100:#f1f5f9;
+  --gray200:#e2e8f0;
+  --gray400:#94a3b8;
+  --gray600:#475569;
+  --gray800:#1e293b;
+  --text:   #0f172a;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
 
-    /* HEADER */
-    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .anchor-icon { width: 32px; height: 32px; }
-    .app-title { font-size: 20px; font-weight: 600; color: #0c3a6e; letter-spacing: -0.3px; }
-    .app-subtitle { font-size: 12px; color: #6b7280; margin-top: 1px; }
-    .current-status { text-align: right; }
-    .current-status .badge {
-      display: inline-block; font-size: 12px; font-weight: 500;
-      padding: 3px 10px; border-radius: 20px; margin-bottom: 2px;
-    }
-    .current-status .sub { font-size: 11px; color: #6b7280; }
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  padding: 0;
+}
 
-    /* STATS — 5 columns */
-    .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 1.5rem; }
-    .stat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; }
-    .stat-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
-    .stat-value { font-size: 20px; font-weight: 600; color: #0c3a6e; line-height: 1; }
-    .stat-unit { font-size: 11px; color: #9ca3af; font-weight: 400; }
-    .stat-card.brazil { border-color: #bbf7d0; background: #f0fdf4; }
-    .stat-card.brazil .stat-label { color: #166534; }
-    .stat-card.brazil .stat-value { color: #15803d; }
+/* ═══ TOPBAR ═══════════════════════════════════════════════ */
+.topbar {
+  background: var(--navy2);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 0 2rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 28px; height: 28px; }
+.logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--white); }
+.logo-sub { font-size: 11px; color: var(--gray400); margin-left: 4px; font-weight: 400; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; }
 
-    /* CALENDAR CARD */
-    .calendar-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 1.25rem; }
-    .nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-    .nav-btn {
-      background: none; border: 1px solid #e5e7eb; border-radius: 8px;
-      padding: 5px 14px; font-size: 13px; color: #374151; cursor: pointer; transition: background 0.1s;
-    }
-    .nav-btn:hover { background: #f3f4f6; }
-    .month-label { font-size: 16px; font-weight: 600; color: #0c3a6e; }
+/* ═══ LAYOUT ════════════════════════════════════════════════ */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 0;
+  min-height: calc(100vh - 56px);
+}
 
-    .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
-    .weekday { font-size: 11px; color: #9ca3af; text-align: center; padding: 4px 0; font-weight: 500; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+/* ═══ LEFT PANEL (calendar) ════════════════════════════════ */
+.left-panel {
+  padding: 1.5rem 1.5rem 1.5rem 2rem;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  overflow-y: auto;
+}
 
-    /* DAY TILE */
-    .day {
-      border-radius: 10px; padding: 6px 5px; min-height: 68px;
-      border: 1px solid #e5e7eb; background: #fff;
-      cursor: pointer; position: relative;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    .day:hover { border-color: #93c5fd; box-shadow: 0 0 0 2px #dbeafe; }
-    .day.empty { background: transparent; border-color: transparent; cursor: default; pointer-events: none; }
-    .day-num { font-size: 12px; color: #6b7280; margin-bottom: 2px; font-weight: 500; }
-    .day.today { border-color: #3b82f6; }
-    .day.today .day-num { color: #1d4ed8; font-weight: 700; }
+/* STATS ROW */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+.stat-card {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.stat-label { font-size: 10px; font-weight: 500; color: var(--gray400); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+.stat-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; color: var(--white); line-height: 1; }
+.stat-unit  { font-size: 11px; color: var(--gray400); font-weight: 400; font-family: 'Space Grotesk', sans-serif; }
+.stat-card.c-green  { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+.stat-card.c-green  .stat-label { color: var(--green); }
+.stat-card.c-green  .stat-value { color: #6ee7b7; }
+.stat-card.c-amber  { border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.08); }
+.stat-card.c-amber  .stat-label { color: var(--amber); }
+.stat-card.c-amber  .stat-value { color: #fdba74; }
+.stat-card.c-ocean  { border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.08); }
+.stat-card.c-ocean  .stat-label { color: var(--sky); }
+.stat-card.c-ocean  .stat-value { color: var(--sky); }
 
-    /* AWAY — blue */
-    .day.range-away { background: #dbeafe; border-color: #bfdbfe; }
-    .day.range-away .day-num { color: #1e40af; }
+/* CALENDAR CARD */
+.cal-card {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+.nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.nav-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm);
+  padding: 5px 14px; font-size: 13px;
+  color: var(--gray400); cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: all 0.15s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+.month-label { font-size: 15px; font-weight: 600; color: var(--white); }
 
-    /* BRAZIL — green stripe at bottom of tile (layered over blue if both) */
-    .day.range-brazil::after {
-      content: '🇧🇷';
-      position: absolute; bottom: 3px; left: 4px;
-      font-size: 10px; line-height: 1;
-    }
-    /* If in Brazil but NOT away — full green bg */
-    .day.range-brazil:not(.range-away) { background: #dcfce7; border-color: #bbf7d0; }
-    .day.range-brazil:not(.range-away) .day-num { color: #166534; }
-    /* If in Brazil AND away — keep blue but add green left border accent */
-    .day.range-brazil.range-away { border-left: 3px solid #22c55e; }
+.weekdays { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin-bottom: 3px; }
+.weekday  { font-size: 10px; color: var(--gray400); text-align: center; padding: 4px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.calendar { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
 
-    /* EVENT MARKERS */
-    .event-marker {
-      font-size: 10px; font-weight: 600; padding: 2px 5px;
-      border-radius: 5px; display: inline-block; line-height: 1.4; margin-bottom: 1px;
-    }
-    .ev-depart    { background: #fbbf24; color: #78350f; }
-    .ev-embark    { background: #34d399; color: #064e3b; }
-    .ev-disembark { background: #f87171; color: #7f1d1d; }
-    .ev-arrive    { background: #60a5fa; color: #1e3a8a; }
-    .ev-brazil-in  { background: #86efac; color: #14532d; }
-    .ev-brazil-out { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+/* DAY TILE */
+.day {
+  border-radius: 8px; padding: 5px 4px; min-height: 66px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer; position: relative;
+  transition: border-color 0.12s, background 0.12s;
+}
+.day:hover { border-color: rgba(56,189,248,0.5); background: rgba(56,189,248,0.06); }
+.day.empty { background: transparent; border-color: transparent; cursor: default; pointer-events: none; }
+.day-num { font-size: 11px; color: var(--gray400); margin-bottom: 2px; font-weight: 600; }
+.day.today { border-color: var(--sky) !important; }
+.day.today .day-num { color: var(--sky); }
 
-    /* badge on arrive tile */
-    .days-away-badge {
-      position: absolute; bottom: 4px; right: 4px;
-      font-size: 9px; font-weight: 700; color: #1e40af;
-      background: #bfdbfe; border-radius: 4px; padding: 1px 4px;
-    }
+/* payroll boundary — 20th gets gold top border */
+.day.payroll-end   { border-top: 2px solid var(--gold); }
+.day.payroll-start { border-top: 2px solid rgba(255,255,255,0.2); }
 
-    /* LEGEND */
-    .legend { display: flex; gap: 12px; margin-top: 1rem; flex-wrap: wrap; }
-    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7280; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+/* RANGES */
+.day.range-away    { background: rgba(29,111,164,0.25); border-color: rgba(56,189,248,0.25); }
+.day.range-away    .day-num { color: var(--sky); }
+.day.range-brazil  { border-left: 3px solid var(--green); }
+.day.range-brazil:not(.range-away) { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); }
+.day.range-brazil:not(.range-away) .day-num { color: #6ee7b7; }
+.day.range-onboard { border-right: 3px solid var(--amber); }
+.day.range-onboard:not(.range-away):not(.range-brazil) { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.25); }
+.day.range-onboard:not(.range-away):not(.range-brazil) .day-num { color: #fdba74; }
 
-    /* SECTION DIVIDER */
-    .section-divider {
-      margin-top: 1rem; padding-top: 1rem;
-      border-top: 1px solid #f3f4f6;
-    }
-    .section-title { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 8px; }
-    .info-row {
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 12px; color: #6b7280; padding: 5px 0;
-      border-bottom: 1px solid #f9fafb;
-    }
-    .badge-blue  { font-weight: 700; color: #1e40af; background: #dbeafe; border-radius: 6px; padding: 2px 8px; font-size: 12px; }
-    .badge-green { font-weight: 700; color: #166534; background: #dcfce7; border-radius: 6px; padding: 2px 8px; font-size: 12px; }
+/* icons on ranged tiles */
+.day.range-brazil::after  { content:'🇧🇷'; position:absolute; bottom:2px; left:3px; font-size:9px; }
+.day.range-onboard::before{ content:'⚓'; position:absolute; bottom:2px; right:3px; font-size:8px; line-height:1; }
 
-    /* MODAL */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.35); align-items: center; justify-content: center; z-index: 100;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal { background: #fff; border-radius: 16px; padding: 1.5rem; width: 310px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
-    .modal-title { font-size: 16px; font-weight: 600; color: #0c3a6e; margin-bottom: 3px; }
-    .modal-sub { font-size: 12px; color: #6b7280; margin-bottom: 1rem; }
-    .modal-section-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 10px 0 6px; }
-    .modal-actions { display: flex; flex-direction: column; gap: 7px; }
-    .action-btn {
-      border: 1px solid #e5e7eb; background: none; border-radius: 10px;
-      padding: 9px 12px; font-size: 13px; color: #111827;
-      cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; transition: background 0.1s;
-    }
-    .action-btn:hover { background: #f9fafb; border-color: #d1d5db; }
-    .action-btn.active { border-color: #3b82f6; background: #eff6ff; font-weight: 600; }
-    .action-btn.active-green { border-color: #22c55e; background: #f0fdf4; font-weight: 600; }
-    .action-icon { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 13px; flex-shrink: 0; }
-    .ai-depart    { background: #fef3c7; }
-    .ai-embark    { background: #dcfce7; }
-    .ai-disembark { background: #fee2e2; }
-    .ai-arrive    { background: #dbeafe; }
-    .ai-brazil-in  { background: #bbf7d0; }
-    .ai-brazil-out { background: #d1fae5; }
-    .modal-clear { margin-top: 8px; width: 100%; border: 1px solid #fee2e2; background: none; color: #dc2626; font-size: 12px; cursor: pointer; padding: 7px; border-radius: 8px; }
-    .modal-clear:hover { background: #fff5f5; }
-    .modal-close { margin-top: 6px; width: 100%; border: none; background: none; color: #9ca3af; font-size: 12px; cursor: pointer; padding: 4px; }
-    .modal-close:hover { color: #6b7280; }
+/* EVENT MARKERS */
+.event-marker {
+  font-size: 9px; font-weight: 700; padding: 1px 4px;
+  border-radius: 4px; display: inline-block; line-height: 1.5; margin-bottom: 1px;
+}
+.ev-depart     { background: rgba(245,158,11,0.3); color: #fde68a; }
+.ev-arrive     { background: rgba(56,189,248,0.3); color: #bae6fd; }
+.ev-brazil-in  { background: rgba(16,185,129,0.3); color: #6ee7b7; }
+.ev-brazil-out { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+.ev-sign-on    { background: rgba(249,115,22,0.35); color: #fed7aa; }
+.ev-sign-off   { background: rgba(249,115,22,0.15); color: #fed7aa; border: 1px solid rgba(249,115,22,0.3); }
 
-    @media (max-width: 580px) {
-      .stats-bar { grid-template-columns: repeat(3, 1fr); }
-      .day { min-height: 52px; }
-    }
-    @media (max-width: 400px) {
-      .stats-bar { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
+/* badges */
+.badge-away   { position:absolute; bottom:14px; right:3px; font-size:8px; font-weight:700; color:#bae6fd; background:rgba(56,189,248,0.2); border-radius:3px; padding:1px 3px; }
+.badge-onboard{ position:absolute; top:3px; right:3px; font-size:8px; font-weight:700; color:#fed7aa; background:rgba(249,115,22,0.25); border-radius:3px; padding:1px 3px; }
+
+/* PAYROLL line markers on 20th tile */
+.payroll-marker {
+  position: absolute; top: -1px; left: 0; right: 0;
+  font-size: 8px; font-weight: 700; color: var(--gold);
+  text-align: center; line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+/* LEGEND */
+.legend { display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--gray400); }
+.ldot { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+.lstripe-r { width:9px; height:9px; border-radius:2px; background:rgba(249,115,22,0.12); border-right:2px solid var(--amber); }
+.lstripe-l { width:9px; height:9px; border-radius:2px; background:rgba(29,111,164,0.25); border-left:2px solid var(--green); }
+
+/* COLLAPSIBLE LISTS */
+.info-section { margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; }
+.section-title { font-size: 11px; font-weight: 600; color: var(--gray400); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: var(--gray400); padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.ibadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600;
+  border-radius: 5px; padding: 2px 7px;
+}
+.ibadge-blue  { color: var(--sky);    background: rgba(56,189,248,0.15); }
+.ibadge-green { color: #6ee7b7;       background: rgba(16,185,129,0.15); }
+.ibadge-amber { color: #fdba74;       background: rgba(249,115,22,0.15); }
+
+/* ═══ RIGHT PANEL (settings) ═══════════════════════════════ */
+.right-panel {
+  background: var(--navy);
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.panel-card {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-header-icon { font-size: 14px; }
+.panel-title { font-size: 13px; font-weight: 600; color: var(--white); }
+.panel-body { padding: 14px 16px; }
+
+/* DAY RATE FORM */
+.form-row { margin-bottom: 10px; }
+.form-label { font-size: 11px; font-weight: 500; color: var(--gray400); margin-bottom: 4px; display: block; }
+.form-input {
+  width: 100%; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm); padding: 8px 10px;
+  color: var(--white); font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none; transition: border-color 0.15s;
+}
+.form-input:focus { border-color: var(--sky); }
+.form-input::placeholder { color: var(--gray400); }
+.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-add {
+  width: 100%; margin-top: 4px;
+  background: linear-gradient(135deg, var(--ocean), var(--steel));
+  border: none; border-radius: var(--radius-sm);
+  padding: 8px; color: var(--white);
+  font-size: 13px; font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.btn-add:hover { opacity: 0.85; }
+
+/* RATE LIST */
+.rate-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 12px;
+}
+.rate-item:last-child { border-bottom: none; }
+.rate-amount { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--gold); font-size: 13px; }
+.rate-period { color: var(--gray400); font-size: 11px; }
+.rate-delete { background: none; border: none; color: var(--gray400); cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px; }
+.rate-delete:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+
+/* PAYROLL TABLE */
+.payroll-table { width: 100%; border-collapse: collapse; }
+.payroll-table th {
+  font-size: 10px; font-weight: 600; color: var(--gray400);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  text-align: left; padding: 6px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.payroll-table td {
+  font-size: 12px; padding: 7px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--gray400);
+}
+.payroll-table tr:last-child td { border-bottom: none; }
+.payroll-table td.period-col { font-size: 11px; }
+.payroll-table td.days-col {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600; color: var(--sky); text-align: center;
+}
+.payroll-table td.earn-col {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700; color: var(--gold); text-align: right;
+}
+.payroll-table tr.total-row td {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  color: var(--white); font-weight: 600;
+  padding-top: 9px;
+}
+.payroll-table tr.total-row td.earn-col { color: var(--gold); font-size: 14px; }
+.empty-state { text-align: center; padding: 1.5rem; color: var(--gray400); font-size: 12px; }
+
+/* ═══ MODAL ═════════════════════════════════════════════════ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; z-index: 200;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 1.5rem; width: 320px;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-title { font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 3px; }
+.modal-sub { font-size: 12px; color: var(--gray400); margin-bottom: 1rem; min-height: 16px; }
+.modal-section-label {
+  font-size: 10px; font-weight: 600; color: var(--gray400);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  margin: 12px 0 6px; padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.modal-actions { display: flex; flex-direction: column; gap: 6px; }
+.action-btn {
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  border-radius: var(--radius-sm); padding: 9px 12px;
+  font-size: 13px; color: var(--white); cursor: pointer;
+  text-align: left; display: flex; align-items: center; gap: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: background 0.1s, border-color 0.1s;
+}
+.action-btn:hover { background: rgba(255,255,255,0.08); }
+.action-btn.active       { border-color: var(--sky);   background: rgba(56,189,248,0.12); }
+.action-btn.active-green { border-color: var(--green); background: rgba(16,185,129,0.12); }
+.action-btn.active-amber { border-color: var(--amber); background: rgba(249,115,22,0.12); }
+.action-icon { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 13px; flex-shrink: 0; }
+.ai-depart    { background: rgba(245,158,11,0.2); }
+.ai-arrive    { background: rgba(56,189,248,0.2); }
+.ai-brazil-in { background: rgba(16,185,129,0.2); }
+.ai-brazil-out{ background: rgba(16,185,129,0.1); }
+.ai-sign-on   { background: rgba(249,115,22,0.2); }
+.ai-sign-off  { background: rgba(249,115,22,0.1); }
+.modal-clear {
+  margin-top: 8px; width: 100%;
+  border: 1px solid rgba(239,68,68,0.3);
+  background: rgba(239,68,68,0.06); color: var(--red);
+  font-size: 12px; cursor: pointer; padding: 8px; border-radius: var(--radius-sm);
+  font-family: 'Space Grotesk', sans-serif;
+}
+.modal-clear:hover { background: rgba(239,68,68,0.12); }
+.modal-close {
+  margin-top: 6px; width: 100%; border: none; background: none;
+  color: var(--gray400); font-size: 12px; cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif; padding: 4px;
+}
+
+/* PAYROLL highlight on 20th col */
+.payroll-table tr.current-period td { background: rgba(245,158,11,0.06); }
+
+/* responsive */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .right-panel { border-top: 1px solid rgba(255,255,255,0.07); }
+  .left-panel { border-right: none; }
+}
+@media (max-width: 540px) {
+  .stats-row { grid-template-columns: repeat(2,1fr); }
+  .topbar { padding: 0 1rem; }
+  .left-panel, .right-panel { padding: 1rem; }
+}
+</style>
 </head>
 <body>
-<div class="app">
 
-  <div class="header">
-    <div class="header-left">
-      <svg class="anchor-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="8" r="3.5" stroke="#185FA5" stroke-width="1.8" fill="none"/>
-        <line x1="16" y1="11.5" x2="16" y2="25" stroke="#185FA5" stroke-width="1.8"/>
-        <path d="M9 16 Q7 21 9.5 25" stroke="#185FA5" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <path d="M23 16 Q25 21 22.5 25" stroke="#185FA5" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <line x1="9.5" y1="25" x2="22.5" y2="25" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round"/>
-        <line x1="9" y1="16" x2="23" y2="16" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
-      <div>
-        <div class="app-title">CrewX</div>
-        <div class="app-subtitle">Ship rotation tracker · Brazil</div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="7" r="3" stroke="#38bdf8" stroke-width="1.6" fill="none"/>
+      <line x1="14" y1="10" x2="14" y2="22" stroke="#38bdf8" stroke-width="1.6"/>
+      <path d="M8 15 Q6 19 8.5 22" stroke="#38bdf8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M20 15 Q22 19 19.5 22" stroke="#38bdf8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <line x1="8.5" y1="22" x2="19.5" y2="22" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="8"   y1="15" x2="20"   y2="15" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <span class="logo-text">CrewX</span>
+    <span class="logo-sub">Ship rotation tracker</span>
+  </div>
+  <div class="topbar-right">
+    <div class="status-pill">
+      <div class="status-dot" id="status-dot" style="background:#94a3b8"></div>
+      <span id="status-text">At home</span>
+    </div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- ═══ LEFT — calendar ═══════════════════════════════════ -->
+  <div class="left-panel">
+
+    <!-- stats -->
+    <div class="stats-row">
+      <div class="stat-card c-ocean">
+        <div class="stat-label">Days away</div>
+        <div class="stat-value" id="stat-away">0 <span class="stat-unit">d</span></div>
+      </div>
+      <div class="stat-card c-green">
+        <div class="stat-label">🇧🇷 In Brazil</div>
+        <div class="stat-value" id="stat-brazil">0 <span class="stat-unit">d</span></div>
+      </div>
+      <div class="stat-card c-amber">
+        <div class="stat-label">⚓ Onboard</div>
+        <div class="stat-value" id="stat-onboard">0 <span class="stat-unit">d</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Travel days</div>
+        <div class="stat-value" id="stat-travel">0 <span class="stat-unit">d</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Trips</div>
+        <div class="stat-value" id="stat-trips">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Contracts</div>
+        <div class="stat-value" id="stat-contracts">0</div>
       </div>
     </div>
-    <div class="current-status">
-      <div class="badge" id="status-badge" style="background:#f3f4f6;color:#6b7280;">–</div>
-      <div class="sub" id="status-sub">No active trip</div>
-    </div>
-  </div>
 
-  <div class="stats-bar">
-    <div class="stat-card">
-      <div class="stat-label">Days away</div>
-      <div class="stat-value" id="stat-away">0 <span class="stat-unit">days</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Onboard days</div>
-      <div class="stat-value" id="stat-earn">0 <span class="stat-unit">days</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Travel days</div>
-      <div class="stat-value" id="stat-travel">0 <span class="stat-unit">days</span></div>
-    </div>
-    <div class="stat-card brazil">
-      <div class="stat-label">Days in Brazil</div>
-      <div class="stat-value" id="stat-brazil">0 <span class="stat-unit">days</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Trips logged</div>
-      <div class="stat-value" id="stat-trips">0</div>
-    </div>
-  </div>
-
-  <div class="calendar-card">
-    <div class="nav-row">
-      <button class="nav-btn" onclick="changeMonth(-1)">← Prev</button>
-      <span class="month-label" id="month-label"></span>
-      <button class="nav-btn" onclick="changeMonth(1)">Next →</button>
-    </div>
-    <div class="weekdays">
-      <div class="weekday">Mon</div><div class="weekday">Tue</div>
-      <div class="weekday">Wed</div><div class="weekday">Thu</div>
-      <div class="weekday">Fri</div><div class="weekday">Sat</div>
-      <div class="weekday">Sun</div>
-    </div>
-    <div class="calendar" id="calendar"></div>
-
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#bfdbfe;border:1px solid #93c5fd;"></div> Away</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1px solid #86efac;"></div> In Brazil</div>
-      <div class="legend-item">
-        <div style="width:10px;height:10px;border-radius:3px;background:#bfdbfe;border-left:3px solid #22c55e;flex-shrink:0;"></div> Away + Brazil
+    <!-- calendar -->
+    <div class="cal-card">
+      <div class="nav-row">
+        <button class="nav-btn" onclick="changeMonth(-1)">← prev</button>
+        <span class="month-label" id="month-label"></span>
+        <button class="nav-btn" onclick="changeMonth(1)">next →</button>
       </div>
-      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24;"></div> Left home</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#34d399;"></div> Embarked</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f87171;"></div> Disembarked</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#60a5fa;"></div> Arrived home</div>
-    </div>
+      <div class="weekdays">
+        <div class="weekday">Mo</div><div class="weekday">Tu</div>
+        <div class="weekday">We</div><div class="weekday">Th</div>
+        <div class="weekday">Fr</div><div class="weekday">Sa</div>
+        <div class="weekday">Su</div>
+      </div>
+      <div class="calendar" id="calendar"></div>
 
-    <div class="section-divider" id="trips-info" style="display:none;">
-      <div class="section-title">Trips away from home</div>
-      <div id="trips-list"></div>
-    </div>
+      <div class="legend">
+        <div class="legend-item"><div class="ldot" style="background:rgba(29,111,164,0.4);border:1px solid rgba(56,189,248,0.4)"></div>Away</div>
+        <div class="legend-item"><div class="ldot" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4)"></div>Brazil</div>
+        <div class="legend-item"><div class="lstripe-l"></div>Away+BR</div>
+        <div class="legend-item"><div class="lstripe-r"></div>Onboard</div>
+        <div class="legend-item"><div class="ldot" style="background:rgba(245,158,11,0.5);border:1px solid #f59e0b"></div>Left home</div>
+        <div class="legend-item"><div class="ldot" style="background:rgba(56,189,248,0.4);border:1px solid #38bdf8"></div>Arrived</div>
+        <div class="legend-item"><div class="ldot" style="width:9px;height:6px;background:var(--gold);border-top:2px solid var(--gold)"></div>Payroll cut</div>
+      </div>
 
-    <div class="section-divider" id="brazil-info" style="display:none;">
-      <div class="section-title">🇧🇷 Brazil stays</div>
-      <div id="brazil-list"></div>
+      <!-- lists -->
+      <div class="info-section" id="trips-info" style="display:none">
+        <div class="section-title">🏠 Trips away from home</div>
+        <div id="trips-list"></div>
+      </div>
+      <div class="info-section" id="brazil-info" style="display:none">
+        <div class="section-title">🇧🇷 Brazil stays</div>
+        <div id="brazil-list"></div>
+      </div>
+      <div class="info-section" id="onboard-info" style="display:none">
+        <div class="section-title">⚓ Onboard contracts</div>
+        <div id="onboard-list"></div>
+      </div>
     </div>
   </div>
 
+  <!-- ═══ RIGHT — settings + payroll ═══════════════════════ -->
+  <div class="right-panel">
+
+    <!-- DAY RATE SETTINGS -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <span class="panel-header-icon">💰</span>
+        <span class="panel-title">Day Rate Settings</span>
+      </div>
+      <div class="panel-body">
+        <div class="form-row">
+          <label class="form-label">Day rate (USD)</label>
+          <input class="form-input" id="rate-amount" type="number" placeholder="e.g. 650" min="0" step="1"/>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Valid from</label>
+          <div class="date-row">
+            <input class="form-input" id="rate-from" type="date"/>
+            <input class="form-input" id="rate-to"   type="date" placeholder="leave blank = ongoing"/>
+          </div>
+          <div style="font-size:10px;color:var(--gray400);margin-top:3px">from → to &nbsp;(leave "to" blank if still current rate)</div>
+        </div>
+        <button class="btn-add" onclick="addRate()">+ Add rate period</button>
+
+        <div id="rates-list" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- PAYROLL -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <span class="panel-header-icon">📊</span>
+        <span class="panel-title">Payroll — 21st → 20th</span>
+      </div>
+      <div class="panel-body" id="payroll-body">
+        <div class="empty-state">Add a day rate above to see payroll calculations</div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-title" id="modal-title"></div>
-    <div class="modal-sub" id="modal-sub"></div>
+    <div class="modal-sub"   id="modal-sub"></div>
 
-    <div class="modal-section-label">Rotation</div>
+    <div class="modal-section-label">Home rotation</div>
     <div class="modal-actions">
-      <button class="action-btn" id="btn-depart"    onclick="logEvent('depart')">
+      <button class="action-btn" id="btn-depart" onclick="logEvent('depart')">
         <div class="action-icon ai-depart">🏠</div> Left home
       </button>
-      <button class="action-btn" id="btn-embark"    onclick="logEvent('embark')">
-        <div class="action-icon ai-embark">⚓</div> Embarked on ship
-      </button>
-      <button class="action-btn" id="btn-disembark" onclick="logEvent('disembark')">
-        <div class="action-icon ai-disembark">🔄</div> Disembarked from ship
-      </button>
-      <button class="action-btn" id="btn-arrive"    onclick="logEvent('arrive')">
+      <button class="action-btn" id="btn-arrive" onclick="logEvent('arrive')">
         <div class="action-icon ai-arrive">🏡</div> Arrived home
       </button>
     </div>
@@ -276,36 +544,48 @@
       </button>
     </div>
 
-    <button class="modal-clear" id="btn-clear" onclick="clearDay()" style="display:none;">
-      Remove all events from this day
-    </button>
+    <div class="modal-section-label">Ship</div>
+    <div class="modal-actions">
+      <button class="action-btn" id="btn-sign-on"  onclick="logEvent('sign-on')">
+        <div class="action-icon ai-sign-on">⚓</div> Sign On (joined ship)
+      </button>
+      <button class="action-btn" id="btn-sign-off" onclick="logEvent('sign-off')">
+        <div class="action-icon ai-sign-off">🔄</div> Sign Off (left ship)
+      </button>
+    </div>
+
+    <button class="modal-clear" id="btn-clear" onclick="clearDay()" style="display:none">Remove all events from this day</button>
     <button class="modal-close" onclick="closeModal()">cancel</button>
   </div>
 </div>
 
 <script>
-// ── Storage ──────────────────────────────────────────────────────
+// ═══ STATE ════════════════════════════════════════════════════════
 let events = JSON.parse(localStorage.getItem('crewxEvents') || '[]');
+let rates  = JSON.parse(localStorage.getItem('crewxRates')  || '[]');
+// rates: [{ amount: 650, from: 'YYYY-MM-DD', to: 'YYYY-MM-DD'|null }]
+
 let currentYear  = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 let selectedDate = null;
 
 const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
+const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function save() { localStorage.setItem('crewxEvents', JSON.stringify(events)); }
+function saveEvents() { localStorage.setItem('crewxEvents', JSON.stringify(events)); }
+function saveRates()  { localStorage.setItem('crewxRates',  JSON.stringify(rates));  }
 
 function dateStr(y, m, d) {
   return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
 function getEventsForDate(ds) { return events.filter(e => e.date === ds); }
 
-// ── Pair events of a given type: in-type → out-type ──────────────
+// ═══ PAIRS ════════════════════════════════════════════════════════
 function getPairs(inType, outType) {
   const ins  = events.filter(e => e.type === inType).map(e => e.date).sort();
   const outs = events.filter(e => e.type === outType).map(e => e.date).sort();
-  const pairs = [];
-  const usedOuts = new Set();
+  const pairs = [], usedOuts = new Set();
   for (const start of ins) {
     const end = outs.find(o => o >= start && !usedOuts.has(o)) || null;
     if (end) usedOuts.add(end);
@@ -313,131 +593,273 @@ function getPairs(inType, outType) {
   }
   return pairs;
 }
+function getTrips()        { return getPairs('depart',   'arrive');    }
+function getBrazilStays()  { return getPairs('brazil-in','brazil-out');}
+function getOnboardStays() { return getPairs('sign-on',  'sign-off');  }
 
-function getTrips()  { return getPairs('depart', 'arrive'); }
-function getBrazilStays() { return getPairs('brazil-in', 'brazil-out'); }
-
-// ── Date sets for ranges ─────────────────────────────────────────
 function getRangeDates(pairs) {
   const set = new Set();
   for (const p of pairs) {
     const s = new Date(p.start + 'T00:00:00');
     const e = p.end ? new Date(p.end + 'T00:00:00') : new Date();
-    for (let cur = new Date(s); cur <= e; cur.setDate(cur.getDate() + 1)) {
-      set.add(cur.toISOString().slice(0, 10));
-    }
+    for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1))
+      set.add(c.toISOString().slice(0,10));
   }
   return set;
 }
 
-// ── Stats ────────────────────────────────────────────────────────
-function updateStats() {
-  const trips       = getTrips();
-  const brazilStays = getBrazilStays();
-  const awayDates   = getRangeDates(trips);
-  const brazilDates = getRangeDates(brazilStays);
-
-  const eventDates = new Set(events.filter(e =>
-    ['depart','arrive','disembark'].includes(e.type)
-  ).map(e => e.date));
-
-  let onboardDays = 0, travelDays = 0;
-  for (const ds of awayDates) {
-    if (eventDates.has(ds)) travelDays++; else onboardDays++;
-  }
-
-  document.getElementById('stat-away').innerHTML   = `${awayDates.size} <span class="stat-unit">days</span>`;
-  document.getElementById('stat-earn').innerHTML   = `${onboardDays} <span class="stat-unit">days</span>`;
-  document.getElementById('stat-travel').innerHTML = `${travelDays} <span class="stat-unit">days</span>`;
-  document.getElementById('stat-brazil').innerHTML = `${brazilDates.size} <span class="stat-unit">days</span>`;
-  document.getElementById('stat-trips').textContent = trips.filter(t => t.end).length;
-
-  // header badge
-  const todayStr = new Date().toISOString().slice(0,10);
-  const badge = document.getElementById('status-badge');
-  const sub   = document.getElementById('status-sub');
-  const inBrazilToday = brazilDates.has(todayStr);
-  if (events.some(e => e.date === todayStr && e.type === 'arrive')) {
-    badge.style.cssText = 'background:#dbeafe;color:#1e40af';
-    badge.textContent = 'Arrived home';
-    sub.textContent = inBrazilToday ? '🇧🇷 Still in Brazil' : 'Back from trip';
-  } else if (awayDates.has(todayStr)) {
-    badge.style.cssText = 'background:#dcfce7;color:#0f6e56';
-    badge.textContent = 'Away';
-    sub.textContent = inBrazilToday ? '🇧🇷 In Brazil' : 'On rotation';
-  } else {
-    badge.style.cssText = 'background:#f3f4f6;color:#6b7280';
-    badge.textContent = 'At home'; sub.textContent = 'No active trip';
-  }
-
-  // Trips list
-  const tripsInfo = document.getElementById('trips-info');
-  const tripsList = document.getElementById('trips-list');
-  if (trips.length === 0) { tripsInfo.style.display = 'none'; }
-  else {
-    tripsInfo.style.display = 'block';
-    tripsList.innerHTML = '';
-    trips.forEach((t, i) => {
-      const dep = t.start.slice(5).replace('-', '/');
-      const arr = t.end ? t.end.slice(5).replace('-', '/') : '…';
-      const dur = t.end
-        ? Math.round((new Date(t.end+'T00:00:00') - new Date(t.start+'T00:00:00')) / 86400000) + 1
-        : '?';
-      const row = document.createElement('div');
-      row.className = 'info-row';
-      row.innerHTML = `<span>Trip ${i+1} &nbsp; ${dep} → ${arr}</span>
-        <span class="badge-blue">${t.end ? dur + ' days' : 'ongoing'}</span>`;
-      tripsList.appendChild(row);
-    });
-  }
-
-  // Brazil stays list
-  const brazilInfo = document.getElementById('brazil-info');
-  const brazilList = document.getElementById('brazil-list');
-  if (brazilStays.length === 0) { brazilInfo.style.display = 'none'; }
-  else {
-    brazilInfo.style.display = 'block';
-    brazilList.innerHTML = '';
-    brazilStays.forEach((b, i) => {
-      const inn = b.start.slice(5).replace('-', '/');
-      const out = b.end ? b.end.slice(5).replace('-', '/') : '…';
-      const dur = b.end
-        ? Math.round((new Date(b.end+'T00:00:00') - new Date(b.start+'T00:00:00')) / 86400000) + 1
-        : '?';
-      const row = document.createElement('div');
-      row.className = 'info-row';
-      row.innerHTML = `<span>Stay ${i+1} &nbsp; ${inn} → ${out}</span>
-        <span class="badge-green">${b.end ? dur + ' days' : 'ongoing'}</span>`;
-      brazilList.appendChild(row);
-    });
-  }
+function durDays(p) {
+  if (!p.end) return null;
+  return Math.round((new Date(p.end+'T00:00:00') - new Date(p.start+'T00:00:00')) / 86400000) + 1;
 }
 
-// ── Calendar render ───────────────────────────────────────────────
+// ═══ RATE LOOKUP ═════════════════════════════════════════════════
+function getRateForDate(ds) {
+  // find rate period covering ds
+  const sorted = [...rates].sort((a,b) => a.from.localeCompare(b.from));
+  for (const r of sorted) {
+    if (ds >= r.from && (!r.to || ds <= r.to)) return r.amount;
+  }
+  return 0;
+}
+
+// ═══ PAYROLL CALCULATION ══════════════════════════════════════════
+// Period: 21st of prev month → 20th of current month
+// For each such period, count away days and multiply by applicable rate
+function getPayrollPeriods() {
+  const awayDates = getRangeDates(getTrips());
+  if (awayDates.size === 0 && rates.length === 0) return [];
+
+  // Determine date range to generate periods for
+  // From earliest event or rate, to today + 2 months
+  const allDates = [...events.map(e => e.date), ...rates.map(r => r.from)].sort();
+  if (allDates.length === 0) return [];
+
+  const earliest = new Date(allDates[0] + 'T00:00:00');
+  const latest   = new Date();
+  latest.setMonth(latest.getMonth() + 2);
+
+  const periods = [];
+  // Start from the period containing earliest date
+  let y = earliest.getFullYear();
+  let m = earliest.getMonth(); // period ends on 20th of this month
+
+  // go back one month to catch partial period
+  if (m === 0) { m = 11; y--; } else m--;
+
+  const endY = latest.getFullYear();
+  const endM = latest.getMonth();
+
+  while (y < endY || (y === endY && m <= endM)) {
+    // period: 21 of prev month → 20 of this month
+    const prevM = m === 0 ? 11 : m - 1;
+    const prevY = m === 0 ? y - 1 : y;
+    const periodStart = dateStr(prevY, prevM, 21); // YYYY-MM-21 of prev
+    const periodEnd   = dateStr(y, m, 20);         // YYYY-MM-20 of this
+
+    // count away days in this period
+    let days = 0;
+    let earnings = 0;
+    const s = new Date(periodStart + 'T00:00:00');
+    const e = new Date(periodEnd   + 'T00:00:00');
+    for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
+      const ds = c.toISOString().slice(0,10);
+      if (awayDates.has(ds)) {
+        days++;
+        earnings += getRateForDate(ds);
+      }
+    }
+
+    periods.push({
+      label: `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${y}`,
+      periodEnd,
+      periodStart,
+      days,
+      earnings
+    });
+
+    m++;
+    if (m > 11) { m = 0; y++; }
+  }
+
+  // only show periods with activity or in the past year
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  return periods.filter(p => p.days > 0 || new Date(p.periodEnd+'T00:00:00') >= oneYearAgo);
+}
+
+// ═══ RENDER RATES LIST ════════════════════════════════════════════
+function renderRates() {
+  const el = document.getElementById('rates-list');
+  if (rates.length === 0) { el.innerHTML = '<div style="font-size:12px;color:var(--gray400);text-align:center;padding:8px 0">No rates added yet</div>'; return; }
+  const sorted = [...rates].sort((a,b) => a.from.localeCompare(b.from));
+  el.innerHTML = sorted.map((r, i) => `
+    <div class="rate-item">
+      <div>
+        <div class="rate-amount">$${Number(r.amount).toLocaleString()}<span style="font-size:10px;color:var(--gray400);font-weight:400;font-family:'Space Grotesk',sans-serif"> /day</span></div>
+        <div class="rate-period">${r.from} → ${r.to || 'ongoing'}</div>
+      </div>
+      <button class="rate-delete" onclick="deleteRate(${i})" title="Remove">✕</button>
+    </div>
+  `).join('');
+}
+
+function addRate() {
+  const amount = parseFloat(document.getElementById('rate-amount').value);
+  const from   = document.getElementById('rate-from').value;
+  const to     = document.getElementById('rate-to').value || null;
+  if (!amount || !from) { alert('Please enter amount and start date.'); return; }
+  rates.push({ amount, from, to });
+  rates.sort((a,b) => a.from.localeCompare(b.from));
+  saveRates();
+  document.getElementById('rate-amount').value = '';
+  document.getElementById('rate-from').value   = '';
+  document.getElementById('rate-to').value     = '';
+  renderRates();
+  renderPayroll();
+  renderCalendar();
+}
+
+function deleteRate(i) {
+  rates.splice(i, 1);
+  saveRates();
+  renderRates();
+  renderPayroll();
+  renderCalendar();
+}
+
+// ═══ RENDER PAYROLL ═══════════════════════════════════════════════
+function renderPayroll() {
+  const body = document.getElementById('payroll-body');
+  if (rates.length === 0) {
+    body.innerHTML = '<div class="empty-state">Add a day rate above to see payroll calculations</div>';
+    return;
+  }
+  const periods = getPayrollPeriods();
+  if (periods.length === 0) {
+    body.innerHTML = '<div class="empty-state">Log trip events to calculate earnings</div>';
+    return;
+  }
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  let totalDays = 0, totalEarn = 0;
+  periods.forEach(p => { totalDays += p.days; totalEarn += p.earnings; });
+
+  const rows = periods.map(p => {
+    const isCurrent = todayStr <= p.periodEnd && todayStr >= p.periodStart;
+    return `<tr class="${isCurrent ? 'current-period' : ''}">
+      <td class="period-col">${p.label}</td>
+      <td class="days-col">${p.days}</td>
+      <td class="earn-col">$${p.earnings.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
+    </tr>`;
+  }).join('');
+
+  body.innerHTML = `
+    <table class="payroll-table">
+      <thead><tr>
+        <th>Period</th>
+        <th style="text-align:center">Days</th>
+        <th style="text-align:right">Earned</th>
+      </tr></thead>
+      <tbody>
+        ${rows}
+        <tr class="total-row">
+          <td>Total</td>
+          <td class="days-col">${totalDays}</td>
+          <td class="earn-col">$${totalEarn.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:10px;color:var(--gray400);margin-top:8px;text-align:center">
+      Highlighted row = current active period &nbsp;·&nbsp; cut-off: 20th each month
+    </div>
+  `;
+}
+
+// ═══ STATS ════════════════════════════════════════════════════════
+function updateStats() {
+  const trips        = getTrips();
+  const brazilStays  = getBrazilStays();
+  const onboardStays = getOnboardStays();
+  const awayDates    = getRangeDates(trips);
+  const brazilDates  = getRangeDates(brazilStays);
+  const onboardDates = getRangeDates(onboardStays);
+
+  const rotEvDates = new Set(events.filter(e => ['depart','arrive'].includes(e.type)).map(e => e.date));
+  let travel = 0;
+  for (const ds of awayDates) { if (rotEvDates.has(ds)) travel++; }
+
+  document.getElementById('stat-away').innerHTML     = `${awayDates.size} <span class="stat-unit">d</span>`;
+  document.getElementById('stat-brazil').innerHTML   = `${brazilDates.size} <span class="stat-unit">d</span>`;
+  document.getElementById('stat-onboard').innerHTML  = `${onboardDates.size} <span class="stat-unit">d</span>`;
+  document.getElementById('stat-travel').innerHTML   = `${travel} <span class="stat-unit">d</span>`;
+  document.getElementById('stat-trips').textContent  = trips.filter(t=>t.end).length;
+  document.getElementById('stat-contracts').textContent = onboardStays.filter(o=>o.end).length;
+
+  // status pill
+  const todayStr = new Date().toISOString().slice(0,10);
+  const dot  = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  const inBrazil  = brazilDates.has(todayStr);
+  const isOnboard = onboardDates.has(todayStr);
+  if (isOnboard) {
+    dot.style.background = '#f97316'; text.textContent = '⚓ Onboard' + (inBrazil ? ' · 🇧🇷' : '');
+  } else if (awayDates.has(todayStr)) {
+    dot.style.background = '#38bdf8'; text.textContent = 'Away' + (inBrazil ? ' · 🇧🇷 Brazil' : '');
+  } else {
+    dot.style.background = '#94a3b8'; text.textContent = 'At home';
+  }
+
+  // lists
+  const fmt = ds => ds.slice(5).replace('-','/');
+  function renderList(listId, infoId, items, labelFn, badgeClass) {
+    const info = document.getElementById(infoId);
+    const list = document.getElementById(listId);
+    if (!items.length) { info.style.display='none'; return; }
+    info.style.display='block'; list.innerHTML='';
+    items.forEach((item,i) => {
+      const d = durDays(item);
+      const row = document.createElement('div');
+      row.className='info-row';
+      row.innerHTML=`<span>${labelFn(item,i)}</span><span class="ibadge ${badgeClass}">${d ? d+'d' : 'ongoing'}</span>`;
+      list.appendChild(row);
+    });
+  }
+  renderList('trips-list',  'trips-info',  trips,        (t,i)=>`Trip ${i+1} &nbsp; ${fmt(t.start)} → ${t.end?fmt(t.end):'…'}`, 'ibadge-blue');
+  renderList('brazil-list', 'brazil-info', brazilStays,  (b,i)=>`Stay ${i+1} &nbsp; ${fmt(b.start)} → ${b.end?fmt(b.end):'…'}`, 'ibadge-green');
+  renderList('onboard-list','onboard-info',onboardStays, (o,i)=>`Contract ${i+1} &nbsp; ${fmt(o.start)} → ${o.end?fmt(o.end):'…'}`, 'ibadge-amber');
+}
+
+// ═══ CALENDAR RENDER ══════════════════════════════════════════════
 function renderCalendar() {
   document.getElementById('month-label').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
   const cal = document.getElementById('calendar');
   cal.innerHTML = '';
 
   const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
-  const offset      = (firstDay === 0) ? 6 : firstDay - 1;
+  const offset      = firstDay === 0 ? 6 : firstDay - 1;
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const today       = new Date();
-  const awayDates   = getRangeDates(getTrips());
-  const brazilDates = getRangeDates(getBrazilStays());
-  const trips       = getTrips();
+
+  const trips        = getTrips();
+  const onboardStays = getOnboardStays();
+  const awayDates    = getRangeDates(trips);
+  const brazilDates  = getRangeDates(getBrazilStays());
+  const onboardDates = getRangeDates(onboardStays);
 
   for (let i = 0; i < offset; i++) {
-    const e = document.createElement('div'); e.className = 'day empty'; cal.appendChild(e);
+    const e = document.createElement('div'); e.className='day empty'; cal.appendChild(e);
   }
 
   const EV_LABEL = {
-    depart: 'left home', embark: 'embarked', disembark: 'disembarked', arrive: 'arrived',
-    'brazil-in': '🇧🇷 entered', 'brazil-out': '✈️ left BR'
+    depart:'left home', arrive:'arrived',
+    'brazil-in':'🇧🇷 in', 'brazil-out':'✈️ out',
+    'sign-on':'⚓ on', 'sign-off':'🔄 off'
   };
   const EV_CLASS = {
-    depart: 'ev-depart', embark: 'ev-embark', disembark: 'ev-disembark', arrive: 'ev-arrive',
-    'brazil-in': 'ev-brazil-in', 'brazil-out': 'ev-brazil-out'
+    depart:'ev-depart', arrive:'ev-arrive',
+    'brazil-in':'ev-brazil-in','brazil-out':'ev-brazil-out',
+    'sign-on':'ev-sign-on','sign-off':'ev-sign-off'
   };
 
   for (let d = 1; d <= daysInMonth; d++) {
@@ -445,32 +867,36 @@ function renderCalendar() {
     const div = document.createElement('div');
     div.className = 'day';
 
-    const isToday = today.getFullYear() === currentYear &&
-                    today.getMonth()    === currentMonth &&
-                    today.getDate()     === d;
-    if (isToday)           div.classList.add('today');
-    if (awayDates.has(ds)) div.classList.add('range-away');
-    if (brazilDates.has(ds)) div.classList.add('range-brazil');
+    const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
+    if (isToday)              div.classList.add('today');
+    if (awayDates.has(ds))    div.classList.add('range-away');
+    if (brazilDates.has(ds))  div.classList.add('range-brazil');
+    if (onboardDates.has(ds)) div.classList.add('range-onboard');
+    if (d === 20)             div.classList.add('payroll-end');
+    if (d === 21)             div.classList.add('payroll-start');
 
-    div.innerHTML = `<div class="day-num">${d}</div>`;
+    let html = `<div class="day-num">${d}</div>`;
+    if (d === 20) html += `<div class="payroll-marker">✂ PAY</div>`;
 
     getEventsForDate(ds).forEach(ev => {
-      div.innerHTML += `<span class="event-marker ${EV_CLASS[ev.type]}">${EV_LABEL[ev.type]}</span><br>`;
+      html += `<span class="event-marker ${EV_CLASS[ev.type]}">${EV_LABEL[ev.type]}</span><br>`;
     });
 
-    // badge on arrive day
+    // away badge on arrive day
     const trip = trips.find(t => t.end === ds);
-    if (trip) {
-      const dur = Math.round(
-        (new Date(trip.end+'T00:00:00') - new Date(trip.start+'T00:00:00')) / 86400000
-      ) + 1;
-      div.innerHTML += `<span class="days-away-badge">${dur}d</span>`;
-    }
+    if (trip && durDays(trip)) html += `<span class="badge-away">${durDays(trip)}d</span>`;
 
+    // onboard badge on sign-off day
+    const contract = onboardStays.find(o => o.end === ds);
+    if (contract && durDays(contract)) html += `<span class="badge-onboard">⚓${durDays(contract)}d</span>`;
+
+    div.innerHTML = html;
     div.addEventListener('click', () => openModal(ds));
     cal.appendChild(div);
   }
+
   updateStats();
+  renderPayroll();
 }
 
 function changeMonth(dir) {
@@ -480,31 +906,33 @@ function changeMonth(dir) {
   renderCalendar();
 }
 
-// ── Modal ─────────────────────────────────────────────────────────
+// ═══ MODAL ════════════════════════════════════════════════════════
 function openModal(ds) {
   selectedDate = ds;
-  const [y, m, d] = ds.split('-');
+  const [y,m,d] = ds.split('-');
   document.getElementById('modal-title').textContent = `${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`;
   const dayEvs = getEventsForDate(ds);
   const EV_LABEL = {
-    depart: 'left home', embark: 'embarked', disembark: 'disembarked', arrive: 'arrived',
-    'brazil-in': 'entered Brazil', 'brazil-out': 'left Brazil'
+    depart:'left home', arrive:'arrived home',
+    'brazil-in':'entered Brazil','brazil-out':'left Brazil',
+    'sign-on':'sign on','sign-off':'sign off'
   };
   document.getElementById('modal-sub').textContent = dayEvs.length
-    ? 'Logged: ' + dayEvs.map(e => EV_LABEL[e.type]).join(', ')
-    : 'No events logged yet — tap to add';
+    ? 'Logged: ' + dayEvs.map(e=>EV_LABEL[e.type]).join(', ')
+    : 'Tap an event to log it for this day';
 
-  ['depart','embark','disembark','arrive'].forEach(t => {
-    const btn = document.getElementById('btn-' + t);
-    btn.classList.remove('active','active-green');
-    if (dayEvs.some(e => e.type === t)) btn.classList.add('active');
+  const blue  = ['depart','arrive'];
+  const green = ['brazil-in','brazil-out'];
+  const amber = ['sign-on','sign-off'];
+  [...blue,...green,...amber].forEach(t => {
+    const btn = document.getElementById('btn-'+t);
+    btn.classList.remove('active','active-green','active-amber');
+    if (dayEvs.some(e=>e.type===t)) {
+      if (blue.includes(t))  btn.classList.add('active');
+      if (green.includes(t)) btn.classList.add('active-green');
+      if (amber.includes(t)) btn.classList.add('active-amber');
+    }
   });
-  ['brazil-in','brazil-out'].forEach(t => {
-    const btn = document.getElementById('btn-' + t);
-    btn.classList.remove('active','active-green');
-    if (dayEvs.some(e => e.type === t)) btn.classList.add('active-green');
-  });
-
   document.getElementById('btn-clear').style.display = dayEvs.length ? 'block' : 'none';
   document.getElementById('modal').classList.add('open');
 }
@@ -520,21 +948,23 @@ function handleOverlayClick(e) {
 
 function logEvent(type) {
   if (!selectedDate) return;
-  const idx = events.findIndex(e => e.date === selectedDate && e.type === type);
-  if (idx >= 0) { events.splice(idx, 1); }
+  const idx = events.findIndex(e => e.date===selectedDate && e.type===type);
+  if (idx >= 0) events.splice(idx,1);
   else {
     events.push({ date: selectedDate, type });
-    events.sort((a, b) => a.date.localeCompare(b.date) || a.type.localeCompare(b.type));
+    events.sort((a,b) => a.date.localeCompare(b.date)||a.type.localeCompare(b.type));
   }
-  save(); closeModal(); renderCalendar();
+  saveEvents(); closeModal(); renderCalendar();
 }
 
 function clearDay() {
   if (!selectedDate) return;
   events = events.filter(e => e.date !== selectedDate);
-  save(); closeModal(); renderCalendar();
+  saveEvents(); closeModal(); renderCalendar();
 }
 
+// ═══ INIT ═════════════════════════════════════════════════════════
+renderRates();
 renderCalendar();
 </script>
 </body>
