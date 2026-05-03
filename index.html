@@ -529,6 +529,132 @@ body {
   .topbar { padding: 0 1rem; }
   .left-panel, .right-panel { padding: 1rem; }
 }
+
+/* ═══ REST HOURS FORM ═══════════════════════════════════════ */
+.rh-screen-wrap { padding: 1.5rem 2rem; max-width: 100%; }
+
+.rh-setup-bar {
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;
+  background: var(--navy2); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 1.25rem;
+}
+.rh-setup-group { display: flex; flex-direction: column; gap: 4px; }
+.rh-setup-label { font-size: 10px; font-weight: 600; color: var(--gray400); text-transform: uppercase; letter-spacing: 0.06em; }
+.rh-select, .rh-input-sm {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px; padding: 6px 10px; color: var(--white); font-size: 12px;
+  font-family: 'Space Grotesk', sans-serif; outline: none;
+}
+.rh-select:focus, .rh-input-sm:focus { border-color: var(--sky); }
+.rh-select option { background: #112240; }
+.rh-btn-apply {
+  background: linear-gradient(135deg, var(--ocean), var(--steel));
+  border: none; border-radius: 7px; padding: 7px 16px;
+  color: var(--white); font-size: 12px; font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif; cursor: pointer;
+}
+.rh-btn-print {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px; padding: 7px 16px; color: var(--gray400);
+  font-size: 12px; font-family: 'Space Grotesk', sans-serif; cursor: pointer;
+}
+.rh-btn-print:hover { color: var(--white); background: rgba(255,255,255,0.1); }
+
+/* FORM ITSELF */
+.rh-form {
+  background: #fff; color: #000;
+  border-radius: 8px; padding: 16px;
+  font-family: Arial, sans-serif;
+}
+.rh-form-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;
+}
+.rh-form-title { font-size: 15px; font-weight: 700; color: #000; }
+.rh-form-sub   { font-size: 10px; color: #444; margin-top: 2px; }
+.rh-form-meta  { text-align: right; font-size: 11px; }
+.rh-meta-row   { margin-bottom: 2px; }
+.rh-meta-row span { color: #555; margin-right: 6px; }
+.rh-meta-row strong { color: #000; }
+
+.rh-crew-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 6px 12px; margin-bottom: 10px;
+}
+.rh-crew-field label { font-size: 9px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 2px; }
+.rh-field-input {
+  width: 100%; border: none; border-bottom: 1px solid #aaa;
+  padding: 2px 0; font-size: 12px; color: #000;
+  background: transparent; outline: none; font-family: Arial, sans-serif;
+}
+
+.rh-rules-strip {
+  display: flex; gap: 12px; align-items: center;
+  background: #f0f4ff; border: 1px solid #c8d8f0;
+  border-radius: 4px; padding: 5px 10px; margin-bottom: 8px;
+  font-size: 10px; color: #333; flex-wrap: wrap;
+}
+
+/* GRID TABLE */
+.rh-table-wrap { overflow-x: auto; margin-bottom: 10px; }
+.rh-grid {
+  border-collapse: collapse; width: 100%; min-width: 900px;
+  font-size: 8px; font-family: Arial, sans-serif;
+}
+.rh-grid th, .rh-grid td {
+  border: 1px solid #999; text-align: center;
+  padding: 0; height: 18px;
+}
+.rh-head-top th { background: #d0dff0; font-size: 8px; font-weight: 700; padding: 1px 2px; }
+.rh-head-bot th { background: #e8f0ff; font-size: 7px; color: #555; width: 10px; min-width: 10px; }
+.rh-th-date { width: 28px; min-width: 28px; font-size: 8px; }
+.rh-th-day  { width: 22px; min-width: 22px; font-size: 8px; }
+.rh-th-rest { width: 32px; min-width: 32px; font-size: 8px; }
+.rh-tbody tr:nth-child(even) { background: #f8f9ff; }
+.rh-tbody tr.inactive { background: #eee !important; }
+.rh-cell-date { font-weight: 700; font-size: 9px; color: #000; }
+.rh-cell-day  { font-size: 8px; color: #555; }
+.rh-slot {
+  cursor: pointer; width: 10px; min-width: 10px;
+  transition: background 0.1s; height: 18px; padding: 0;
+  border: none; background: transparent; display: table-cell;
+}
+.rh-slot.work { background: #2563eb !important; }
+.rh-slot.rest { background: #dcfce7 !important; }
+.rh-slot.inactive-slot { background: #ddd !important; cursor: default; }
+.rh-cell-rest { font-size: 9px; font-weight: 700; color: #166534; }
+.rh-cell-work { font-size: 9px; font-weight: 700; color: #1d4ed8; }
+.rh-cell-status { font-size: 8px; font-weight: 700; }
+.rh-cell-status.ok   { color: #166534; }
+.rh-cell-status.warn { color: #854d0e; }
+.rh-cell-status.fail { color: #991b1b; }
+.rh-total-cell { font-weight: 700; font-size: 10px; background: #d0dff0; }
+.rh-totals-row td { background: #d0dff0; font-size: 9px; }
+
+.rh-footer-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;
+}
+.rh-comment-label { font-size: 9px; font-weight: 700; color: #555; text-transform: uppercase; display: block; margin-bottom: 4px; }
+.rh-textarea {
+  width: 100%; border: 1px solid #aaa; border-radius: 3px;
+  padding: 4px; font-size: 11px; font-family: Arial, sans-serif;
+  resize: vertical; background: #fff; color: #000;
+}
+.rh-sig-block { display: flex; flex-direction: column; gap: 14px; }
+.rh-sig-field label { font-size: 9px; font-weight: 700; color: #555; text-transform: uppercase; display: block; margin-bottom: 4px; }
+.rh-sig-line { border-bottom: 1px solid #000; height: 24px; margin-bottom: 2px; }
+.rh-sig-name { font-size: 10px; color: #333; }
+
+/* PRINT */
+@media print {
+  .no-print, .topbar, .sidebar, .sidebar-overlay { display: none !important; }
+  .page { display: block !important; }
+  body { background: white !important; }
+  .rh-screen-wrap { padding: 0; }
+  .rh-form { box-shadow: none; border-radius: 0; padding: 8px; }
+  .rh-slot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rh-slot.work { background: #2563eb !important; -webkit-print-color-adjust: exact; }
+}
 </style>
 </head>
 <body>
@@ -723,45 +849,173 @@ body {
 
 <!-- PAGE: REST HOURS -->
 <div class="page" id="page-resthours">
-<div class="page-wrap">
-  <div class="page-title">😴 Rest Hours</div>
-  <div class="page-sub">MLC 2006 / STCW minimum rest requirements</div>
+<div class="rh-screen-wrap">
 
-  <div class="rh-rules-grid">
-    <div class="rh-rule-card">
-      <div class="rh-rule-val">10h</div>
-      <div class="rh-rule-name">Min rest per 24h</div>
-      <div class="rh-rule-desc">May be split into max 2 periods, one at least 6h</div>
-    </div>
-    <div class="rh-rule-card">
-      <div class="rh-rule-val">77h</div>
-      <div class="rh-rule-name">Min rest per 7 days</div>
-      <div class="rh-rule-desc">Minimum 77 hours rest in any 7-day period</div>
-    </div>
-    <div class="rh-rule-card">
-      <div class="rh-rule-val">14h</div>
-      <div class="rh-rule-name">Max work per 24h</div>
-      <div class="rh-rule-desc">Maximum 14 hours work in any 24-hour period</div>
-    </div>
-  </div>
-
-  <div class="rh-panel">
-    <div class="rh-panel-head">
-      <span class="rh-panel-title">Weekly rest hours log</span>
-      <button onclick="resetRH()" style="background:none;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:4px 10px;color:var(--gray400);font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Reset week</button>
-    </div>
-    <div class="rh-panel-body" id="rh-days-body"></div>
-    <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.06);">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <div>
-          <div style="font-size:11px;color:var(--gray400);margin-bottom:2px">Total rest this week</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;" id="rh-total">0h 0m</div>
-        </div>
-        <div id="rh-week-status" style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;"></div>
+  <!-- SETUP BAR -->
+  <div class="rh-setup-bar no-print">
+    <div class="rh-setup-group">
+      <label class="rh-setup-label">Month / Year</label>
+      <div style="display:flex;gap:6px">
+        <select class="rh-select" id="rh-month">
+          <option value="0">January</option><option value="1">February</option>
+          <option value="2">March</option><option value="3">April</option>
+          <option value="4">May</option><option value="5">June</option>
+          <option value="6">July</option><option value="7">August</option>
+          <option value="8">September</option><option value="9">October</option>
+          <option value="10">November</option><option value="11">December</option>
+        </select>
+        <input class="rh-input-sm" type="number" id="rh-year" value="2025" min="2020" max="2040" style="width:70px"/>
       </div>
     </div>
+    <div class="rh-setup-group">
+      <label class="rh-setup-label">Watch / Shift</label>
+      <select class="rh-select" id="rh-shift">
+        <option value="">-- select shift --</option>
+        <option value="06-18">06:00 – 18:00 (day watch)</option>
+        <option value="18-06">18:00 – 06:00 (night watch)</option>
+        <option value="00-12">00:00 – 12:00</option>
+        <option value="12-24">12:00 – 24:00</option>
+        <option value="custom">Custom (mark manually)</option>
+      </select>
+    </div>
+    <div class="rh-setup-group">
+      <label class="rh-setup-label">Sign On board</label>
+      <input class="rh-input-sm" type="text" id="rh-signin" placeholder="dd/mm/yyyy hh:mm" style="width:150px"/>
+    </div>
+    <div class="rh-setup-group">
+      <label class="rh-setup-label">Sign Off vessel</label>
+      <input class="rh-input-sm" type="text" id="rh-signoff" placeholder="dd/mm/yyyy hh:mm" style="width:150px"/>
+    </div>
+    <div class="rh-setup-group" style="flex-direction:row;align-items:flex-end;gap:8px;">
+      <button class="rh-btn-apply" onclick="applyRHSetup()">Apply &amp; Fill</button>
+      <button class="rh-btn-print" onclick="window.print()">🖨 Print</button>
+    </div>
   </div>
-</div>
+
+  <!-- PRINTABLE FORM -->
+  <div class="rh-form" id="rh-form">
+
+    <!-- HEADER -->
+    <div class="rh-form-header">
+      <div class="rh-form-title-block">
+        <div class="rh-form-title">Record of Hours of Rest and Work</div>
+        <div class="rh-form-sub">MLC 2006 / STCW — Doc No: 1078 Rev 20</div>
+      </div>
+      <div class="rh-form-meta">
+        <div class="rh-meta-row"><span>Month:</span><strong id="rh-display-month">—</strong></div>
+        <div class="rh-meta-row"><span>Shift:</span><strong id="rh-display-shift">—</strong></div>
+      </div>
+    </div>
+
+    <!-- CREW INFO -->
+    <div class="rh-crew-grid">
+      <div class="rh-crew-field">
+        <label>Name of Vessel</label>
+        <input type="text" class="rh-field-input" id="rh-vessel"/>
+      </div>
+      <div class="rh-crew-field">
+        <label>Employee Name</label>
+        <input type="text" class="rh-field-input" id="rh-emp-name"/>
+      </div>
+      <div class="rh-crew-field">
+        <label>ISM Company</label>
+        <input type="text" class="rh-field-input" id="rh-company"/>
+      </div>
+      <div class="rh-crew-field">
+        <label>Position / Rank</label>
+        <input type="text" class="rh-field-input" id="rh-rank"/>
+      </div>
+      <div class="rh-crew-field">
+        <label>Flag of Vessel</label>
+        <input type="text" class="rh-field-input" id="rh-flag"/>
+      </div>
+      <div class="rh-crew-field">
+        <label>Employee Number</label>
+        <input type="text" class="rh-field-input" id="rh-emp-num"/>
+      </div>
+      <div class="rh-crew-field">
+        <label>Captain / Dept. Head</label>
+        <input type="text" class="rh-field-input" id="rh-captain"/>
+      </div>
+      <div class="rh-crew-field">
+        <label>Sign On board</label>
+        <input type="text" class="rh-field-input" id="rh-signin-disp" placeholder="dd/mm/yyyy hh:mm"/>
+      </div>
+      <div class="rh-crew-field">
+        <label>Sign Off vessel</label>
+        <input type="text" class="rh-field-input" id="rh-signoff-disp" placeholder="dd/mm/yyyy hh:mm"/>
+      </div>
+    </div>
+
+    <!-- MLC RULES REMINDER -->
+    <div class="rh-rules-strip">
+      <span>Min rest: <strong>10h / 24h</strong></span>
+      <span>·</span>
+      <span>Min rest: <strong>77h / 7 days</strong></span>
+      <span>·</span>
+      <span>Max work: <strong>14h / 24h</strong></span>
+      <span>·</span>
+      <span><strong>R</strong> = Rest &nbsp; <strong>W</strong> = Work</span>
+    </div>
+
+    <!-- GRID TABLE -->
+    <div class="rh-table-wrap">
+      <table class="rh-grid" id="rh-grid">
+        <thead>
+          <tr class="rh-head-top">
+            <th rowspan="2" class="rh-th-date">Date</th>
+            <th rowspan="2" class="rh-th-day">Day</th>
+            <!-- 48 half-hour slots -->
+            <th colspan="2">00</th><th colspan="2">01</th><th colspan="2">02</th><th colspan="2">03</th>
+            <th colspan="2">04</th><th colspan="2">05</th><th colspan="2">06</th><th colspan="2">07</th>
+            <th colspan="2">08</th><th colspan="2">09</th><th colspan="2">10</th><th colspan="2">11</th>
+            <th colspan="2">12</th><th colspan="2">13</th><th colspan="2">14</th><th colspan="2">15</th>
+            <th colspan="2">16</th><th colspan="2">17</th><th colspan="2">18</th><th colspan="2">19</th>
+            <th colspan="2">20</th><th colspan="2">21</th><th colspan="2">22</th><th colspan="2">23</th>
+            <th rowspan="2" class="rh-th-rest">Rest<br>hrs</th>
+            <th rowspan="2" class="rh-th-rest">Work<br>hrs</th>
+            <th rowspan="2" class="rh-th-rest">Status</th>
+          </tr>
+          <tr class="rh-head-bot" id="rh-head-bot">
+            <!-- :30 sub-headers injected by JS -->
+          </tr>
+        </thead>
+        <tbody id="rh-tbody"></tbody>
+        <tfoot>
+          <tr class="rh-totals-row">
+            <td colspan="2" style="font-weight:700;font-size:11px;text-align:right;padding-right:6px;">TOTALS</td>
+            <!-- 48 blank cells -->
+            <td colspan="48"></td>
+            <td class="rh-total-cell" id="rh-total-rest">0</td>
+            <td class="rh-total-cell" id="rh-total-work">0</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- COMMENTS + SIGNATURES -->
+    <div class="rh-footer-grid">
+      <div class="rh-comment-box">
+        <label class="rh-comment-label">Comments</label>
+        <textarea class="rh-textarea" id="rh-comments" rows="3" placeholder="Any remarks..."></textarea>
+      </div>
+      <div class="rh-sig-block">
+        <div class="rh-sig-field">
+          <label>Seafarer signature</label>
+          <div class="rh-sig-line"></div>
+          <div class="rh-sig-name" id="rh-sig-seafarer">__________________________</div>
+        </div>
+        <div class="rh-sig-field">
+          <label>Captain / Dept. Head signature</label>
+          <div class="rh-sig-line"></div>
+          <div class="rh-sig-name" id="rh-sig-captain">__________________________</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /rh-form -->
+</div><!-- /rh-screen-wrap -->
 </div>
 
 <!-- PAGE: CERTIFICATES -->
@@ -1280,6 +1534,14 @@ function clearAllRates() {
 // ═══ INIT ═════════════════════════════════════════════════════════
 renderRates();
 renderCalendar();
+// init RH month/year to current
+(function(){
+  const now = new Date();
+  const mEl = document.getElementById('rh-month');
+  const yEl = document.getElementById('rh-year');
+  if (mEl) mEl.value = now.getMonth();
+  if (yEl) yEl.value = now.getFullYear();
+})();
 
 // ═══ SIDEBAR ══════════════════════════════════════════════════════
 function openSidebar() {
@@ -1302,87 +1564,222 @@ function showPage(name) {
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
   // refresh page content
-  if (name === 'resthours')    renderRH();
+  if (name === 'resthours')  { renderRH(); bindRHMetaFields(); }
   if (name === 'certificates') renderCerts();
   closeSidebar();
 }
 
 // ═══ REST HOURS ═══════════════════════════════════════════════════
-const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-let rhData = JSON.parse(localStorage.getItem('crewxRH') || 'null');
+const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTHS_FULL = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
 
-function defaultRH() {
-  return DAYS_SHORT.map(d => ({ day: d, rest: 10, note: '' }));
+// rhGrid[month_key][day] = array of 48 booleans (true=work, false=rest)
+let rhGrid    = JSON.parse(localStorage.getItem('crewxRHGrid') || '{}');
+let rhMeta    = JSON.parse(localStorage.getItem('crewxRHMeta') || '{}');
+// meta: { vessel, empName, company, rank, flag, empNum, captain, signIn, signOff, comments }
+
+function saveRHGrid() { localStorage.setItem('crewxRHGrid', JSON.stringify(rhGrid)); }
+function saveRHMeta()  { localStorage.setItem('crewxRHMeta',  JSON.stringify(rhMeta));  }
+
+function rhMonthKey(y, m) { return y + '-' + String(m).padStart(2,'0'); }
+
+function getSlots(y, m, day) {
+  const k = rhMonthKey(y, m);
+  if (!rhGrid[k]) rhGrid[k] = {};
+  if (!rhGrid[k][day]) rhGrid[k][day] = new Array(48).fill(false); // false=rest
+  return rhGrid[k][day];
 }
-if (!rhData) rhData = defaultRH();
 
-function saveRH() { localStorage.setItem('crewxRH', JSON.stringify(rhData)); }
+// shift slot ranges: slot 0 = 00:00-00:30, slot 1 = 00:30-01:00 ...
+function shiftToSlots(shift) {
+  // returns [startSlot, endSlot) — work slots
+  if (shift === '06-18') return [12, 36];
+  if (shift === '18-06') return [[36, 48],[0, 12]]; // wraps midnight
+  if (shift === '00-12') return [0, 24];
+  if (shift === '12-24') return [24, 48];
+  return null;
+}
 
-function resetRH() {
-  if (!confirm('Reset all rest hours to default (10h)?')) return;
-  rhData = defaultRH();
-  saveRH();
+function applyRHSetup() {
+  const y     = parseInt(document.getElementById('rh-year').value);
+  const m     = parseInt(document.getElementById('rh-month').value);
+  const shift = document.getElementById('rh-shift').value;
+  const signIn  = document.getElementById('rh-signin').value.trim();
+  const signOff = document.getElementById('rh-signoff').value.trim();
+
+  // save meta inputs
+  rhMeta.signIn  = signIn;
+  rhMeta.signOff = signOff;
+  document.getElementById('rh-signin-disp').value  = signIn;
+  document.getElementById('rh-signoff-disp').value = signOff;
+  saveRHMeta();
+
+  if (shift && shift !== 'custom') {
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const k = rhMonthKey(y, m);
+    rhGrid[k] = {};
+
+    // parse sign-on / sign-off day numbers
+    let signInDay = 0, signOffDay = daysInMonth + 1;
+    if (signIn) {
+      const parts = signIn.split('/');
+      if (parts.length >= 1) signInDay = parseInt(parts[0]) || 0;
+    }
+    if (signOff) {
+      const parts = signOff.split('/');
+      if (parts.length >= 1) signOffDay = parseInt(parts[0]) || daysInMonth + 1;
+    }
+
+    const ranges = shiftToSlots(shift);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const slots = new Array(48).fill(false); // rest by default
+      const active = d >= signInDay && d <= signOffDay;
+      if (active && ranges !== null) {
+        if (Array.isArray(ranges[0])) {
+          // wrapped (18-06)
+          for (let s = ranges[0][0]; s < ranges[0][1]; s++) slots[s] = true;
+          for (let s = ranges[1][0]; s < ranges[1][1]; s++) slots[s] = true;
+        } else {
+          for (let s = ranges[0]; s < ranges[1]; s++) slots[s] = true;
+        }
+      }
+      rhGrid[k][d] = slots;
+    }
+    saveRHGrid();
+  }
+  renderRH();
+}
+
+function toggleSlot(y, m, day, slotIdx) {
+  const slots = getSlots(y, m, day);
+  slots[slotIdx] = !slots[slotIdx];
+  saveRHGrid();
   renderRH();
 }
 
 function renderRH() {
-  const body = document.getElementById('rh-days-body');
-  if (!body) return;
-
-  let totalMins = 0;
-  let hasViolation = false;
-
-  body.innerHTML = rhData.map((d, i) => {
-    const restMins = Math.round(d.rest * 60);
-    totalMins += restMins;
-    const minReq = 10 * 60; // 10h in mins
-    const pct = Math.min(100, (restMins / (24 * 60)) * 100);
-    let status = 'ok';
-    if (restMins < minReq) { status = 'fail'; hasViolation = true; }
-    else if (restMins < 11 * 60) status = 'warn';
-    const barColor = status === 'ok' ? '#10b981' : status === 'warn' ? '#f59e0b' : '#ef4444';
-    const tagClass = 'rh-tag-' + status;
-    const tagText = status === 'ok' ? 'OK' : status === 'warn' ? 'LOW' : 'VIOLATION';
-    return `<div class="rh-day-row">
-      <span class="rh-day-label">${d.day}</span>
-      <input class="rh-input" type="number" min="0" max="24" step="0.5"
-        value="${d.rest}" onchange="updateRH(${i}, this.value)"
-        title="${d.day} rest hours"/>
-      <span style="font-size:10px;color:var(--gray400);">h</span>
-      <div class="rh-bar rh-bar-${status}" style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:3px;">
-        <div class="rh-bar-fill" style="width:${pct}%;height:100%;border-radius:3px;background:${barColor};"></div>
-      </div>
-      <span class="rh-tag ${tagClass}">${tagText}</span>
-    </div>`;
-  }).join('');
-
-  // totals
-  const totalH = Math.floor(totalMins / 60);
-  const totalM = totalMins % 60;
-  document.getElementById('rh-total').textContent = `${totalH}h ${totalM}m`;
-
-  const weekOk = totalMins >= 77 * 60;
-  const statusEl = document.getElementById('rh-week-status');
-  if (weekOk && !hasViolation) {
-    statusEl.style.cssText = 'background:rgba(16,185,129,0.12);color:#6ee7b7;font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;';
-    statusEl.textContent = '✓ Compliant with MLC 2006';
-  } else if (!weekOk) {
-    statusEl.style.cssText = 'background:rgba(239,68,68,0.12);color:#f87171;font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;';
-    statusEl.textContent = `✗ Need ${Math.ceil((77*60 - totalMins)/60)}h more this week`;
-  } else {
-    statusEl.style.cssText = 'background:rgba(245,158,11,0.12);color:#f59e0b;font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;';
-    statusEl.textContent = '⚠ Daily violation detected';
+  // sync meta fields
+  const m = rhMeta;
+  const fields = {
+    'rh-vessel': m.vessel, 'rh-emp-name': m.empName,
+    'rh-company': m.company, 'rh-rank': m.rank,
+    'rh-flag': m.flag, 'rh-emp-num': m.empNum,
+    'rh-captain': m.captain,
+    'rh-signin-disp': m.signIn, 'rh-signoff-disp': m.signOff,
+    'rh-comments': m.comments
+  };
+  for (const [id, val] of Object.entries(fields)) {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.value = val;
   }
 
-  // badge
+  const y = parseInt(document.getElementById('rh-year')?.value || new Date().getFullYear());
+  const mo = parseInt(document.getElementById('rh-month')?.value ?? new Date().getMonth());
+
+  document.getElementById('rh-display-month').textContent = MONTHS_FULL[mo] + ' ' + y;
+  const shiftEl = document.getElementById('rh-shift');
+  document.getElementById('rh-display-shift').textContent = shiftEl?.options[shiftEl?.selectedIndex]?.text || '—';
+
+  // Build :30 sub-header
+  const headBot = document.getElementById('rh-head-bot');
+  if (headBot) {
+    headBot.innerHTML = Array.from({length:48},(_,i)=>`<th>${i%2===0?'00':'30'}</th>`).join('');
+  }
+
+  const tbody = document.getElementById('rh-tbody');
+  if (!tbody) return;
+
+  const daysInMonth = new Date(y, mo + 1, 0).getDate();
+  const k = rhMonthKey(y, mo);
+  let totalRestSlots = 0, totalWorkSlots = 0;
+
+  // parse active range from signIn/signOff
+  let signInDay = 1, signOffDay = daysInMonth;
+  if (rhMeta.signIn) {
+    const p = rhMeta.signIn.split('/');
+    if (p.length >= 1) signInDay = parseInt(p[0]) || 1;
+  }
+  if (rhMeta.signOff) {
+    const p = rhMeta.signOff.split('/');
+    if (p.length >= 1) signOffDay = parseInt(p[0]) || daysInMonth;
+  }
+
+  let rows = '';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(y, mo, d);
+    const wday = WEEKDAYS[date.getDay() === 0 ? 6 : date.getDay() - 1];
+    const slots = rhGrid[k]?.[d] || new Array(48).fill(false);
+    const active = d >= signInDay && d <= signOffDay;
+
+    let restSlots = 0, workSlots = 0;
+    let slotCells = '';
+    for (let s = 0; s < 48; s++) {
+      const isWork = slots[s];
+      if (active) {
+        if (isWork) workSlots++; else restSlots++;
+        const cls = isWork ? 'work' : 'rest';
+        slotCells += `<td class="rh-slot ${cls}" onclick="toggleSlot(${y},${mo},${d},${s})" title="${Math.floor(s/2)}:${s%2===0?'00':'30'}"></td>`;
+      } else {
+        slotCells += `<td class="rh-slot inactive-slot"></td>`;
+      }
+    }
+
+    if (active) { totalRestSlots += restSlots; totalWorkSlots += workSlots; }
+
+    const restH = (restSlots * 0.5).toFixed(1);
+    const workH = (workSlots * 0.5).toFixed(1);
+    const minRest = 20; // 10h = 20 half-hour slots
+    let stCls = 'ok', stTxt = 'OK';
+    if (active) {
+      if (restSlots < minRest) { stCls = 'fail'; stTxt = 'VIOL'; }
+      else if (restSlots < 22) { stCls = 'warn'; stTxt = 'LOW'; }
+    }
+
+    rows += `<tr class="${active ? '' : 'inactive'}">
+      <td class="rh-cell-date">${d}</td>
+      <td class="rh-cell-day">${wday}</td>
+      ${slotCells}
+      <td class="rh-cell-rest">${active ? restH : ''}</td>
+      <td class="rh-cell-work">${active ? workH : ''}</td>
+      <td class="rh-cell-status ${stCls}">${active ? stTxt : ''}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = rows;
+
+  const totalRestH = (totalRestSlots * 0.5).toFixed(1);
+  const totalWorkH = (totalWorkSlots * 0.5).toFixed(1);
+  document.getElementById('rh-total-rest').textContent = totalRestH;
+  document.getElementById('rh-total-work').textContent = totalWorkH;
+
+  // sidebar badge
   const badge = document.getElementById('rh-badge');
-  if (badge) badge.style.display = (!weekOk || hasViolation) ? 'inline' : 'none';
+  if (badge) badge.style.display = (totalRestSlots < 154) ? 'inline' : 'none'; // 77h*2
 }
 
-function updateRH(i, val) {
-  rhData[i].rest = Math.min(24, Math.max(0, parseFloat(val) || 0));
-  saveRH();
-  renderRH();
+// save meta on input change
+function bindRHMetaFields() {
+  const map = {
+    'rh-vessel':'vessel','rh-emp-name':'empName','rh-company':'company',
+    'rh-rank':'rank','rh-flag':'flag','rh-emp-num':'empNum',
+    'rh-captain':'captain','rh-signin-disp':'signIn',
+    'rh-signoff-disp':'signOff','rh-comments':'comments'
+  };
+  for (const [id, key] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { rhMeta[key] = el.value; saveRHMeta(); });
+  }
+  // also sync sig names from captain/seafarer fields
+  const cap = document.getElementById('rh-captain');
+  const emp = document.getElementById('rh-emp-name');
+  if (cap) cap.addEventListener('input', () => {
+    const sig = document.getElementById('rh-sig-captain');
+    if (sig) sig.textContent = cap.value || '__________________________';
+  });
+  if (emp) emp.addEventListener('input', () => {
+    const sig = document.getElementById('rh-sig-seafarer');
+    if (sig) sig.textContent = emp.value || '__________________________';
+  });
 }
 
 // ═══ CERTIFICATES ═════════════════════════════════════════════════
