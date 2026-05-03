@@ -152,12 +152,12 @@ body {
 /* RANGES */
 .day.range-away    { background: rgba(29,111,164,0.25); border-color: rgba(56,189,248,0.25); }
 .day.range-away    .day-num { color: var(--sky); }
-.day.range-brazil  { border-left: 3px solid var(--green); }
-.day.range-brazil:not(.range-away) { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); }
-.day.range-brazil:not(.range-away) .day-num { color: #6ee7b7; }
-.day.range-onboard { border-right: 3px solid var(--amber); }
-.day.range-onboard:not(.range-away):not(.range-brazil) { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.25); }
-.day.range-onboard:not(.range-away):not(.range-brazil) .day-num { color: #fdba74; }
+.day.range-brazil  { border-left: 2px solid rgba(20,184,166,0.5); }
+.day.range-brazil:not(.range-away) { background: rgba(20,184,166,0.07); border-color: rgba(20,184,166,0.18); }
+.day.range-brazil:not(.range-away) .day-num { color: #5eead4; }
+.day.range-onboard { border-right: 2px solid rgba(249,115,22,0.45); }
+.day.range-onboard:not(.range-away):not(.range-brazil) { background: rgba(249,115,22,0.06); border-color: rgba(249,115,22,0.16); }
+.day.range-onboard:not(.range-away):not(.range-brazil) .day-num { color: #fb923c; }
 
 /* icons on ranged tiles */
 .day.range-brazil::after  { content:'🇧🇷'; position:absolute; bottom:2px; left:3px; font-size:9px; }
@@ -847,6 +847,8 @@ function renderCalendar() {
   const trips        = getTrips();
   const onboardStays = getOnboardStays();
   const awayDates    = getRangeDates(trips, true);
+  const brazilDates  = getRangeDates(getBrazilStays(), true);
+  const onboardDates = getRangeDates(onboardStays, true);
 
   for (let i = 0; i < offset; i++) {
     const e = document.createElement('div'); e.className='day empty'; cal.appendChild(e);
@@ -869,10 +871,12 @@ function renderCalendar() {
     div.className = 'day';
 
     const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
-    if (isToday)           div.classList.add('today');
-    if (awayDates.has(ds)) div.classList.add('range-away');
-    if (d === 20)          div.classList.add('payroll-end');
-    if (d === 21)          div.classList.add('payroll-start');
+    if (isToday)              div.classList.add('today');
+    if (awayDates.has(ds))    div.classList.add('range-away');
+    if (brazilDates.has(ds))  div.classList.add('range-brazil');
+    if (onboardDates.has(ds)) div.classList.add('range-onboard');
+    if (d === 20)             div.classList.add('payroll-end');
+    if (d === 21)             div.classList.add('payroll-start');
 
     let html = `<div class="day-num">${d}</div>`;
     if (d === 20) html += `<div class="payroll-marker">✂ PAY</div>`;
