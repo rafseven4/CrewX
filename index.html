@@ -155,7 +155,7 @@ body {
   background: var(--navy2); border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--radius); padding: 14px; position: relative; overflow: hidden;
 }
-.cert-card.ok       { border-left: 3px solid #10b981; }
+.cert-card.ok        { border-left: 3px solid #10b981; }
 .cert-card.expiring { border-left: 3px solid var(--gold); }
 .cert-card.expired  { border-left: 3px solid #ef4444; }
 .cert-name { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 2px; padding-right: 24px; }
@@ -164,11 +164,11 @@ body {
 .cert-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
 .cert-exp-label { font-size: 10px; color: var(--gray400); }
 .cert-exp-val { font-size: 12px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
-.cert-exp-val.ok       { color: #6ee7b7; }
+.cert-exp-val.ok        { color: #6ee7b7; }
 .cert-exp-val.expiring { color: var(--gold); }
 .cert-exp-val.expired  { color: #f87171; }
 .cert-days-left { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
-.cert-days-left.ok       { background: rgba(16,185,129,0.12); color: #6ee7b7; }
+.cert-days-left.ok        { background: rgba(16,185,129,0.12); color: #6ee7b7; }
 .cert-days-left.expiring { background: rgba(245,158,11,0.12); color: var(--gold); }
 .cert-days-left.expired  { background: rgba(239,68,68,0.12);  color: #f87171; }
 .cert-delete {
@@ -722,7 +722,7 @@ body {
   </nav>
 
   <div class="sidebar-footer">
-    v1.0 &nbsp;·&nbsp; Data saved locally
+    v1.0 &nbsp;·&nbsp; Cloud Synced ☁️
   </div>
 </div>
 
@@ -1101,22 +1101,84 @@ body {
   </div>
 </div>
 
+<!-- FIREBASE SKRYPTY (wersja compat zapobiega psuciu istniejącego kodu JS) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
 <script>
-// ═══ STATE ════════════════════════════════════════════════════════
+// 🔥 TWOJA KONFIGURACJA FIREBASE 🔥
+const firebaseConfig = {
+  apiKey: "AIzaSyCkdha2N09Rj_mY1ybjLrgE87NF8-LNyZA",
+  authDomain: "crewx-17f23.firebaseapp.com",
+  projectId: "crewx-17f23",
+  storageBucket: "crewx-17f23.firebasestorage.app",
+  messagingSenderId: "938144343104",
+  appId: "1:938144343104:web:cbe52e46ea333509d06ba5"
+};
+
+// INICJALIZACJA FIREBASE
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const syncDoc = db.collection('appData').doc('moje_dane_crewx'); // Stały dokument dla Twoich danych
+
+// ═══ STATE & SYNC ════════════════════════════════════════════════════════
 let events = JSON.parse(localStorage.getItem('crewxEvents') || '[]');
 let rates  = JSON.parse(localStorage.getItem('crewxRates')  || '[]');
-// rates: [{ amount: 650, from: 'YYYY-MM-DD', to: 'YYYY-MM-DD'|null }]
+let rhGrid = JSON.parse(localStorage.getItem('crewxRHGrid') || '{}');
+let rhMeta = JSON.parse(localStorage.getItem('crewxRHMeta') || '{}');
+let certs  = JSON.parse(localStorage.getItem('crewxCerts')  || '[]');
 
 let currentYear  = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 let selectedDate = null;
+let editingCertIdx = null;
+
+// Przy starcie: jeśli dokument w chmurze nie istnieje (pierwsze użycie), wyślij tam lokalne dane
+syncDoc.get().then((doc) => {
+  if (!doc.exists) saveToCloud();
+});
+
+// Nasłuchiwanie zmian na żywo z chmury
+syncDoc.onSnapshot((doc) => {
+  if (doc.exists) {
+    const data = doc.data();
+    events = data.events || [];
+    rates  = data.rates || [];
+    rhGrid = data.rhGrid || {};
+    rhMeta = data.rhMeta || {};
+    certs  = data.certs || [];
+
+    // Kopia zapasowa lokalnie
+    localStorage.setItem('crewxEvents', JSON.stringify(events));
+    localStorage.setItem('crewxRates',  JSON.stringify(rates));
+    localStorage.setItem('crewxRHGrid', JSON.stringify(rhGrid));
+    localStorage.setItem('crewxRHMeta', JSON.stringify(rhMeta));
+    localStorage.setItem('crewxCerts',  JSON.stringify(certs));
+
+    // Odświeżanie interfejsu po pobraniu danych z chmury
+    renderRates();
+    renderCalendar();
+    if (document.getElementById('page-resthours').classList.contains('active')) renderRH();
+    if (document.getElementById('page-certificates').classList.contains('active')) renderCerts();
+  }
+});
+
+// Zapisywanie do Firebase (łączy się z Twoimi starymi funkcjami save...)
+function saveToCloud() {
+  syncDoc.set({ events, rates, rhGrid, rhMeta, certs }, { merge: true })
+    .catch(err => console.error("Błąd zapisu do chmury:", err));
+}
+
+function saveEvents() { localStorage.setItem('crewxEvents', JSON.stringify(events)); saveToCloud(); }
+function saveRates()  { localStorage.setItem('crewxRates',  JSON.stringify(rates));  saveToCloud(); }
+function saveRHGrid() { localStorage.setItem('crewxRHGrid', JSON.stringify(rhGrid)); saveToCloud(); }
+function saveRHMeta() { localStorage.setItem('crewxRHMeta', JSON.stringify(rhMeta)); saveToCloud(); }
+function saveCerts()  { localStorage.setItem('crewxCerts',  JSON.stringify(certs));  saveToCloud(); }
+
 
 const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
 const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-function saveEvents() { localStorage.setItem('crewxEvents', JSON.stringify(events)); }
-function saveRates()  { localStorage.setItem('crewxRates',  JSON.stringify(rates));  }
 
 function dateStr(y, m, d) {
   return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -1574,23 +1636,6 @@ const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const MONTHS_FULL = ['January','February','March','April','May','June',
                      'July','August','September','October','November','December'];
 
-// rhGrid[month_key][day] = array of 48 booleans (true=work, false=rest)
-let rhGrid    = JSON.parse(localStorage.getItem('crewxRHGrid') || '{}');
-let rhMeta    = JSON.parse(localStorage.getItem('crewxRHMeta') || '{}');
-// meta: { vessel, empName, company, rank, flag, empNum, captain, signIn, signOff, comments }
-
-function saveRHGrid() { localStorage.setItem('crewxRHGrid', JSON.stringify(rhGrid)); }
-function saveRHMeta()  { localStorage.setItem('crewxRHMeta',  JSON.stringify(rhMeta));  }
-
-function rhMonthKey(y, m) { return y + '-' + String(m).padStart(2,'0'); }
-
-function getSlots(y, m, day) {
-  const k = rhMonthKey(y, m);
-  if (!rhGrid[k]) rhGrid[k] = {};
-  if (!rhGrid[k][day]) rhGrid[k][day] = new Array(48).fill(false); // false=rest
-  return rhGrid[k][day];
-}
-
 // shift slot ranges: slot 0 = 00:00-00:30, slot 1 = 00:30-01:00 ...
 function shiftToSlots(shift) {
   // returns [startSlot, endSlot) — work slots
@@ -1599,6 +1644,15 @@ function shiftToSlots(shift) {
   if (shift === '00-12') return [0, 24];
   if (shift === '12-24') return [24, 48];
   return null;
+}
+
+function rhMonthKey(y, m) { return y + '-' + String(m).padStart(2,'0'); }
+
+function getSlots(y, m, day) {
+  const k = rhMonthKey(y, m);
+  if (!rhGrid[k]) rhGrid[k] = {};
+  if (!rhGrid[k][day]) rhGrid[k][day] = new Array(48).fill(false); // false=rest
+  return rhGrid[k][day];
 }
 
 function applyRHSetup() {
@@ -1783,11 +1837,6 @@ function bindRHMetaFields() {
 }
 
 // ═══ CERTIFICATES ═════════════════════════════════════════════════
-let certs = JSON.parse(localStorage.getItem('crewxCerts') || '[]');
-// cert: { name, issuer, number, issued, expiry }
-let editingCertIdx = null;
-
-function saveCerts() { localStorage.setItem('crewxCerts', JSON.stringify(certs)); }
 
 function certStatus(expiryStr) {
   if (!expiryStr) return { cls: 'ok', label: 'No expiry', days: null };
