@@ -9,99 +9,90 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f4f6f9;
-      color: #1a1a2e;
-      min-height: 100vh;
-      padding: 2rem 1rem;
+      background: #f4f6f9; color: #1a1a2e;
+      min-height: 100vh; padding: 2rem 1rem;
     }
-
     .app { max-width: 720px; margin: 0 auto; }
 
     /* HEADER */
-    .header {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.5rem;
-    }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
     .header-left { display: flex; align-items: center; gap: 12px; }
     .anchor-icon { width: 32px; height: 32px; }
     .app-title { font-size: 20px; font-weight: 600; color: #0c3a6e; letter-spacing: -0.3px; }
     .app-subtitle { font-size: 12px; color: #6b7280; margin-top: 1px; }
     .current-status { text-align: right; }
     .current-status .badge {
-      display: inline-block; background: #e1f5ee; color: #0f6e56;
-      font-size: 12px; font-weight: 500; padding: 3px 10px;
-      border-radius: 20px; margin-bottom: 2px;
+      display: inline-block; font-size: 12px; font-weight: 500;
+      padding: 3px 10px; border-radius: 20px; margin-bottom: 2px;
     }
     .current-status .sub { font-size: 11px; color: #6b7280; }
 
-    /* STATS */
-    .stats-bar {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 10px; margin-bottom: 1.5rem;
-    }
-    .stat-card {
-      background: #fff; border: 1px solid #e5e7eb;
-      border-radius: 12px; padding: 12px 14px;
-    }
+    /* STATS — 5 columns */
+    .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .stat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; }
     .stat-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
-    .stat-value { font-size: 22px; font-weight: 600; color: #0c3a6e; line-height: 1; }
+    .stat-value { font-size: 20px; font-weight: 600; color: #0c3a6e; line-height: 1; }
     .stat-unit { font-size: 11px; color: #9ca3af; font-weight: 400; }
+    .stat-card.brazil { border-color: #bbf7d0; background: #f0fdf4; }
+    .stat-card.brazil .stat-label { color: #166534; }
+    .stat-card.brazil .stat-value { color: #15803d; }
 
     /* CALENDAR CARD */
-    .calendar-card {
-      background: #fff; border: 1px solid #e5e7eb;
-      border-radius: 16px; padding: 1.25rem;
-    }
-    .nav-row {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 1rem;
-    }
+    .calendar-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 1.25rem; }
+    .nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
     .nav-btn {
       background: none; border: 1px solid #e5e7eb; border-radius: 8px;
-      padding: 5px 14px; font-size: 13px; color: #374151;
-      cursor: pointer; transition: background 0.1s;
+      padding: 5px 14px; font-size: 13px; color: #374151; cursor: pointer; transition: background 0.1s;
     }
     .nav-btn:hover { background: #f3f4f6; }
     .month-label { font-size: 16px; font-weight: 600; color: #0c3a6e; }
 
-    .weekdays {
-      display: grid; grid-template-columns: repeat(7, 1fr);
-      gap: 4px; margin-bottom: 4px;
-    }
+    .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
     .weekday { font-size: 11px; color: #9ca3af; text-align: center; padding: 4px 0; font-weight: 500; }
-
     .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 
     /* DAY TILE */
     .day {
-      border-radius: 10px; padding: 6px 5px; min-height: 62px;
+      border-radius: 10px; padding: 6px 5px; min-height: 68px;
       border: 1px solid #e5e7eb; background: #fff;
       cursor: pointer; position: relative;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     .day:hover { border-color: #93c5fd; box-shadow: 0 0 0 2px #dbeafe; }
     .day.empty { background: transparent; border-color: transparent; cursor: default; pointer-events: none; }
-    .day-num { font-size: 12px; color: #6b7280; margin-bottom: 3px; font-weight: 500; }
+    .day-num { font-size: 12px; color: #6b7280; margin-bottom: 2px; font-weight: 500; }
     .day.today { border-color: #3b82f6; }
     .day.today .day-num { color: #1d4ed8; font-weight: 700; }
 
-    /* AWAY RANGE — blue fill */
+    /* AWAY — blue */
     .day.range-away { background: #dbeafe; border-color: #bfdbfe; }
     .day.range-away .day-num { color: #1e40af; }
+
+    /* BRAZIL — green stripe at bottom of tile (layered over blue if both) */
+    .day.range-brazil::after {
+      content: '🇧🇷';
+      position: absolute; bottom: 3px; left: 4px;
+      font-size: 10px; line-height: 1;
+    }
+    /* If in Brazil but NOT away — full green bg */
+    .day.range-brazil:not(.range-away) { background: #dcfce7; border-color: #bbf7d0; }
+    .day.range-brazil:not(.range-away) .day-num { color: #166534; }
+    /* If in Brazil AND away — keep blue but add green left border accent */
+    .day.range-brazil.range-away { border-left: 3px solid #22c55e; }
 
     /* EVENT MARKERS */
     .event-marker {
       font-size: 10px; font-weight: 600; padding: 2px 5px;
-      border-radius: 5px; display: inline-block; line-height: 1.4;
-      margin-bottom: 2px;
+      border-radius: 5px; display: inline-block; line-height: 1.4; margin-bottom: 1px;
     }
     .ev-depart    { background: #fbbf24; color: #78350f; }
     .ev-embark    { background: #34d399; color: #064e3b; }
     .ev-disembark { background: #f87171; color: #7f1d1d; }
     .ev-arrive    { background: #60a5fa; color: #1e3a8a; }
+    .ev-brazil-in  { background: #86efac; color: #14532d; }
+    .ev-brazil-out { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
 
-    /* small badge showing total days on the arrive tile */
+    /* badge on arrive tile */
     .days-away-badge {
       position: absolute; bottom: 4px; right: 4px;
       font-size: 9px; font-weight: 700; color: #1e40af;
@@ -109,72 +100,61 @@
     }
 
     /* LEGEND */
-    .legend { display: flex; gap: 14px; margin-top: 1rem; flex-wrap: wrap; }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    .legend { display: flex; gap: 12px; margin-top: 1rem; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7280; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
-    /* TRIPS LIST */
-    .trips-info {
+    /* SECTION DIVIDER */
+    .section-divider {
       margin-top: 1rem; padding-top: 1rem;
       border-top: 1px solid #f3f4f6;
     }
-    .trips-title { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 8px; }
-    .trip-row {
+    .section-title { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+    .info-row {
       display: flex; justify-content: space-between; align-items: center;
       font-size: 12px; color: #6b7280; padding: 5px 0;
       border-bottom: 1px solid #f9fafb;
     }
-    .trip-days {
-      font-weight: 700; color: #1e40af;
-      background: #dbeafe; border-radius: 6px;
-      padding: 2px 8px; font-size: 12px;
-    }
+    .badge-blue  { font-weight: 700; color: #1e40af; background: #dbeafe; border-radius: 6px; padding: 2px 8px; font-size: 12px; }
+    .badge-green { font-weight: 700; color: #166534; background: #dcfce7; border-radius: 6px; padding: 2px 8px; font-size: 12px; }
 
     /* MODAL */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.35); align-items: center;
-      justify-content: center; z-index: 100;
+      background: rgba(0,0,0,0.35); align-items: center; justify-content: center; z-index: 100;
     }
     .modal-overlay.open { display: flex; }
-    .modal {
-      background: #fff; border-radius: 16px; padding: 1.5rem; width: 300px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    }
+    .modal { background: #fff; border-radius: 16px; padding: 1.5rem; width: 310px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
     .modal-title { font-size: 16px; font-weight: 600; color: #0c3a6e; margin-bottom: 3px; }
-    .modal-sub { font-size: 12px; color: #6b7280; margin-bottom: 1.25rem; }
-    .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+    .modal-sub { font-size: 12px; color: #6b7280; margin-bottom: 1rem; }
+    .modal-section-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 10px 0 6px; }
+    .modal-actions { display: flex; flex-direction: column; gap: 7px; }
     .action-btn {
       border: 1px solid #e5e7eb; background: none; border-radius: 10px;
-      padding: 10px 14px; font-size: 13px; color: #111827;
-      cursor: pointer; text-align: left; display: flex; align-items: center;
-      gap: 10px; transition: background 0.1s;
+      padding: 9px 12px; font-size: 13px; color: #111827;
+      cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; transition: background 0.1s;
     }
     .action-btn:hover { background: #f9fafb; border-color: #d1d5db; }
     .action-btn.active { border-color: #3b82f6; background: #eff6ff; font-weight: 600; }
-    .action-icon {
-      width: 28px; height: 28px; display: flex; align-items: center;
-      justify-content: center; border-radius: 7px; font-size: 14px; flex-shrink: 0;
-    }
+    .action-btn.active-green { border-color: #22c55e; background: #f0fdf4; font-weight: 600; }
+    .action-icon { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 13px; flex-shrink: 0; }
     .ai-depart    { background: #fef3c7; }
     .ai-embark    { background: #dcfce7; }
     .ai-disembark { background: #fee2e2; }
     .ai-arrive    { background: #dbeafe; }
-    .modal-clear {
-      margin-top: 6px; width: 100%; border: 1px solid #fee2e2;
-      background: none; color: #dc2626; font-size: 12px;
-      cursor: pointer; padding: 7px; border-radius: 8px;
-    }
+    .ai-brazil-in  { background: #bbf7d0; }
+    .ai-brazil-out { background: #d1fae5; }
+    .modal-clear { margin-top: 8px; width: 100%; border: 1px solid #fee2e2; background: none; color: #dc2626; font-size: 12px; cursor: pointer; padding: 7px; border-radius: 8px; }
     .modal-clear:hover { background: #fff5f5; }
-    .modal-close {
-      margin-top: 6px; width: 100%; border: none; background: none;
-      color: #9ca3af; font-size: 12px; cursor: pointer; padding: 4px;
-    }
+    .modal-close { margin-top: 6px; width: 100%; border: none; background: none; color: #9ca3af; font-size: 12px; cursor: pointer; padding: 4px; }
     .modal-close:hover { color: #6b7280; }
 
-    @media (max-width: 520px) {
+    @media (max-width: 580px) {
+      .stats-bar { grid-template-columns: repeat(3, 1fr); }
+      .day { min-height: 52px; }
+    }
+    @media (max-width: 400px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      .day { min-height: 50px; }
     }
   </style>
 </head>
@@ -197,14 +177,14 @@
       </div>
     </div>
     <div class="current-status">
-      <div class="badge" id="status-badge">–</div>
+      <div class="badge" id="status-badge" style="background:#f3f4f6;color:#6b7280;">–</div>
       <div class="sub" id="status-sub">No active trip</div>
     </div>
   </div>
 
   <div class="stats-bar">
     <div class="stat-card">
-      <div class="stat-label">Days away (total)</div>
+      <div class="stat-label">Days away</div>
       <div class="stat-value" id="stat-away">0 <span class="stat-unit">days</span></div>
     </div>
     <div class="stat-card">
@@ -214,6 +194,10 @@
     <div class="stat-card">
       <div class="stat-label">Travel days</div>
       <div class="stat-value" id="stat-travel">0 <span class="stat-unit">days</span></div>
+    </div>
+    <div class="stat-card brazil">
+      <div class="stat-label">Days in Brazil</div>
+      <div class="stat-value" id="stat-brazil">0 <span class="stat-unit">days</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Trips logged</div>
@@ -236,16 +220,25 @@
     <div class="calendar" id="calendar"></div>
 
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#bfdbfe;border:1px solid #93c5fd;"></div> Away period</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#bfdbfe;border:1px solid #93c5fd;"></div> Away</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1px solid #86efac;"></div> In Brazil</div>
+      <div class="legend-item">
+        <div style="width:10px;height:10px;border-radius:3px;background:#bfdbfe;border-left:3px solid #22c55e;flex-shrink:0;"></div> Away + Brazil
+      </div>
       <div class="legend-item"><div class="legend-dot" style="background:#fbbf24;"></div> Left home</div>
       <div class="legend-item"><div class="legend-dot" style="background:#34d399;"></div> Embarked</div>
       <div class="legend-item"><div class="legend-dot" style="background:#f87171;"></div> Disembarked</div>
       <div class="legend-item"><div class="legend-dot" style="background:#60a5fa;"></div> Arrived home</div>
     </div>
 
-    <div class="trips-info" id="trips-info" style="display:none;">
-      <div class="trips-title">Logged trips</div>
+    <div class="section-divider" id="trips-info" style="display:none;">
+      <div class="section-title">Trips away from home</div>
       <div id="trips-list"></div>
+    </div>
+
+    <div class="section-divider" id="brazil-info" style="display:none;">
+      <div class="section-title">🇧🇷 Brazil stays</div>
+      <div id="brazil-list"></div>
     </div>
   </div>
 
@@ -256,20 +249,33 @@
   <div class="modal">
     <div class="modal-title" id="modal-title"></div>
     <div class="modal-sub" id="modal-sub"></div>
+
+    <div class="modal-section-label">Rotation</div>
     <div class="modal-actions">
-      <button class="action-btn" id="btn-depart" onclick="logEvent('depart')">
+      <button class="action-btn" id="btn-depart"    onclick="logEvent('depart')">
         <div class="action-icon ai-depart">🏠</div> Left home
       </button>
-      <button class="action-btn" id="btn-embark" onclick="logEvent('embark')">
+      <button class="action-btn" id="btn-embark"    onclick="logEvent('embark')">
         <div class="action-icon ai-embark">⚓</div> Embarked on ship
       </button>
       <button class="action-btn" id="btn-disembark" onclick="logEvent('disembark')">
         <div class="action-icon ai-disembark">🔄</div> Disembarked from ship
       </button>
-      <button class="action-btn" id="btn-arrive" onclick="logEvent('arrive')">
+      <button class="action-btn" id="btn-arrive"    onclick="logEvent('arrive')">
         <div class="action-icon ai-arrive">🏡</div> Arrived home
       </button>
     </div>
+
+    <div class="modal-section-label">Brazil</div>
+    <div class="modal-actions">
+      <button class="action-btn" id="btn-brazil-in"  onclick="logEvent('brazil-in')">
+        <div class="action-icon ai-brazil-in">🇧🇷</div> Entered Brazil
+      </button>
+      <button class="action-btn" id="btn-brazil-out" onclick="logEvent('brazil-out')">
+        <div class="action-icon ai-brazil-out">✈️</div> Left Brazil
+      </button>
+    </div>
+
     <button class="modal-clear" id="btn-clear" onclick="clearDay()" style="display:none;">
       Remove all events from this day
     </button>
@@ -279,7 +285,6 @@
 
 <script>
 // ── Storage ──────────────────────────────────────────────────────
-// events: [{ date: 'YYYY-MM-DD', type: 'depart'|'embark'|'disembark'|'arrive' }]
 let events = JSON.parse(localStorage.getItem('crewxEvents') || '[]');
 let currentYear  = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
@@ -293,97 +298,119 @@ function save() { localStorage.setItem('crewxEvents', JSON.stringify(events)); }
 function dateStr(y, m, d) {
   return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
+function getEventsForDate(ds) { return events.filter(e => e.date === ds); }
 
-function getEventsForDate(ds) {
-  return events.filter(e => e.date === ds);
-}
-
-// ── Trip pairing: each depart pairs with the nearest following arrive ──
-function getTrips() {
-  const departs = events.filter(e => e.type === 'depart').map(e => e.date).sort();
-  const arrives = events.filter(e => e.type === 'arrive').map(e => e.date).sort();
-  const trips = [];
-  const usedArrives = new Set();
-  for (const dep of departs) {
-    const arr = arrives.find(a => a >= dep && !usedArrives.has(a)) || null;
-    if (arr) usedArrives.add(arr);
-    trips.push({ depart: dep, arrive: arr });
+// ── Pair events of a given type: in-type → out-type ──────────────
+function getPairs(inType, outType) {
+  const ins  = events.filter(e => e.type === inType).map(e => e.date).sort();
+  const outs = events.filter(e => e.type === outType).map(e => e.date).sort();
+  const pairs = [];
+  const usedOuts = new Set();
+  for (const start of ins) {
+    const end = outs.find(o => o >= start && !usedOuts.has(o)) || null;
+    if (end) usedOuts.add(end);
+    pairs.push({ start, end });
   }
-  return trips;
+  return pairs;
 }
 
-// ── Returns Set of 'YYYY-MM-DD' strings within any depart→arrive range ──
-function getAwayDates() {
-  const away = new Set();
-  const trips = getTrips();
-  for (const t of trips) {
-    const start = new Date(t.depart + 'T00:00:00');
-    const end   = t.arrive ? new Date(t.arrive + 'T00:00:00') : new Date();
-    for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
-      away.add(cur.toISOString().slice(0, 10));
+function getTrips()  { return getPairs('depart', 'arrive'); }
+function getBrazilStays() { return getPairs('brazil-in', 'brazil-out'); }
+
+// ── Date sets for ranges ─────────────────────────────────────────
+function getRangeDates(pairs) {
+  const set = new Set();
+  for (const p of pairs) {
+    const s = new Date(p.start + 'T00:00:00');
+    const e = p.end ? new Date(p.end + 'T00:00:00') : new Date();
+    for (let cur = new Date(s); cur <= e; cur.setDate(cur.getDate() + 1)) {
+      set.add(cur.toISOString().slice(0, 10));
     }
   }
-  return away;
+  return set;
 }
 
 // ── Stats ────────────────────────────────────────────────────────
 function updateStats() {
-  const away   = getAwayDates();
-  const trips  = getTrips();
+  const trips       = getTrips();
+  const brazilStays = getBrazilStays();
+  const awayDates   = getRangeDates(trips);
+  const brazilDates = getRangeDates(brazilStays);
 
-  // onboard days = away days that are NOT a depart/arrive/disembark event day
   const eventDates = new Set(events.filter(e =>
-    e.type === 'depart' || e.type === 'arrive' || e.type === 'disembark'
+    ['depart','arrive','disembark'].includes(e.type)
   ).map(e => e.date));
 
   let onboardDays = 0, travelDays = 0;
-  for (const ds of away) {
-    if (eventDates.has(ds)) travelDays++;
-    else onboardDays++;
+  for (const ds of awayDates) {
+    if (eventDates.has(ds)) travelDays++; else onboardDays++;
   }
 
-  const completedTrips = trips.filter(t => t.arrive).length;
-
-  document.getElementById('stat-away').innerHTML   = `${away.size} <span class="stat-unit">days</span>`;
+  document.getElementById('stat-away').innerHTML   = `${awayDates.size} <span class="stat-unit">days</span>`;
   document.getElementById('stat-earn').innerHTML   = `${onboardDays} <span class="stat-unit">days</span>`;
   document.getElementById('stat-travel').innerHTML = `${travelDays} <span class="stat-unit">days</span>`;
-  document.getElementById('stat-trips').textContent = completedTrips;
+  document.getElementById('stat-brazil').innerHTML = `${brazilDates.size} <span class="stat-unit">days</span>`;
+  document.getElementById('stat-trips').textContent = trips.filter(t => t.end).length;
 
   // header badge
   const todayStr = new Date().toISOString().slice(0,10);
   const badge = document.getElementById('status-badge');
   const sub   = document.getElementById('status-sub');
+  const inBrazilToday = brazilDates.has(todayStr);
   if (events.some(e => e.date === todayStr && e.type === 'arrive')) {
     badge.style.cssText = 'background:#dbeafe;color:#1e40af';
-    badge.textContent = 'Arrived home'; sub.textContent = 'Back from trip';
-  } else if (away.has(todayStr)) {
+    badge.textContent = 'Arrived home';
+    sub.textContent = inBrazilToday ? '🇧🇷 Still in Brazil' : 'Back from trip';
+  } else if (awayDates.has(todayStr)) {
     badge.style.cssText = 'background:#dcfce7;color:#0f6e56';
-    badge.textContent = 'Away'; sub.textContent = 'Currently on rotation';
+    badge.textContent = 'Away';
+    sub.textContent = inBrazilToday ? '🇧🇷 In Brazil' : 'On rotation';
   } else {
     badge.style.cssText = 'background:#f3f4f6;color:#6b7280';
     badge.textContent = 'At home'; sub.textContent = 'No active trip';
   }
 
-  // trips list
+  // Trips list
   const tripsInfo = document.getElementById('trips-info');
   const tripsList = document.getElementById('trips-list');
-  if (trips.length === 0) { tripsInfo.style.display = 'none'; return; }
-  tripsInfo.style.display = 'block';
-  tripsList.innerHTML = '';
-  trips.forEach((t, i) => {
-    const dep = t.depart.slice(5).replace('-', '/');
-    const arr = t.arrive ? t.arrive.slice(5).replace('-', '/') : '…';
-    let dur = '?';
-    if (t.arrive) {
-      const ms = new Date(t.arrive + 'T00:00:00') - new Date(t.depart + 'T00:00:00');
-      dur = Math.round(ms / 86400000) + 1;
-    }
-    const row = document.createElement('div');
-    row.className = 'trip-row';
-    row.innerHTML = `<span>Trip ${i+1} &nbsp;&nbsp; ${dep} → ${arr}</span>
-      <span class="trip-days">${t.arrive ? dur + ' days' : 'ongoing'}</span>`;
-    tripsList.appendChild(row);
-  });
+  if (trips.length === 0) { tripsInfo.style.display = 'none'; }
+  else {
+    tripsInfo.style.display = 'block';
+    tripsList.innerHTML = '';
+    trips.forEach((t, i) => {
+      const dep = t.start.slice(5).replace('-', '/');
+      const arr = t.end ? t.end.slice(5).replace('-', '/') : '…';
+      const dur = t.end
+        ? Math.round((new Date(t.end+'T00:00:00') - new Date(t.start+'T00:00:00')) / 86400000) + 1
+        : '?';
+      const row = document.createElement('div');
+      row.className = 'info-row';
+      row.innerHTML = `<span>Trip ${i+1} &nbsp; ${dep} → ${arr}</span>
+        <span class="badge-blue">${t.end ? dur + ' days' : 'ongoing'}</span>`;
+      tripsList.appendChild(row);
+    });
+  }
+
+  // Brazil stays list
+  const brazilInfo = document.getElementById('brazil-info');
+  const brazilList = document.getElementById('brazil-list');
+  if (brazilStays.length === 0) { brazilInfo.style.display = 'none'; }
+  else {
+    brazilInfo.style.display = 'block';
+    brazilList.innerHTML = '';
+    brazilStays.forEach((b, i) => {
+      const inn = b.start.slice(5).replace('-', '/');
+      const out = b.end ? b.end.slice(5).replace('-', '/') : '…';
+      const dur = b.end
+        ? Math.round((new Date(b.end+'T00:00:00') - new Date(b.start+'T00:00:00')) / 86400000) + 1
+        : '?';
+      const row = document.createElement('div');
+      row.className = 'info-row';
+      row.innerHTML = `<span>Stay ${i+1} &nbsp; ${inn} → ${out}</span>
+        <span class="badge-green">${b.end ? dur + ' days' : 'ongoing'}</span>`;
+      brazilList.appendChild(row);
+    });
+  }
 }
 
 // ── Calendar render ───────────────────────────────────────────────
@@ -396,39 +423,46 @@ function renderCalendar() {
   const offset      = (firstDay === 0) ? 6 : firstDay - 1;
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const today       = new Date();
-  const awayDates   = getAwayDates();
+  const awayDates   = getRangeDates(getTrips());
+  const brazilDates = getRangeDates(getBrazilStays());
   const trips       = getTrips();
 
   for (let i = 0; i < offset; i++) {
     const e = document.createElement('div'); e.className = 'day empty'; cal.appendChild(e);
   }
 
-  const EV_LABEL = { depart: 'left home', embark: 'embarked', disembark: 'disembarked', arrive: 'arrived' };
-  const EV_CLASS = { depart: 'ev-depart', embark: 'ev-embark', disembark: 'ev-disembark', arrive: 'ev-arrive' };
+  const EV_LABEL = {
+    depart: 'left home', embark: 'embarked', disembark: 'disembarked', arrive: 'arrived',
+    'brazil-in': '🇧🇷 entered', 'brazil-out': '✈️ left BR'
+  };
+  const EV_CLASS = {
+    depart: 'ev-depart', embark: 'ev-embark', disembark: 'ev-disembark', arrive: 'ev-arrive',
+    'brazil-in': 'ev-brazil-in', 'brazil-out': 'ev-brazil-out'
+  };
 
   for (let d = 1; d <= daysInMonth; d++) {
     const ds  = dateStr(currentYear, currentMonth, d);
     const div = document.createElement('div');
     div.className = 'day';
 
-    const isToday = (today.getFullYear() === currentYear &&
-                     today.getMonth()    === currentMonth &&
-                     today.getDate()     === d);
-    if (isToday) div.classList.add('today');
+    const isToday = today.getFullYear() === currentYear &&
+                    today.getMonth()    === currentMonth &&
+                    today.getDate()     === d;
+    if (isToday)           div.classList.add('today');
     if (awayDates.has(ds)) div.classList.add('range-away');
+    if (brazilDates.has(ds)) div.classList.add('range-brazil');
 
     div.innerHTML = `<div class="day-num">${d}</div>`;
 
-    // Event markers
     getEventsForDate(ds).forEach(ev => {
       div.innerHTML += `<span class="event-marker ${EV_CLASS[ev.type]}">${EV_LABEL[ev.type]}</span><br>`;
     });
 
-    // Total days badge on arrive day
-    const trip = trips.find(t => t.arrive === ds);
+    // badge on arrive day
+    const trip = trips.find(t => t.end === ds);
     if (trip) {
       const dur = Math.round(
-        (new Date(trip.arrive + 'T00:00:00') - new Date(trip.depart + 'T00:00:00')) / 86400000
+        (new Date(trip.end+'T00:00:00') - new Date(trip.start+'T00:00:00')) / 86400000
       ) + 1;
       div.innerHTML += `<span class="days-away-badge">${dur}d</span>`;
     }
@@ -452,14 +486,25 @@ function openModal(ds) {
   const [y, m, d] = ds.split('-');
   document.getElementById('modal-title').textContent = `${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`;
   const dayEvs = getEventsForDate(ds);
-  const EV_LABEL = { depart: 'left home', embark: 'embarked', disembark: 'disembarked', arrive: 'arrived' };
+  const EV_LABEL = {
+    depart: 'left home', embark: 'embarked', disembark: 'disembarked', arrive: 'arrived',
+    'brazil-in': 'entered Brazil', 'brazil-out': 'left Brazil'
+  };
   document.getElementById('modal-sub').textContent = dayEvs.length
     ? 'Logged: ' + dayEvs.map(e => EV_LABEL[e.type]).join(', ')
     : 'No events logged yet — tap to add';
 
   ['depart','embark','disembark','arrive'].forEach(t => {
-    document.getElementById('btn-' + t).classList.toggle('active', dayEvs.some(e => e.type === t));
+    const btn = document.getElementById('btn-' + t);
+    btn.classList.remove('active','active-green');
+    if (dayEvs.some(e => e.type === t)) btn.classList.add('active');
   });
+  ['brazil-in','brazil-out'].forEach(t => {
+    const btn = document.getElementById('btn-' + t);
+    btn.classList.remove('active','active-green');
+    if (dayEvs.some(e => e.type === t)) btn.classList.add('active-green');
+  });
+
   document.getElementById('btn-clear').style.display = dayEvs.length ? 'block' : 'none';
   document.getElementById('modal').classList.add('open');
 }
@@ -476,26 +521,20 @@ function handleOverlayClick(e) {
 function logEvent(type) {
   if (!selectedDate) return;
   const idx = events.findIndex(e => e.date === selectedDate && e.type === type);
-  if (idx >= 0) {
-    events.splice(idx, 1); // toggle off
-  } else {
+  if (idx >= 0) { events.splice(idx, 1); }
+  else {
     events.push({ date: selectedDate, type });
     events.sort((a, b) => a.date.localeCompare(b.date) || a.type.localeCompare(b.type));
   }
-  save();
-  closeModal();
-  renderCalendar();
+  save(); closeModal(); renderCalendar();
 }
 
 function clearDay() {
   if (!selectedDate) return;
   events = events.filter(e => e.date !== selectedDate);
-  save();
-  closeModal();
-  renderCalendar();
+  save(); closeModal(); renderCalendar();
 }
 
-// ── Init ──────────────────────────────────────────────────────────
 renderCalendar();
 </script>
 </body>
