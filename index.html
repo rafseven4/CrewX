@@ -491,14 +491,15 @@ body {
           <input class="form-input" id="rate-amount" type="number" placeholder="e.g. 650" min="0" step="1"/>
         </div>
         <div class="form-row">
-          <label class="form-label">Valid from</label>
+          <label class="form-label">Valid from → to (dd/mm/yyyy)</label>
           <div class="date-row">
-            <input class="form-input" id="rate-from" type="date"/>
-            <input class="form-input" id="rate-to"   type="date" placeholder="leave blank = ongoing"/>
+            <input class="form-input" id="rate-from" type="text" placeholder="dd/mm/yyyy" maxlength="10"/>
+            <input class="form-input" id="rate-to"   type="text" placeholder="dd/mm/yyyy or blank"/>
           </div>
-          <div style="font-size:10px;color:var(--gray400);margin-top:3px">from → to &nbsp;(leave "to" blank if still current rate)</div>
+          <div style="font-size:10px;color:var(--gray400);margin-top:3px">leave "to" blank if rate is still current</div>
         </div>
         <button class="btn-add" onclick="addRate()">+ Add rate period</button>
+        <button onclick="clearAllRates()" style="width:100%;margin-top:6px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px;color:#f87171;font-size:11px;font-family:'Space Grotesk',sans-serif;cursor:pointer;">Clear all rates</button>
 
         <div id="rates-list" style="margin-top:12px"></div>
       </div>
@@ -685,10 +686,7 @@ function getPayrollPeriods() {
     if (m > 11) { m = 0; y++; }
   }
 
-  // only show periods with activity or in the past year
-  const oneYearAgo = new Date();
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-  return periods.filter(p => p.days > 0 || new Date(p.periodEnd+'T00:00:00') >= oneYearAgo);
+  return periods.filter(p => p.days > 0);
 }
 
 // ═══ RENDER RATES LIST ════════════════════════════════════════════
@@ -700,18 +698,36 @@ function renderRates() {
     <div class="rate-item">
       <div>
         <div class="rate-amount">$${Number(r.amount).toLocaleString()}<span style="font-size:10px;color:var(--gray400);font-weight:400;font-family:'Space Grotesk',sans-serif"> /day</span></div>
-        <div class="rate-period">${r.from} → ${r.to || 'ongoing'}</div>
+        <div class="rate-period">${fmtDate(r.from)} → ${fmtDate(r.to)}</div>
       </div>
       <button class="rate-delete" onclick="deleteRate(${i})" title="Remove">✕</button>
     </div>
   `).join('');
 }
 
+function fmtDate(ds) {
+  if (!ds) return 'ongoing';
+  const [y,m,d] = ds.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function parseDMY(str) {
+  if (!str || !str.trim()) return null;
+  const parts = str.trim().split('/');
+  if (parts.length !== 3) return null;
+  const [d, m, y] = parts;
+  if (!d || !m || !y || y.length !== 4) return null;
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+
 function addRate() {
   const amount = parseFloat(document.getElementById('rate-amount').value);
-  const from   = document.getElementById('rate-from').value;
-  const to     = document.getElementById('rate-to').value || null;
-  if (!amount || !from) { alert('Please enter amount and start date.'); return; }
+  const fromRaw = document.getElementById('rate-from').value;
+  const toRaw   = document.getElementById('rate-to').value;
+  const from = parseDMY(fromRaw);
+  const to   = parseDMY(toRaw);
+  if (!amount || !from) { alert('Enter amount and a valid "from" date (dd/mm/yyyy).'); return; }
+  if (toRaw.trim() && !to) { alert('"To" date is not valid. Use dd/mm/yyyy or leave blank.'); return; }
   rates.push({ amount, from, to });
   rates.sort((a,b) => a.from.localeCompare(b.from));
   saveRates();
@@ -964,6 +980,14 @@ function clearDay() {
   if (!selectedDate) return;
   events = events.filter(e => e.date !== selectedDate);
   saveEvents(); closeModal(); renderCalendar();
+}
+
+function clearAllRates() {
+  if (!confirm('Remove all rate periods?')) return;
+  rates = [];
+  saveRates();
+  renderRates();
+  renderPayroll();
 }
 
 // ═══ INIT ═════════════════════════════════════════════════════════
