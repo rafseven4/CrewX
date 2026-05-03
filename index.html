@@ -44,6 +44,160 @@ body {
   padding: 0;
 }
 
+/* ═══ SIDEBAR ══════════════════════════════════════════════ */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 80;
+}
+.sidebar-overlay.open { display: block; }
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+  background: var(--navy2); border-right: 1px solid rgba(255,255,255,0.09);
+  z-index: 90; transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-head {
+  padding: 0 20px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
+}
+.sidebar-logo { display: flex; align-items: center; gap: 9px; }
+.sidebar-logo-text { font-size: 16px; font-weight: 700; color: var(--white); }
+.sidebar-close {
+  background: none; border: none; color: var(--gray400); cursor: pointer;
+  font-size: 20px; padding: 4px; border-radius: 6px; transition: color 0.15s, background 0.15s;
+}
+.sidebar-close:hover { color: var(--white); background: rgba(255,255,255,0.08); }
+.sidebar-section-label {
+  font-size: 10px; font-weight: 600; color: var(--gray400);
+  text-transform: uppercase; letter-spacing: 0.08em; padding: 16px 20px 6px;
+}
+.sidebar-nav { padding: 8px 10px; flex: 1; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 14px; font-weight: 500;
+  color: var(--gray400); border: 1px solid transparent; background: none;
+  width: 100%; text-align: left; font-family: 'Space Grotesk', sans-serif;
+  transition: background 0.15s, color 0.15s; margin-bottom: 2px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+.nav-item.active { background: rgba(56,189,248,0.1); color: var(--sky); border-color: rgba(56,189,248,0.15); }
+.nav-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; font-size: 10px; font-weight: 700;
+  background: rgba(239,68,68,0.2); color: #f87171;
+  border-radius: 10px; padding: 1px 7px;
+}
+.sidebar-footer {
+  padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 11px; color: var(--gray400); flex-shrink: 0;
+}
+.hamburger {
+  background: none; border: none; cursor: pointer; color: var(--gray400);
+  padding: 6px 8px; margin-right: 6px; border-radius: 6px;
+  display: flex; flex-direction: column; gap: 4px; transition: background 0.15s;
+}
+.hamburger:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+.hamburger span { display: block; width: 18px; height: 2px; background: currentColor; border-radius: 2px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* REST HOURS PAGE */
+.page-wrap { max-width: 900px; margin: 0 auto; padding: 1.5rem 2rem; }
+.page-title { font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+.page-sub   { font-size: 13px; color: var(--gray400); margin-bottom: 1.5rem; }
+.rh-rules-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.5rem; }
+.rh-rule-card {
+  background: var(--navy2); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius); padding: 14px;
+}
+.rh-rule-val  { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: var(--sky); }
+.rh-rule-name { font-size: 11px; color: var(--gray400); margin-top: 2px; }
+.rh-rule-desc { font-size: 10px; color: rgba(148,163,184,0.7); margin-top: 4px; line-height: 1.4; }
+.rh-panel {
+  background: var(--navy2); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 10px;
+}
+.rh-panel-head {
+  padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.rh-panel-title { font-size: 13px; font-weight: 600; color: var(--white); }
+.rh-panel-body  { padding: 14px 16px; }
+.rh-day-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.rh-day-label { font-size: 12px; color: var(--gray400); width: 36px; flex-shrink: 0; }
+.rh-input {
+  width: 54px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 5px;
+  padding: 4px 6px; color: var(--white); font-size: 12px;
+  font-family: 'JetBrains Mono', monospace; outline: none; text-align: center;
+}
+.rh-input:focus { border-color: var(--sky); }
+.rh-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; min-width: 60px; }
+.rh-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.rh-bar-ok   .rh-bar-fill { background: #10b981; }
+.rh-bar-warn .rh-bar-fill { background: var(--gold); }
+.rh-bar-fail .rh-bar-fill { background: #ef4444; }
+.rh-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+  flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
+}
+.rh-tag-ok   { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+.rh-tag-warn { background: rgba(245,158,11,0.15); color: var(--gold); }
+.rh-tag-fail { background: rgba(239,68,68,0.15);  color: #f87171; }
+
+/* CERTIFICATES PAGE */
+.cert-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+.cert-card {
+  background: var(--navy2); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius); padding: 14px; position: relative; overflow: hidden;
+}
+.cert-card.ok       { border-left: 3px solid #10b981; }
+.cert-card.expiring { border-left: 3px solid var(--gold); }
+.cert-card.expired  { border-left: 3px solid #ef4444; }
+.cert-name { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 2px; padding-right: 24px; }
+.cert-issuer { font-size: 11px; color: var(--gray400); margin-bottom: 8px; }
+.cert-num  { font-size: 10px; color: var(--gray400); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
+.cert-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.cert-exp-label { font-size: 10px; color: var(--gray400); }
+.cert-exp-val { font-size: 12px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+.cert-exp-val.ok       { color: #6ee7b7; }
+.cert-exp-val.expiring { color: var(--gold); }
+.cert-exp-val.expired  { color: #f87171; }
+.cert-days-left { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+.cert-days-left.ok       { background: rgba(16,185,129,0.12); color: #6ee7b7; }
+.cert-days-left.expiring { background: rgba(245,158,11,0.12); color: var(--gold); }
+.cert-days-left.expired  { background: rgba(239,68,68,0.12);  color: #f87171; }
+.cert-delete {
+  position: absolute; top: 10px; right: 10px;
+  background: none; border: none; color: rgba(255,255,255,0.2);
+  cursor: pointer; font-size: 14px; padding: 2px 5px; border-radius: 4px;
+}
+.cert-delete:hover { color: #f87171; background: rgba(239,68,68,0.1); }
+.cert-add-btn {
+  background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.15);
+  border-radius: var(--radius); padding: 14px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; color: var(--gray400); font-size: 12px; min-height: 110px;
+  font-family: 'Space Grotesk', sans-serif; transition: background 0.15s, border-color 0.15s;
+  width: 100%;
+}
+.cert-add-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(56,189,248,0.3); color: var(--sky); }
+.cert-add-icon { font-size: 24px; }
+.cert-modal-form .form-row { margin-bottom: 10px; }
+.cert-modal-form .form-label { font-size: 11px; font-weight: 500; color: var(--gray400); margin-bottom: 4px; display: block; }
+.cert-modal-form .form-input {
+  width: 100%; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm);
+  padding: 8px 10px; color: var(--white); font-size: 13px;
+  font-family: 'Space Grotesk', sans-serif; outline: none;
+}
+.cert-modal-form .form-input:focus { border-color: var(--sky); }
+.form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
 /* ═══ TOPBAR ═══════════════════════════════════════════════ */
 .topbar {
   background: var(--navy2);
@@ -381,6 +535,10 @@ body {
 
 <!-- TOPBAR -->
 <div class="topbar">
+  <div style="display:flex;align-items:center;gap:4px">
+  <button class="hamburger" onclick="openSidebar()" title="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <div class="logo">
     <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
       <circle cx="14" cy="7" r="3" stroke="#38bdf8" stroke-width="1.6" fill="none"/>
@@ -393,6 +551,7 @@ body {
     <span class="logo-text">CrewX</span>
     <span class="logo-sub">Ship rotation tracker</span>
   </div>
+  </div>
   <div class="topbar-right">
     <div class="status-pill">
       <div class="status-dot" id="status-dot" style="background:#94a3b8"></div>
@@ -401,7 +560,48 @@ body {
   </div>
 </div>
 
-<!-- LAYOUT -->
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <div class="sidebar-logo">
+      <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="7" r="3" stroke="#38bdf8" stroke-width="1.6" fill="none"/>
+        <line x1="14" y1="10" x2="14" y2="22" stroke="#38bdf8" stroke-width="1.6"/>
+        <path d="M8 15 Q6 19 8.5 22" stroke="#38bdf8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <path d="M20 15 Q22 19 19.5 22" stroke="#38bdf8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <line x1="8.5" y1="22" x2="19.5" y2="22" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="8"   y1="15" x2="20"   y2="15" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span class="sidebar-logo-text">CrewX</span>
+    </div>
+    <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+  </div>
+
+  <div class="sidebar-section-label">Navigation</div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" id="nav-rotation" onclick="showPage('rotation')">
+      <span class="nav-icon">📅</span> Rotation Calendar
+    </button>
+    <button class="nav-item" id="nav-resthours" onclick="showPage('resthours')">
+      <span class="nav-icon">😴</span> Rest Hours
+      <span class="nav-badge" id="rh-badge" style="display:none">!</span>
+    </button>
+    <button class="nav-item" id="nav-certificates" onclick="showPage('certificates')">
+      <span class="nav-icon">📜</span> Certificates
+      <span class="nav-badge" id="cert-badge" style="display:none">!</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    v1.0 &nbsp;·&nbsp; Data saved locally
+  </div>
+</div>
+
+<!-- PAGES -->
+<div class="page active" id="page-rotation">
 <div class="layout">
 
   <!-- ═══ LEFT — calendar ═══════════════════════════════════ -->
@@ -516,6 +716,93 @@ body {
       </div>
     </div>
 
+  </div>
+</div>
+</div><!-- /page-rotation -->
+
+
+<!-- PAGE: REST HOURS -->
+<div class="page" id="page-resthours">
+<div class="page-wrap">
+  <div class="page-title">😴 Rest Hours</div>
+  <div class="page-sub">MLC 2006 / STCW minimum rest requirements</div>
+
+  <div class="rh-rules-grid">
+    <div class="rh-rule-card">
+      <div class="rh-rule-val">10h</div>
+      <div class="rh-rule-name">Min rest per 24h</div>
+      <div class="rh-rule-desc">May be split into max 2 periods, one at least 6h</div>
+    </div>
+    <div class="rh-rule-card">
+      <div class="rh-rule-val">77h</div>
+      <div class="rh-rule-name">Min rest per 7 days</div>
+      <div class="rh-rule-desc">Minimum 77 hours rest in any 7-day period</div>
+    </div>
+    <div class="rh-rule-card">
+      <div class="rh-rule-val">14h</div>
+      <div class="rh-rule-name">Max work per 24h</div>
+      <div class="rh-rule-desc">Maximum 14 hours work in any 24-hour period</div>
+    </div>
+  </div>
+
+  <div class="rh-panel">
+    <div class="rh-panel-head">
+      <span class="rh-panel-title">Weekly rest hours log</span>
+      <button onclick="resetRH()" style="background:none;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:4px 10px;color:var(--gray400);font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Reset week</button>
+    </div>
+    <div class="rh-panel-body" id="rh-days-body"></div>
+    <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.06);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:11px;color:var(--gray400);margin-bottom:2px">Total rest this week</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;" id="rh-total">0h 0m</div>
+        </div>
+        <div id="rh-week-status" style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE: CERTIFICATES -->
+<div class="page" id="page-certificates">
+<div class="page-wrap">
+  <div class="page-title">📜 Certificates</div>
+  <div class="page-sub">Track expiry dates — warnings at 90 and 30 days</div>
+
+  <div class="cert-grid" id="cert-grid"></div>
+</div>
+</div>
+
+<!-- CERT MODAL -->
+<div class="modal-overlay" id="cert-modal" onclick="handleCertOverlay(event)">
+  <div class="modal cert-modal-form">
+    <div class="modal-title" id="cert-modal-title">Add Certificate</div>
+    <div class="modal-sub" style="margin-bottom:1rem">Enter certificate details</div>
+    <div class="form-row">
+      <label class="form-label">Certificate name</label>
+      <input class="form-input" id="cert-name-in" type="text" placeholder="e.g. STCW Basic Safety"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Issuing authority</label>
+      <input class="form-input" id="cert-issuer-in" type="text" placeholder="e.g. Flag State Administration"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Certificate number</label>
+      <input class="form-input" id="cert-number-in" type="text" placeholder="e.g. PL-2024-001234"/>
+    </div>
+    <div class="form-row form-row-2col">
+      <div>
+        <label class="form-label">Issue date (dd/mm/yyyy)</label>
+        <input class="form-input" id="cert-issue-in" type="text" placeholder="dd/mm/yyyy"/>
+      </div>
+      <div>
+        <label class="form-label">Expiry date (dd/mm/yyyy)</label>
+        <input class="form-input" id="cert-expiry-in" type="text" placeholder="dd/mm/yyyy"/>
+      </div>
+    </div>
+    <button class="btn-add" onclick="saveCert()" style="margin-top:4px">Save certificate</button>
+    <button class="modal-close" onclick="closeCertModal()">cancel</button>
   </div>
 </div>
 
@@ -993,6 +1280,223 @@ function clearAllRates() {
 // ═══ INIT ═════════════════════════════════════════════════════════
 renderRates();
 renderCalendar();
+
+// ═══ SIDEBAR ══════════════════════════════════════════════════════
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showPage(name) {
+  // hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // deactivate all nav items
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  // show target
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  // refresh page content
+  if (name === 'resthours')    renderRH();
+  if (name === 'certificates') renderCerts();
+  closeSidebar();
+}
+
+// ═══ REST HOURS ═══════════════════════════════════════════════════
+const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let rhData = JSON.parse(localStorage.getItem('crewxRH') || 'null');
+
+function defaultRH() {
+  return DAYS_SHORT.map(d => ({ day: d, rest: 10, note: '' }));
+}
+if (!rhData) rhData = defaultRH();
+
+function saveRH() { localStorage.setItem('crewxRH', JSON.stringify(rhData)); }
+
+function resetRH() {
+  if (!confirm('Reset all rest hours to default (10h)?')) return;
+  rhData = defaultRH();
+  saveRH();
+  renderRH();
+}
+
+function renderRH() {
+  const body = document.getElementById('rh-days-body');
+  if (!body) return;
+
+  let totalMins = 0;
+  let hasViolation = false;
+
+  body.innerHTML = rhData.map((d, i) => {
+    const restMins = Math.round(d.rest * 60);
+    totalMins += restMins;
+    const minReq = 10 * 60; // 10h in mins
+    const pct = Math.min(100, (restMins / (24 * 60)) * 100);
+    let status = 'ok';
+    if (restMins < minReq) { status = 'fail'; hasViolation = true; }
+    else if (restMins < 11 * 60) status = 'warn';
+    const barColor = status === 'ok' ? '#10b981' : status === 'warn' ? '#f59e0b' : '#ef4444';
+    const tagClass = 'rh-tag-' + status;
+    const tagText = status === 'ok' ? 'OK' : status === 'warn' ? 'LOW' : 'VIOLATION';
+    return `<div class="rh-day-row">
+      <span class="rh-day-label">${d.day}</span>
+      <input class="rh-input" type="number" min="0" max="24" step="0.5"
+        value="${d.rest}" onchange="updateRH(${i}, this.value)"
+        title="${d.day} rest hours"/>
+      <span style="font-size:10px;color:var(--gray400);">h</span>
+      <div class="rh-bar rh-bar-${status}" style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:3px;">
+        <div class="rh-bar-fill" style="width:${pct}%;height:100%;border-radius:3px;background:${barColor};"></div>
+      </div>
+      <span class="rh-tag ${tagClass}">${tagText}</span>
+    </div>`;
+  }).join('');
+
+  // totals
+  const totalH = Math.floor(totalMins / 60);
+  const totalM = totalMins % 60;
+  document.getElementById('rh-total').textContent = `${totalH}h ${totalM}m`;
+
+  const weekOk = totalMins >= 77 * 60;
+  const statusEl = document.getElementById('rh-week-status');
+  if (weekOk && !hasViolation) {
+    statusEl.style.cssText = 'background:rgba(16,185,129,0.12);color:#6ee7b7;font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;';
+    statusEl.textContent = '✓ Compliant with MLC 2006';
+  } else if (!weekOk) {
+    statusEl.style.cssText = 'background:rgba(239,68,68,0.12);color:#f87171;font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;';
+    statusEl.textContent = `✗ Need ${Math.ceil((77*60 - totalMins)/60)}h more this week`;
+  } else {
+    statusEl.style.cssText = 'background:rgba(245,158,11,0.12);color:#f59e0b;font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;';
+    statusEl.textContent = '⚠ Daily violation detected';
+  }
+
+  // badge
+  const badge = document.getElementById('rh-badge');
+  if (badge) badge.style.display = (!weekOk || hasViolation) ? 'inline' : 'none';
+}
+
+function updateRH(i, val) {
+  rhData[i].rest = Math.min(24, Math.max(0, parseFloat(val) || 0));
+  saveRH();
+  renderRH();
+}
+
+// ═══ CERTIFICATES ═════════════════════════════════════════════════
+let certs = JSON.parse(localStorage.getItem('crewxCerts') || '[]');
+// cert: { name, issuer, number, issued, expiry }
+let editingCertIdx = null;
+
+function saveCerts() { localStorage.setItem('crewxCerts', JSON.stringify(certs)); }
+
+function certStatus(expiryStr) {
+  if (!expiryStr) return { cls: 'ok', label: 'No expiry', days: null };
+  const exp = new Date(expiryStr + 'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((exp - today) / 86400000);
+  if (diff < 0)  return { cls: 'expired',  label: 'Expired',    days: diff };
+  if (diff < 30) return { cls: 'expiring', label: 'Expires soon', days: diff };
+  if (diff < 90) return { cls: 'expiring', label: `${diff}d left`, days: diff };
+  return { cls: 'ok', label: `${diff}d left`, days: diff };
+}
+
+function renderCerts() {
+  const grid = document.getElementById('cert-grid');
+  if (!grid) return;
+
+  let expCount = 0;
+  let html = certs.map((c, i) => {
+    const st = certStatus(c.expiry);
+    if (st.cls !== 'ok') expCount++;
+    const expDateFmt = c.expiry ? fmtDate(c.expiry) : '—';
+    const daysHtml = st.days !== null
+      ? `<span class="cert-days-left ${st.cls}">${st.days < 0 ? 'Expired ' + Math.abs(st.days) + 'd ago' : st.days + 'd left'}</span>`
+      : '';
+    return `<div class="cert-card ${st.cls}">
+      <button class="cert-delete" onclick="deleteCert(${i})" title="Delete">✕</button>
+      <div class="cert-name">${c.name}</div>
+      <div class="cert-issuer">${c.issuer || ''}</div>
+      ${c.number ? `<div class="cert-num">${c.number}</div>` : ''}
+      <div class="cert-footer">
+        <div>
+          <div class="cert-exp-label">Expires</div>
+          <div class="cert-exp-val ${st.cls}">${expDateFmt}</div>
+        </div>
+        ${daysHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  html += `<button class="cert-add-btn" onclick="openCertModal()">
+    <span class="cert-add-icon">＋</span>
+    Add certificate
+  </button>`;
+
+  grid.innerHTML = html;
+
+  const badge = document.getElementById('cert-badge');
+  if (badge) badge.style.display = expCount > 0 ? 'inline' : 'none';
+  if (badge && expCount > 0) badge.textContent = expCount;
+}
+
+function openCertModal(idx) {
+  editingCertIdx = idx !== undefined ? idx : null;
+  const m = document.getElementById('cert-modal');
+  document.getElementById('cert-modal-title').textContent = editingCertIdx !== null ? 'Edit Certificate' : 'Add Certificate';
+  if (editingCertIdx !== null) {
+    const c = certs[editingCertIdx];
+    document.getElementById('cert-name-in').value   = c.name   || '';
+    document.getElementById('cert-issuer-in').value = c.issuer || '';
+    document.getElementById('cert-number-in').value = c.number || '';
+    document.getElementById('cert-issue-in').value  = c.issued ? fmtDate(c.issued)  : '';
+    document.getElementById('cert-expiry-in').value = c.expiry ? fmtDate(c.expiry) : '';
+  } else {
+    ['cert-name-in','cert-issuer-in','cert-number-in','cert-issue-in','cert-expiry-in'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+  }
+  m.classList.add('open');
+}
+
+function closeCertModal() {
+  document.getElementById('cert-modal').classList.remove('open');
+  editingCertIdx = null;
+}
+
+function handleCertOverlay(e) {
+  if (e.target === document.getElementById('cert-modal')) closeCertModal();
+}
+
+function saveCert() {
+  const name   = document.getElementById('cert-name-in').value.trim();
+  const issuer = document.getElementById('cert-issuer-in').value.trim();
+  const number = document.getElementById('cert-number-in').value.trim();
+  const issued = parseDMY(document.getElementById('cert-issue-in').value);
+  const expiry = parseDMY(document.getElementById('cert-expiry-in').value);
+  if (!name) { alert('Certificate name is required.'); return; }
+  const cert = { name, issuer, number, issued, expiry };
+  if (editingCertIdx !== null) certs[editingCertIdx] = cert;
+  else certs.push(cert);
+  // sort by expiry
+  certs.sort((a,b) => {
+    if (!a.expiry) return 1; if (!b.expiry) return -1;
+    return a.expiry.localeCompare(b.expiry);
+  });
+  saveCerts();
+  closeCertModal();
+  renderCerts();
+}
+
+function deleteCert(i) {
+  if (!confirm('Delete this certificate?')) return;
+  certs.splice(i, 1);
+  saveCerts();
+  renderCerts();
+}
+
 </script>
 </body>
 </html>
