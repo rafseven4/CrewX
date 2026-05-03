@@ -597,9 +597,12 @@ function getTrips()        { return getPairs('depart',   'arrive');    }
 function getBrazilStays()  { return getPairs('brazil-in','brazil-out');}
 function getOnboardStays() { return getPairs('sign-on',  'sign-off');  }
 
-function getRangeDates(pairs) {
+// calendarOnly=true  -> only closed pairs highlighted on calendar
+// calendarOnly=false -> open pairs extend to today (for stats)
+function getRangeDates(pairs, calendarOnly) {
   const set = new Set();
   for (const p of pairs) {
+    if (calendarOnly && !p.end) continue;
     const s = new Date(p.start + 'T00:00:00');
     const e = p.end ? new Date(p.end + 'T00:00:00') : new Date();
     for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1))
@@ -843,9 +846,9 @@ function renderCalendar() {
 
   const trips        = getTrips();
   const onboardStays = getOnboardStays();
-  const awayDates    = getRangeDates(trips);
-  const brazilDates  = getRangeDates(getBrazilStays());
-  const onboardDates = getRangeDates(onboardStays);
+  const awayDates    = getRangeDates(trips, true);
+  const brazilDates  = getRangeDates(getBrazilStays(), true);
+  const onboardDates = getRangeDates(onboardStays, true);
 
   for (let i = 0; i < offset; i++) {
     const e = document.createElement('div'); e.className='day empty'; cal.appendChild(e);
