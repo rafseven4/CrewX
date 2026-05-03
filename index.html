@@ -15,15 +15,11 @@
       padding: 2rem 1rem;
     }
 
-    .app {
-      max-width: 720px;
-      margin: 0 auto;
-    }
+    .app { max-width: 720px; margin: 0 auto; }
 
     /* HEADER */
     .header {
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center;
       justify-content: space-between;
       margin-bottom: 1.5rem;
     }
@@ -33,89 +29,55 @@
     .app-subtitle { font-size: 12px; color: #6b7280; margin-top: 1px; }
     .current-status { text-align: right; }
     .current-status .badge {
-      display: inline-block;
-      background: #e1f5ee;
-      color: #0f6e56;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 3px 10px;
-      border-radius: 20px;
-      margin-bottom: 2px;
+      display: inline-block; background: #e1f5ee; color: #0f6e56;
+      font-size: 12px; font-weight: 500; padding: 3px 10px;
+      border-radius: 20px; margin-bottom: 2px;
     }
     .current-status .sub { font-size: 11px; color: #6b7280; }
 
     /* STATS */
     .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-bottom: 1.5rem;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 10px; margin-bottom: 1.5rem;
     }
     .stat-card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 12px 14px;
+      background: #fff; border: 1px solid #e5e7eb;
+      border-radius: 12px; padding: 12px 14px;
     }
     .stat-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
     .stat-value { font-size: 22px; font-weight: 600; color: #0c3a6e; line-height: 1; }
     .stat-unit { font-size: 11px; color: #9ca3af; font-weight: 400; }
 
-    /* CALENDAR WRAPPER */
+    /* CALENDAR CARD */
     .calendar-card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 1.25rem;
+      background: #fff; border: 1px solid #e5e7eb;
+      border-radius: 16px; padding: 1.25rem;
     }
-
     .nav-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 1rem;
     }
     .nav-btn {
-      background: none;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 5px 14px;
-      font-size: 13px;
-      color: #374151;
-      cursor: pointer;
-      transition: background 0.1s;
+      background: none; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 5px 14px; font-size: 13px; color: #374151;
+      cursor: pointer; transition: background 0.1s;
     }
     .nav-btn:hover { background: #f3f4f6; }
     .month-label { font-size: 16px; font-weight: 600; color: #0c3a6e; }
 
     .weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-      margin-bottom: 4px;
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 4px; margin-bottom: 4px;
     }
-    .weekday {
-      font-size: 11px;
-      color: #9ca3af;
-      text-align: center;
-      padding: 4px 0;
-      font-weight: 500;
-    }
+    .weekday { font-size: 11px; color: #9ca3af; text-align: center; padding: 4px 0; font-weight: 500; }
 
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-    }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 
+    /* DAY TILE */
     .day {
-      border-radius: 10px;
-      padding: 6px 5px;
-      min-height: 62px;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      cursor: pointer;
-      position: relative;
+      border-radius: 10px; padding: 6px 5px; min-height: 62px;
+      border: 1px solid #e5e7eb; background: #fff;
+      cursor: pointer; position: relative;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     .day:hover { border-color: #93c5fd; box-shadow: 0 0 0 2px #dbeafe; }
@@ -124,96 +86,99 @@
     .day.today { border-color: #3b82f6; }
     .day.today .day-num { color: #1d4ed8; font-weight: 700; }
 
-    .day-status {
-      font-size: 10px;
-      padding: 2px 5px;
-      border-radius: 5px;
-      display: inline-block;
-      font-weight: 500;
-      line-height: 1.4;
+    /* AWAY RANGE — blue fill */
+    .day.range-away { background: #dbeafe; border-color: #bfdbfe; }
+    .day.range-away .day-num { color: #1e40af; }
+
+    /* EVENT MARKERS */
+    .event-marker {
+      font-size: 10px; font-weight: 600; padding: 2px 5px;
+      border-radius: 5px; display: inline-block; line-height: 1.4;
+      margin-bottom: 2px;
     }
-    .s-onboard  { background: #dcfce7; color: #166534; }
-    .s-home     { background: #dbeafe; color: #1e40af; }
-    .s-travel   { background: #fef3c7; color: #92400e; }
+    .ev-depart    { background: #fbbf24; color: #78350f; }
+    .ev-embark    { background: #34d399; color: #064e3b; }
+    .ev-disembark { background: #f87171; color: #7f1d1d; }
+    .ev-arrive    { background: #60a5fa; color: #1e3a8a; }
+
+    /* small badge showing total days on the arrive tile */
+    .days-away-badge {
+      position: absolute; bottom: 4px; right: 4px;
+      font-size: 9px; font-weight: 700; color: #1e40af;
+      background: #bfdbfe; border-radius: 4px; padding: 1px 4px;
+    }
 
     /* LEGEND */
-    .legend {
-      display: flex;
-      gap: 14px;
-      margin-top: 1rem;
-      flex-wrap: wrap;
-    }
+    .legend { display: flex; gap: 14px; margin-top: 1rem; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
     .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
 
+    /* TRIPS LIST */
+    .trips-info {
+      margin-top: 1rem; padding-top: 1rem;
+      border-top: 1px solid #f3f4f6;
+    }
+    .trips-title { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+    .trip-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: #6b7280; padding: 5px 0;
+      border-bottom: 1px solid #f9fafb;
+    }
+    .trip-days {
+      font-weight: 700; color: #1e40af;
+      background: #dbeafe; border-radius: 6px;
+      padding: 2px 8px; font-size: 12px;
+    }
+
     /* MODAL */
     .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.35);
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35); align-items: center;
+      justify-content: center; z-index: 100;
     }
     .modal-overlay.open { display: flex; }
     .modal {
-      background: #fff;
-      border-radius: 16px;
-      padding: 1.5rem;
-      width: 290px;
+      background: #fff; border-radius: 16px; padding: 1.5rem; width: 300px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     }
     .modal-title { font-size: 16px; font-weight: 600; color: #0c3a6e; margin-bottom: 3px; }
     .modal-sub { font-size: 12px; color: #6b7280; margin-bottom: 1.25rem; }
     .modal-actions { display: flex; flex-direction: column; gap: 8px; }
     .action-btn {
-      border: 1px solid #e5e7eb;
-      background: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: #111827;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: background 0.1s;
+      border: 1px solid #e5e7eb; background: none; border-radius: 10px;
+      padding: 10px 14px; font-size: 13px; color: #111827;
+      cursor: pointer; text-align: left; display: flex; align-items: center;
+      gap: 10px; transition: background 0.1s;
     }
     .action-btn:hover { background: #f9fafb; border-color: #d1d5db; }
+    .action-btn.active { border-color: #3b82f6; background: #eff6ff; font-weight: 600; }
     .action-icon {
-      width: 28px; height: 28px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 7px;
-      font-size: 14px;
-      flex-shrink: 0;
+      width: 28px; height: 28px; display: flex; align-items: center;
+      justify-content: center; border-radius: 7px; font-size: 14px; flex-shrink: 0;
     }
     .ai-depart    { background: #fef3c7; }
     .ai-embark    { background: #dcfce7; }
     .ai-disembark { background: #fee2e2; }
     .ai-arrive    { background: #dbeafe; }
+    .modal-clear {
+      margin-top: 6px; width: 100%; border: 1px solid #fee2e2;
+      background: none; color: #dc2626; font-size: 12px;
+      cursor: pointer; padding: 7px; border-radius: 8px;
+    }
+    .modal-clear:hover { background: #fff5f5; }
     .modal-close {
-      margin-top: 1rem;
-      width: 100%;
-      border: none;
-      background: none;
-      color: #9ca3af;
-      font-size: 12px;
-      cursor: pointer;
-      padding: 4px;
+      margin-top: 6px; width: 100%; border: none; background: none;
+      color: #9ca3af; font-size: 12px; cursor: pointer; padding: 4px;
     }
     .modal-close:hover { color: #6b7280; }
 
     @media (max-width: 520px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      .day { min-height: 48px; }
-      .day-status { display: none; }
+      .day { min-height: 50px; }
     }
   </style>
 </head>
 <body>
-
 <div class="app">
 
   <div class="header">
@@ -232,27 +197,27 @@
       </div>
     </div>
     <div class="current-status">
-      <div class="badge" id="status-badge">Onboard</div>
-      <div class="sub" id="status-sub">Day 12 of 28</div>
+      <div class="badge" id="status-badge">–</div>
+      <div class="sub" id="status-sub">No active trip</div>
     </div>
   </div>
 
   <div class="stats-bar">
     <div class="stat-card">
-      <div class="stat-label">Earning days</div>
+      <div class="stat-label">Days away (total)</div>
+      <div class="stat-value" id="stat-away">0 <span class="stat-unit">days</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Onboard days</div>
       <div class="stat-value" id="stat-earn">0 <span class="stat-unit">days</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Days in Brazil</div>
-      <div class="stat-value" id="stat-brazil">0 <span class="stat-unit">days</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Days at home</div>
-      <div class="stat-value" id="stat-home">0 <span class="stat-unit">days</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Travel days</div>
       <div class="stat-value" id="stat-travel">0 <span class="stat-unit">days</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Trips logged</div>
+      <div class="stat-value" id="stat-trips">0</div>
     </div>
   </div>
 
@@ -262,24 +227,25 @@
       <span class="month-label" id="month-label"></span>
       <button class="nav-btn" onclick="changeMonth(1)">Next →</button>
     </div>
-
     <div class="weekdays">
-      <div class="weekday">Mon</div>
-      <div class="weekday">Tue</div>
-      <div class="weekday">Wed</div>
-      <div class="weekday">Thu</div>
-      <div class="weekday">Fri</div>
-      <div class="weekday">Sat</div>
+      <div class="weekday">Mon</div><div class="weekday">Tue</div>
+      <div class="weekday">Wed</div><div class="weekday">Thu</div>
+      <div class="weekday">Fri</div><div class="weekday">Sat</div>
       <div class="weekday">Sun</div>
     </div>
-
     <div class="calendar" id="calendar"></div>
 
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#166534;"></div> Onboard</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#1e40af;"></div> At home</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#92400e;"></div> Travel</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e5e7eb;"></div> Unlogged</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#bfdbfe;border:1px solid #93c5fd;"></div> Away period</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24;"></div> Left home</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#34d399;"></div> Embarked</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f87171;"></div> Disembarked</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#60a5fa;"></div> Arrived home</div>
+    </div>
+
+    <div class="trips-info" id="trips-info" style="display:none;">
+      <div class="trips-title">Logged trips</div>
+      <div id="trips-list"></div>
     </div>
   </div>
 
@@ -288,150 +254,249 @@
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
   <div class="modal">
-    <div class="modal-title" id="modal-title">3 May</div>
-    <div class="modal-sub" id="modal-sub">Log an event for this day</div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-sub" id="modal-sub"></div>
     <div class="modal-actions">
-      <button class="action-btn" onclick="logEvent('travel')">
-        <div class="action-icon ai-depart">🏠</div>
-        Left home (travel day)
+      <button class="action-btn" id="btn-depart" onclick="logEvent('depart')">
+        <div class="action-icon ai-depart">🏠</div> Left home
       </button>
-      <button class="action-btn" onclick="logEvent('onboard')">
-        <div class="action-icon ai-embark">⚓</div>
-        Embarked on ship
+      <button class="action-btn" id="btn-embark" onclick="logEvent('embark')">
+        <div class="action-icon ai-embark">⚓</div> Embarked on ship
       </button>
-      <button class="action-btn" onclick="logEvent('travel')">
-        <div class="action-icon ai-disembark">🔄</div>
-        Disembarked from ship
+      <button class="action-btn" id="btn-disembark" onclick="logEvent('disembark')">
+        <div class="action-icon ai-disembark">🔄</div> Disembarked from ship
       </button>
-      <button class="action-btn" onclick="logEvent('home')">
-        <div class="action-icon ai-arrive">🏡</div>
-        Arrived home
+      <button class="action-btn" id="btn-arrive" onclick="logEvent('arrive')">
+        <div class="action-icon ai-arrive">🏡</div> Arrived home
       </button>
     </div>
+    <button class="modal-clear" id="btn-clear" onclick="clearDay()" style="display:none;">
+      Remove all events from this day
+    </button>
     <button class="modal-close" onclick="closeModal()">cancel</button>
   </div>
 </div>
 
 <script>
-  // ── State ──────────────────────────────────────────────────
-  // data[year][month][day] = 'onboard' | 'home' | 'travel'
-  let data = JSON.parse(localStorage.getItem('rotationData') || '{}');
-  let currentYear = new Date().getFullYear();
-  let currentMonth = new Date().getMonth();
-  let selectedDay = null;
+// ── Storage ──────────────────────────────────────────────────────
+// events: [{ date: 'YYYY-MM-DD', type: 'depart'|'embark'|'disembark'|'arrive' }]
+let events = JSON.parse(localStorage.getItem('crewxEvents') || '[]');
+let currentYear  = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let selectedDate = null;
 
-  const MONTHS = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-  const STATUS_LABEL = { onboard: 'onboard', home: 'at home', travel: 'travel' };
-  const STATUS_CLASS = { onboard: 's-onboard', home: 's-home', travel: 's-travel' };
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
 
-  // ── Save / Load ────────────────────────────────────────────
-  function save() {
-    localStorage.setItem('rotationData', JSON.stringify(data));
+function save() { localStorage.setItem('crewxEvents', JSON.stringify(events)); }
+
+function dateStr(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function getEventsForDate(ds) {
+  return events.filter(e => e.date === ds);
+}
+
+// ── Trip pairing: each depart pairs with the nearest following arrive ──
+function getTrips() {
+  const departs = events.filter(e => e.type === 'depart').map(e => e.date).sort();
+  const arrives = events.filter(e => e.type === 'arrive').map(e => e.date).sort();
+  const trips = [];
+  const usedArrives = new Set();
+  for (const dep of departs) {
+    const arr = arrives.find(a => a >= dep && !usedArrives.has(a)) || null;
+    if (arr) usedArrives.add(arr);
+    trips.push({ depart: dep, arrive: arr });
   }
+  return trips;
+}
 
-  function getDay(y, m, d) {
-    return data[y]?.[m]?.[d] || null;
-  }
-
-  function setDay(y, m, d, status) {
-    if (!data[y]) data[y] = {};
-    if (!data[y][m]) data[y][m] = {};
-    data[y][m][d] = status;
-    save();
-  }
-
-  // ── Stats ──────────────────────────────────────────────────
-  function updateStats() {
-    let earn = 0, brazil = 0, home = 0, travel = 0;
-    for (const y in data) {
-      for (const m in data[y]) {
-        for (const d in data[y][m]) {
-          const st = data[y][m][d];
-          if (st === 'onboard') { earn++; brazil++; }
-          if (st === 'home')    { home++; }
-          if (st === 'travel')  { travel++; brazil++; }
-        }
-      }
+// ── Returns Set of 'YYYY-MM-DD' strings within any depart→arrive range ──
+function getAwayDates() {
+  const away = new Set();
+  const trips = getTrips();
+  for (const t of trips) {
+    const start = new Date(t.depart + 'T00:00:00');
+    const end   = t.arrive ? new Date(t.arrive + 'T00:00:00') : new Date();
+    for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
+      away.add(cur.toISOString().slice(0, 10));
     }
-    document.getElementById('stat-earn').innerHTML   = `${earn} <span class="stat-unit">days</span>`;
-    document.getElementById('stat-brazil').innerHTML = `${brazil} <span class="stat-unit">days</span>`;
-    document.getElementById('stat-home').innerHTML   = `${home} <span class="stat-unit">days</span>`;
-    document.getElementById('stat-travel').innerHTML = `${travel} <span class="stat-unit">days</span>`;
+  }
+  return away;
+}
+
+// ── Stats ────────────────────────────────────────────────────────
+function updateStats() {
+  const away   = getAwayDates();
+  const trips  = getTrips();
+
+  // onboard days = away days that are NOT a depart/arrive/disembark event day
+  const eventDates = new Set(events.filter(e =>
+    e.type === 'depart' || e.type === 'arrive' || e.type === 'disembark'
+  ).map(e => e.date));
+
+  let onboardDays = 0, travelDays = 0;
+  for (const ds of away) {
+    if (eventDates.has(ds)) travelDays++;
+    else onboardDays++;
   }
 
-  // ── Calendar render ────────────────────────────────────────
-  function renderCalendar() {
-    document.getElementById('month-label').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
-    const cal = document.getElementById('calendar');
-    cal.innerHTML = '';
+  const completedTrips = trips.filter(t => t.arrive).length;
 
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const offset = (firstDay === 0) ? 6 : firstDay - 1;
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const today = new Date();
+  document.getElementById('stat-away').innerHTML   = `${away.size} <span class="stat-unit">days</span>`;
+  document.getElementById('stat-earn').innerHTML   = `${onboardDays} <span class="stat-unit">days</span>`;
+  document.getElementById('stat-travel').innerHTML = `${travelDays} <span class="stat-unit">days</span>`;
+  document.getElementById('stat-trips').textContent = completedTrips;
 
-    for (let i = 0; i < offset; i++) {
-      const e = document.createElement('div');
-      e.className = 'day empty';
-      cal.appendChild(e);
+  // header badge
+  const todayStr = new Date().toISOString().slice(0,10);
+  const badge = document.getElementById('status-badge');
+  const sub   = document.getElementById('status-sub');
+  if (events.some(e => e.date === todayStr && e.type === 'arrive')) {
+    badge.style.cssText = 'background:#dbeafe;color:#1e40af';
+    badge.textContent = 'Arrived home'; sub.textContent = 'Back from trip';
+  } else if (away.has(todayStr)) {
+    badge.style.cssText = 'background:#dcfce7;color:#0f6e56';
+    badge.textContent = 'Away'; sub.textContent = 'Currently on rotation';
+  } else {
+    badge.style.cssText = 'background:#f3f4f6;color:#6b7280';
+    badge.textContent = 'At home'; sub.textContent = 'No active trip';
+  }
+
+  // trips list
+  const tripsInfo = document.getElementById('trips-info');
+  const tripsList = document.getElementById('trips-list');
+  if (trips.length === 0) { tripsInfo.style.display = 'none'; return; }
+  tripsInfo.style.display = 'block';
+  tripsList.innerHTML = '';
+  trips.forEach((t, i) => {
+    const dep = t.depart.slice(5).replace('-', '/');
+    const arr = t.arrive ? t.arrive.slice(5).replace('-', '/') : '…';
+    let dur = '?';
+    if (t.arrive) {
+      const ms = new Date(t.arrive + 'T00:00:00') - new Date(t.depart + 'T00:00:00');
+      dur = Math.round(ms / 86400000) + 1;
+    }
+    const row = document.createElement('div');
+    row.className = 'trip-row';
+    row.innerHTML = `<span>Trip ${i+1} &nbsp;&nbsp; ${dep} → ${arr}</span>
+      <span class="trip-days">${t.arrive ? dur + ' days' : 'ongoing'}</span>`;
+    tripsList.appendChild(row);
+  });
+}
+
+// ── Calendar render ───────────────────────────────────────────────
+function renderCalendar() {
+  document.getElementById('month-label').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = '';
+
+  const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
+  const offset      = (firstDay === 0) ? 6 : firstDay - 1;
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const today       = new Date();
+  const awayDates   = getAwayDates();
+  const trips       = getTrips();
+
+  for (let i = 0; i < offset; i++) {
+    const e = document.createElement('div'); e.className = 'day empty'; cal.appendChild(e);
+  }
+
+  const EV_LABEL = { depart: 'left home', embark: 'embarked', disembark: 'disembarked', arrive: 'arrived' };
+  const EV_CLASS = { depart: 'ev-depart', embark: 'ev-embark', disembark: 'ev-disembark', arrive: 'ev-arrive' };
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds  = dateStr(currentYear, currentMonth, d);
+    const div = document.createElement('div');
+    div.className = 'day';
+
+    const isToday = (today.getFullYear() === currentYear &&
+                     today.getMonth()    === currentMonth &&
+                     today.getDate()     === d);
+    if (isToday) div.classList.add('today');
+    if (awayDates.has(ds)) div.classList.add('range-away');
+
+    div.innerHTML = `<div class="day-num">${d}</div>`;
+
+    // Event markers
+    getEventsForDate(ds).forEach(ev => {
+      div.innerHTML += `<span class="event-marker ${EV_CLASS[ev.type]}">${EV_LABEL[ev.type]}</span><br>`;
+    });
+
+    // Total days badge on arrive day
+    const trip = trips.find(t => t.arrive === ds);
+    if (trip) {
+      const dur = Math.round(
+        (new Date(trip.arrive + 'T00:00:00') - new Date(trip.depart + 'T00:00:00')) / 86400000
+      ) + 1;
+      div.innerHTML += `<span class="days-away-badge">${dur}d</span>`;
     }
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const div = document.createElement('div');
-      div.className = 'day';
-      const isToday = (today.getFullYear() === currentYear &&
-                       today.getMonth() === currentMonth &&
-                       today.getDate() === d);
-      if (isToday) div.classList.add('today');
-
-      const st = getDay(currentYear, currentMonth, d);
-      div.innerHTML = `<div class="day-num">${d}</div>`;
-      if (st) {
-        div.innerHTML += `<span class="day-status ${STATUS_CLASS[st]}">${STATUS_LABEL[st]}</span>`;
-      }
-      div.addEventListener('click', () => openModal(d));
-      cal.appendChild(div);
-    }
-    updateStats();
+    div.addEventListener('click', () => openModal(ds));
+    cal.appendChild(div);
   }
+  updateStats();
+}
 
-  function changeMonth(dir) {
-    currentMonth += dir;
-    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-    if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
-    renderCalendar();
-  }
-
-  // ── Modal ──────────────────────────────────────────────────
-  function openModal(d) {
-    selectedDay = d;
-    const st = getDay(currentYear, currentMonth, d);
-    document.getElementById('modal-title').textContent = `${d} ${MONTHS[currentMonth]} ${currentYear}`;
-    document.getElementById('modal-sub').textContent = st
-      ? `Current status: ${STATUS_LABEL[st]}`
-      : 'No event logged yet';
-    document.getElementById('modal').classList.add('open');
-  }
-
-  function closeModal() {
-    document.getElementById('modal').classList.remove('open');
-    selectedDay = null;
-  }
-
-  function handleOverlayClick(e) {
-    if (e.target === document.getElementById('modal')) closeModal();
-  }
-
-  function logEvent(status) {
-    if (selectedDay === null) return;
-    setDay(currentYear, currentMonth, selectedDay, status);
-    closeModal();
-    renderCalendar();
-  }
-
-  // ── Init ───────────────────────────────────────────────────
+function changeMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
   renderCalendar();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────
+function openModal(ds) {
+  selectedDate = ds;
+  const [y, m, d] = ds.split('-');
+  document.getElementById('modal-title').textContent = `${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`;
+  const dayEvs = getEventsForDate(ds);
+  const EV_LABEL = { depart: 'left home', embark: 'embarked', disembark: 'disembarked', arrive: 'arrived' };
+  document.getElementById('modal-sub').textContent = dayEvs.length
+    ? 'Logged: ' + dayEvs.map(e => EV_LABEL[e.type]).join(', ')
+    : 'No events logged yet — tap to add';
+
+  ['depart','embark','disembark','arrive'].forEach(t => {
+    document.getElementById('btn-' + t).classList.toggle('active', dayEvs.some(e => e.type === t));
+  });
+  document.getElementById('btn-clear').style.display = dayEvs.length ? 'block' : 'none';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  selectedDate = null;
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+function logEvent(type) {
+  if (!selectedDate) return;
+  const idx = events.findIndex(e => e.date === selectedDate && e.type === type);
+  if (idx >= 0) {
+    events.splice(idx, 1); // toggle off
+  } else {
+    events.push({ date: selectedDate, type });
+    events.sort((a, b) => a.date.localeCompare(b.date) || a.type.localeCompare(b.type));
+  }
+  save();
+  closeModal();
+  renderCalendar();
+}
+
+function clearDay() {
+  if (!selectedDate) return;
+  events = events.filter(e => e.date !== selectedDate);
+  save();
+  closeModal();
+  renderCalendar();
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+renderCalendar();
 </script>
 </body>
 </html>
