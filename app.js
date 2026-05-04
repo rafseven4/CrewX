@@ -25,34 +25,64 @@ let currentMonth = new Date().getMonth();
 let selectedDate = null;
 let editingCertIdx = null;
 
-// Przy starcie: jeśli dokument w chmurze nie istnieje (pierwsze użycie), wyślij tam lokalne dane
+// ═══ CLOUD SYNC — bezpieczna logika startowa ══════════════════════
+// Flaga: czy już załadowaliśmy dane z chmury przy starcie
+let cloudLoaded = false;
+
 syncDoc.get().then((doc) => {
-  if (!doc.exists) saveToCloud();
-});
+  if (!doc.exists) {
+    // Dokument nie istnieje w chmurze — pierwszy raz na tym koncie
+    // Zapisujemy lokalne dane TYLKO jeśli lokalnie coś jest
+    const hasLocalData = events.length > 0 || rates.length > 0 || certs.length > 0;
+    if (hasLocalData) {
+      console.log("Pierwszy raz — wysyłam dane lokalne do chmury");
+      saveToCloud();
+    } else {
+      console.log("Brak danych lokalnych i w chmurze — czysta instalacja");
+    }
+  }
+  // Jeśli dokument istnieje, onSnapshot załaduje dane automatycznie
+}).catch(err => console.error("Błąd sprawdzania chmury:", err));
 
 // Nasłuchiwanie zmian na żywo z chmury
 syncDoc.onSnapshot((doc) => {
-  if (doc.exists) {
-    const data = doc.data();
-    events = data.events || [];
-    rates  = data.rates || [];
-    rhGrid = data.rhGrid || {};
-    rhMeta = data.rhMeta || {};
-    certs  = data.certs || [];
+  if (!doc.exists) return;
 
-    // Kopia zapasowa lokalnie
-    localStorage.setItem('crewxEvents', JSON.stringify(events));
-    localStorage.setItem('crewxRates',  JSON.stringify(rates));
-    localStorage.setItem('crewxRHGrid', JSON.stringify(rhGrid));
-    localStorage.setItem('crewxRHMeta', JSON.stringify(rhMeta));
-    localStorage.setItem('crewxCerts',  JSON.stringify(certs));
+  const data = doc.data();
+  const cloudEvents = data.events || [];
+  const cloudRates  = data.rates  || [];
+  const cloudRhGrid = data.rhGrid || {};
+  const cloudRhMeta = data.rhMeta || {};
+  const cloudCerts  = data.certs  || [];
 
-    // Odświeżanie interfejsu po pobraniu danych z chmury
-    renderRates();
-    renderCalendar();
-    if (document.getElementById('page-resthours').classList.contains('active')) renderRH();
-    if (document.getElementById('page-certificates').classList.contains('active')) renderCerts();
-  }
+  // Pierwsze załadowanie: chmura wygrywa nad lokalnym
+  // Kolejne aktualizacje: zawsze bierz z chmury (real-time sync)
+  events = cloudEvents;
+  rates  = cloudRates;
+  rhGrid = cloudRhGrid;
+  rhMeta = cloudRhMeta;
+  certs  = cloudCerts;
+  cloudLoaded = true;
+
+  // Kopia zapasowa lokalnie
+  localStorage.setItem('crewxEvents', JSON.stringify(events));
+  localStorage.setItem('crewxRates',  JSON.stringify(rates));
+  localStorage.setItem('crewxRHGrid', JSON.stringify(rhGrid));
+  localStorage.setItem('crewxRHMeta', JSON.stringify(rhMeta));
+  localStorage.setItem('crewxCerts',  JSON.stringify(certs));
+
+  // Odświeżanie interfejsu
+  renderRates();
+  renderCalendar();
+  updateStats();
+  if (document.getElementById('page-resthours').classList.contains('active')) renderRH();
+  if (document.getElementById('page-certificates').classList.contains('active')) renderCerts();
+}, (err) => {
+  console.error("Błąd nasłuchiwania chmury:", err);
+  // Fallback: używaj danych lokalnych jeśli brak połączenia
+  renderRates();
+  renderCalendar();
+  updateStats();
 });
 
 // Zapisywanie do Firebase
