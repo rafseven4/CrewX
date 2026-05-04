@@ -756,6 +756,11 @@ function renderCerts() {
 function openCertModal(idx) {
   editingCertIdx = idx !== undefined ? idx : null;
   const m = document.getElementById('cert-modal');
+  
+  // Ta nowa linijka chowa status z poprzedniego skanowania
+  const statusEl = document.getElementById('scan-status');
+  if (statusEl) statusEl.style.display = 'none';
+
   document.getElementById('cert-modal-title').textContent = editingCertIdx !== null ? 'Edit Certificate' : 'Add Certificate';
   if (editingCertIdx !== null) {
     const c = certs[editingCertIdx];
