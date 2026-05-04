@@ -817,3 +817,43 @@ body {
 .admin-btn-disable:hover { background: rgba(245,158,11,0.1); }
 .admin-btn-del     { color: var(--red); border-color: rgba(239,68,68,0.3); }
 .admin-btn-del:hover { background: rgba(239,68,68,0.1); }
+
+/* ═══ ADMIN EMAIL SETTINGS ══════════════════════════════════════════ */
+.admin-toggle-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--navy); border: 1px solid var(--navy3);
+  border-radius: 8px; padding: 8px 14px; cursor: pointer;
+  transition: border-color 0.2s;
+}
+.admin-toggle-wrap:hover { border-color: var(--sky); }
+.admin-toggle-wrap input[type="checkbox"] { display: none; }
+.admin-toggle-label {
+  font-size: 13px; font-weight: 600; color: var(--gray400);
+  transition: color 0.2s;
+}
+.admin-toggle-wrap input:checked ~ .admin-toggle-label { color: var(--sky); }
+.admin-toggle-wrap input:checked + .admin-toggle-label { color: var(--sky); }
+.admin-toggle-wrap:has(input:checked) {
+  border-color: rgba(56,189,248,0.4);
+  background: rgba(56,189,248,0.06);
+}
+
+/* Master on/off toggle switch */
+.admin-master-toggle {
+  position: relative; display: inline-block;
+  width: 48px; height: 26px; cursor: pointer; flex-shrink: 0;
+}
+.admin-master-toggle input { display: none; }
+.admin-master-slider {
+  position: absolute; inset: 0;
+  background: var(--navy3); border-radius: 26px;
+  transition: background 0.2s;
+}
+.admin-master-slider::before {
+  content: ''; position: absolute;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--white); top: 3px; left: 3px;
+  transition: transform 0.2s;
+}
+.admin-master-toggle input:checked ~ .admin-master-slider { background: var(--ocean); }
+.admin-master-toggle input:checked ~ .admin-master-slider::before { transform: translateX(22px); }
