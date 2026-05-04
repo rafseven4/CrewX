@@ -647,3 +647,91 @@ body {
   .rh-slot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .rh-slot.work { background: #2563eb !important; -webkit-print-color-adjust: exact; }
 }
+
+/* ═══ TRAVEL EXPENSES ═══════════════════════════════════════════════ */
+.exp-upload-zone {
+  border: 2px dashed rgba(56,189,248,0.4);
+  border-radius: var(--radius);
+  background: rgba(56,189,248,0.05);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.exp-upload-zone:hover {
+  background: rgba(56,189,248,0.1);
+  border-color: rgba(56,189,248,0.7);
+}
+.exp-upload-icon { font-size: 32px; margin-bottom: 10px; }
+.exp-upload-title { font-size: 14px; font-weight: 600; color: var(--sky); margin-bottom: 6px; }
+.exp-upload-sub { font-size: 11px; color: var(--gray400); }
+
+.exp-group { margin-bottom: 24px; }
+.exp-group-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--gray400);
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--navy3);
+}
+.exp-card {
+  background: var(--navy2);
+  border: 1px solid var(--navy3);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.exp-card-left { flex: 1; min-width: 0; }
+.exp-card-desc {
+  font-size: 13px; font-weight: 600; color: var(--white);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.exp-card-meta { font-size: 11px; color: var(--gray400); margin-top: 3px; }
+.exp-card-amount {
+  font-size: 16px; font-weight: 700; color: var(--green);
+  white-space: nowrap;
+}
+.exp-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.exp-btn-edit, .exp-btn-del {
+  background: none; border: 1px solid var(--navy3);
+  border-radius: 6px; padding: 4px 8px;
+  font-size: 11px; cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: background 0.15s;
+}
+.exp-btn-edit { color: var(--sky); }
+.exp-btn-edit:hover { background: rgba(56,189,248,0.1); }
+.exp-btn-del { color: var(--red); }
+.exp-btn-del:hover { background: rgba(239,68,68,0.1); }
+
+.exp-empty {
+  text-align: center; padding: 32px 0;
+  font-size: 13px; color: var(--gray400);
+}
+
+/* Expenses section in payroll */
+.exp-payroll-section {
+  margin-top: 12px;
+  border-top: 1px solid var(--navy3);
+  padding-top: 10px;
+}
+.exp-payroll-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--gray400); margin-bottom: 6px;
+}
+.exp-payroll-row {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--gray400);
+  padding: 2px 0;
+}
+.exp-payroll-row span:last-child { color: var(--green); font-weight: 600; }
+.exp-payroll-total {
+  display: flex; justify-content: space-between;
+  font-size: 12px; font-weight: 700;
+  color: var(--white); padding-top: 6px;
+  border-top: 1px solid var(--navy3); margin-top: 4px;
+}
+.exp-payroll-total span:last-child { color: var(--green); }
