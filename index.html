@@ -393,8 +393,8 @@
       <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
         <span style="font-size: 24px;">🤖</span>
         <span style="font-size: 13px; font-weight: 600; color: var(--sky);">Skanuj certyfikat przez AI (Claude)</span>
-        <span style="font-size: 10px; color: var(--gray400);">Kliknij, aby wybrać zdjęcie (JPG/PNG)</span>
-        <input type="file" id="cert-scan-input" accept="image/jpeg, image/png" style="display: none;" onchange="handleCertScan(event)">
+        <span style="font-size: 10px; color: var(--gray400);">Kliknij, aby wybrać zdjęcie lub PDF (JPG/PNG/PDF)</span>
+        <input type="file" id="cert-scan-input" accept="image/jpeg, image/png, application/pdf" style="display: none;" onchange="handleCertScan(event)">
       </label>
       <div id="scan-status" style="font-size: 11px; font-weight: 500; margin-top: 8px; display: none;"></div>
     </div>
@@ -476,10 +476,10 @@
 
   <!-- UPLOAD ZONE -->
   <div class="exp-upload-zone" id="exp-upload-zone" onclick="document.getElementById('exp-file-input').click()">
-    <input type="file" id="exp-file-input" accept=".docx" style="display:none" onchange="handleExpenseScan(event)"/>
+    <input type="file" id="exp-file-input" accept=".doc,.docx" style="display:none" onchange="handleExpenseScan(event)"/>
     <div class="exp-upload-icon">🤖</div>
     <div class="exp-upload-title">Scan Expense Document (AI)</div>
-    <div class="exp-upload-sub">Click to upload a .docx file — Claude will extract currency, total and convert to USD</div>
+    <div class="exp-upload-sub">Click to upload a .doc or .docx file — Claude extracts all items, currencies and converts to USD</div>
     <div id="exp-scan-status" style="display:none;margin-top:10px;font-size:12px;font-weight:600;"></div>
   </div>
 
