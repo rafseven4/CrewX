@@ -10,87 +10,161 @@ const firebaseConfig = {
 
 // INICJALIZACJA FIREBASE
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const syncDoc = db.collection('appData').doc('moje_dane_crewx'); // Stały dokument dla Twoich danych
+const db   = firebase.firestore();
+const auth = firebase.auth();
 
-// ═══ STATE & SYNC ════════════════════════════════════════════════════════
-let events = JSON.parse(localStorage.getItem('crewxEvents') || '[]');
-let rates  = JSON.parse(localStorage.getItem('crewxRates')  || '[]');
-let rhGrid = JSON.parse(localStorage.getItem('crewxRHGrid') || '{}');
-let rhMeta = JSON.parse(localStorage.getItem('crewxRHMeta') || '{}');
-let certs  = JSON.parse(localStorage.getItem('crewxCerts')  || '[]');
-let expenses = JSON.parse(localStorage.getItem('crewxExpenses') || '[]');
+// ═══ ADMIN ════════════════════════════════════════════════════════
+const ADMIN_EMAIL = 'rafal.pietrzak.pl@gmail.com';
+let currentUser   = null;
+let syncDoc       = null;
+let unsubscribeSnapshot = null;
 
-let currentYear  = new Date().getFullYear();
-let currentMonth = new Date().getMonth();
-let selectedDate = null;
+// ═══ STATE ════════════════════════════════════════════════════════
+let events   = [];
+let rates    = [];
+let rhGrid   = {};
+let rhMeta   = {};
+let certs    = [];
+let expenses = [];
+
+let currentYear    = new Date().getFullYear();
+let currentMonth   = new Date().getMonth();
+let selectedDate   = null;
 let editingCertIdx = null;
+let cloudLoaded    = false;
 
-// ═══ CLOUD SYNC — bezpieczna logika startowa ══════════════════════
-// Flaga: czy już załadowaliśmy dane z chmury przy starcie
-let cloudLoaded = false;
-
-syncDoc.get().then((doc) => {
-  if (!doc.exists) {
-    // Dokument nie istnieje w chmurze — pierwszy raz na tym koncie
-    // Zapisujemy lokalne dane TYLKO jeśli lokalnie coś jest
-    const hasLocalData = events.length > 0 || rates.length > 0 || certs.length > 0;
-    if (hasLocalData) {
-      console.log("Pierwszy raz — wysyłam dane lokalne do chmury");
-      saveToCloud();
-    } else {
-      console.log("Brak danych lokalnych i w chmurze — czysta instalacja");
-    }
+// ═══ AUTH STATE OBSERVER ══════════════════════════════════════════
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    showApp();
+  } else {
+    currentUser = null;
+    showLogin();
   }
-  // Jeśli dokument istnieje, onSnapshot załaduje dane automatycznie
-}).catch(err => console.error("Błąd sprawdzania chmury:", err));
-
-// Nasłuchiwanie zmian na żywo z chmury
-syncDoc.onSnapshot((doc) => {
-  if (!doc.exists) return;
-
-  const data = doc.data();
-  const cloudEvents = data.events || [];
-  const cloudRates  = data.rates  || [];
-  const cloudRhGrid = data.rhGrid || {};
-  const cloudRhMeta = data.rhMeta || {};
-  const cloudCerts  = data.certs  || [];
-
-  // Pierwsze załadowanie: chmura wygrywa nad lokalnym
-  // Kolejne aktualizacje: zawsze bierz z chmury (real-time sync)
-  events   = cloudEvents;
-  rates    = cloudRates;
-  rhGrid   = cloudRhGrid;
-  rhMeta   = cloudRhMeta;
-  certs    = cloudCerts;
-  expenses = data.expenses || [];
-  cloudLoaded = true;
-
-  localStorage.setItem('crewxEvents',   JSON.stringify(events));
-  localStorage.setItem('crewxRates',    JSON.stringify(rates));
-  localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));
-  localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));
-  localStorage.setItem('crewxCerts',    JSON.stringify(certs));
-  localStorage.setItem('crewxExpenses', JSON.stringify(expenses));
-
-  // Odświeżanie interfejsu
-  renderRates();
-  renderCalendar();
-  updateStats();
-  if (document.getElementById('page-resthours').classList.contains('active')) renderRH();
-  if (document.getElementById('page-certificates').classList.contains('active')) renderCerts();
-}, (err) => {
-  console.error("Błąd nasłuchiwania chmury:", err);
-  // Fallback: używaj danych lokalnych jeśli brak połączenia
-  renderRates();
-  renderCalendar();
-  updateStats();
 });
 
-// Zapisywanie do Firebase
+// ─── Show login screen ────────────────────────────────────────────
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-root').style.display = 'none';
+  if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+}
+
+// ─── Show app after login ─────────────────────────────────────────
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = 'block';
+
+  // Per-user Firestore document
+  syncDoc = db.collection('users').doc(currentUser.uid).collection('appData').doc('crewx');
+
+  // Show/hide admin menu
+  const adminBtn = document.getElementById('nav-admin');
+  if (adminBtn) adminBtn.style.display = currentUser.email === ADMIN_EMAIL ? 'flex' : 'none';
+
+  // Update status bar
+  const statusDot  = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+  if (statusText) statusText.textContent = currentUser.email.split('@')[0];
+
+  // Load data
+  initCloudSync();
+  renderRates();
+  renderCalendar();
+}
+
+// ─── Login function ───────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+
+  if (!email || !pass) { errEl.textContent = 'Enter email and password.'; return; }
+
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+  errEl.textContent = '';
+
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (err) {
+    btn.textContent = 'Sign In';
+    btn.disabled = false;
+    switch (err.code) {
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        errEl.textContent = 'Invalid email or password.'; break;
+      case 'auth/too-many-requests':
+        errEl.textContent = 'Too many attempts. Try again later.'; break;
+      default:
+        errEl.textContent = err.message;
+    }
+  }
+}
+
+// ─── Logout ───────────────────────────────────────────────────────
+function doLogout() {
+  if (!confirm('Sign out?')) return;
+  events = []; rates = []; rhGrid = {}; rhMeta = {}; certs = []; expenses = [];
+  localStorage.clear();
+  auth.signOut();
+}
+
+// Allow Enter key on login form
+document.addEventListener('DOMContentLoaded', () => {
+  const passEl = document.getElementById('login-pass');
+  if (passEl) passEl.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  const emailEl = document.getElementById('login-email');
+  if (emailEl) emailEl.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+});
+
+// ═══ CLOUD SYNC — per user ════════════════════════════════════════
+function initCloudSync() {
+  if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+  syncDoc.get().then(doc => {
+    if (!doc.exists) {
+      console.log("Nowy użytkownik — czysta instalacja");
+    }
+  }).catch(err => console.error("Błąd sprawdzania chmury:", err));
+
+  unsubscribeSnapshot = syncDoc.onSnapshot(doc => {
+    if (!doc.exists) return;
+    const data = doc.data();
+    events   = data.events   || [];
+    rates    = data.rates    || [];
+    rhGrid   = data.rhGrid   || {};
+    rhMeta   = data.rhMeta   || {};
+    certs    = data.certs    || [];
+    expenses = data.expenses || [];
+    cloudLoaded = true;
+
+    localStorage.setItem('crewxEvents',   JSON.stringify(events));
+    localStorage.setItem('crewxRates',    JSON.stringify(rates));
+    localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));
+    localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));
+    localStorage.setItem('crewxCerts',    JSON.stringify(certs));
+    localStorage.setItem('crewxExpenses', JSON.stringify(expenses));
+
+    renderRates();
+    renderCalendar();
+    updateStats();
+    if (document.getElementById('page-resthours')?.classList.contains('active')) renderRH();
+    if (document.getElementById('page-certificates')?.classList.contains('active')) renderCerts();
+    if (document.getElementById('page-expenses')?.classList.contains('active')) renderExpenses();
+  }, err => {
+    console.error("Błąd nasłuchiwania chmury:", err);
+    renderRates(); renderCalendar(); updateStats();
+  });
+}
+
 function saveToCloud() {
+  if (!syncDoc) return;
   syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses }, { merge: true })
-    .catch(err => console.error("Błąd zapisu do chmury:", err));
+    .catch(err => console.error("Błąd zapisu:", err));
 }
 
 function saveEvents()   { localStorage.setItem('crewxEvents',   JSON.stringify(events));   saveToCloud(); }
@@ -99,6 +173,118 @@ function saveRHGrid()   { localStorage.setItem('crewxRHGrid',   JSON.stringify(r
 function saveRHMeta()   { localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));   saveToCloud(); }
 function saveCerts()    { localStorage.setItem('crewxCerts',    JSON.stringify(certs));    saveToCloud(); }
 function saveExpenses() { localStorage.setItem('crewxExpenses', JSON.stringify(expenses)); saveToCloud(); }
+
+// ═══ ADMIN — user management ══════════════════════════════════════
+const ADMIN_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/adminManageUsers";
+
+async function renderAdminPanel() {
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
+  const wrap = document.getElementById('admin-users-list');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="color:var(--gray400);font-size:13px">Loading users...</div>';
+
+  try {
+    const token = await currentUser.getIdToken();
+    const resp  = await fetch(ADMIN_FUNCTION_URL + '?action=list', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    if (!data.users || data.users.length === 0) {
+      wrap.innerHTML = '<div class="exp-empty">No users yet.</div>';
+      return;
+    }
+
+    wrap.innerHTML = data.users.map(u => `
+      <div class="admin-user-card">
+        <div class="admin-user-info">
+          <div class="admin-user-email">${u.email}</div>
+          <div class="admin-user-meta">
+            Created: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+            &nbsp;·&nbsp;
+            Last login: ${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : 'Never'}
+          </div>
+        </div>
+        <div class="admin-user-actions">
+          ${u.disabled
+            ? `<button class="admin-btn-enable" onclick="adminEnableUser('${u.uid}')">Enable</button>`
+            : `<button class="admin-btn-disable" onclick="adminDisableUser('${u.uid}')">Disable</button>`}
+          <button class="admin-btn-del" onclick="adminDeleteUser('${u.uid}', '${u.email}')">Delete</button>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    wrap.innerHTML = `<div style="color:var(--red);font-size:13px">Error: ${err.message}</div>`;
+  }
+}
+
+async function adminCreateUser() {
+  const email = document.getElementById('admin-new-email').value.trim();
+  const pass  = document.getElementById('admin-new-pass').value.trim();
+  const msgEl = document.getElementById('admin-create-msg');
+
+  if (!email || !pass) { msgEl.style.color='var(--red)'; msgEl.textContent='Email and password required.'; return; }
+  if (pass.length < 6) { msgEl.style.color='var(--red)'; msgEl.textContent='Password must be at least 6 characters.'; return; }
+
+  msgEl.style.color = 'var(--gold)'; msgEl.textContent = 'Creating user...';
+
+  try {
+    const token = await currentUser.getIdToken();
+    const resp  = await fetch(ADMIN_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'create', email, password: pass })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    msgEl.style.color = 'var(--green)';
+    msgEl.textContent = `✅ User ${email} created!`;
+    document.getElementById('admin-new-email').value = '';
+    document.getElementById('admin-new-pass').value  = '';
+    renderAdminPanel();
+  } catch (err) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '❌ ' + err.message;
+  }
+}
+
+async function adminDeleteUser(uid, email) {
+  if (!confirm(`Delete user ${email}? This cannot be undone.`)) return;
+  try {
+    const token = await currentUser.getIdToken();
+    await fetch(ADMIN_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'delete', uid })
+    });
+    renderAdminPanel();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function adminDisableUser(uid) {
+  try {
+    const token = await currentUser.getIdToken();
+    await fetch(ADMIN_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'disable', uid })
+    });
+    renderAdminPanel();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function adminEnableUser(uid) {
+  try {
+    const token = await currentUser.getIdToken();
+    await fetch(ADMIN_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'enable', uid })
+    });
+    renderAdminPanel();
+  } catch (err) { alert('Error: ' + err.message); }
+}
 
 
 const MONTHS = ['January','February','March','April','May','June',
@@ -618,6 +804,7 @@ function showPage(name) {
   if (name === 'resthours')    { renderRH(); bindRHMetaFields(); }
   if (name === 'certificates') renderCerts();
   if (name === 'expenses')     renderExpenses();
+  if (name === 'admin')        renderAdminPanel();
   closeSidebar();
 }
 
