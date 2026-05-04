@@ -19,6 +19,7 @@ let rates  = JSON.parse(localStorage.getItem('crewxRates')  || '[]');
 let rhGrid = JSON.parse(localStorage.getItem('crewxRHGrid') || '{}');
 let rhMeta = JSON.parse(localStorage.getItem('crewxRHMeta') || '{}');
 let certs  = JSON.parse(localStorage.getItem('crewxCerts')  || '[]');
+let expenses = JSON.parse(localStorage.getItem('crewxExpenses') || '[]');
 
 let currentYear  = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
@@ -57,19 +58,20 @@ syncDoc.onSnapshot((doc) => {
 
   // Pierwsze załadowanie: chmura wygrywa nad lokalnym
   // Kolejne aktualizacje: zawsze bierz z chmury (real-time sync)
-  events = cloudEvents;
-  rates  = cloudRates;
-  rhGrid = cloudRhGrid;
-  rhMeta = cloudRhMeta;
-  certs  = cloudCerts;
+  events   = cloudEvents;
+  rates    = cloudRates;
+  rhGrid   = cloudRhGrid;
+  rhMeta   = cloudRhMeta;
+  certs    = cloudCerts;
+  expenses = data.expenses || [];
   cloudLoaded = true;
 
-  // Kopia zapasowa lokalnie
-  localStorage.setItem('crewxEvents', JSON.stringify(events));
-  localStorage.setItem('crewxRates',  JSON.stringify(rates));
-  localStorage.setItem('crewxRHGrid', JSON.stringify(rhGrid));
-  localStorage.setItem('crewxRHMeta', JSON.stringify(rhMeta));
-  localStorage.setItem('crewxCerts',  JSON.stringify(certs));
+  localStorage.setItem('crewxEvents',   JSON.stringify(events));
+  localStorage.setItem('crewxRates',    JSON.stringify(rates));
+  localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));
+  localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));
+  localStorage.setItem('crewxCerts',    JSON.stringify(certs));
+  localStorage.setItem('crewxExpenses', JSON.stringify(expenses));
 
   // Odświeżanie interfejsu
   renderRates();
@@ -87,15 +89,16 @@ syncDoc.onSnapshot((doc) => {
 
 // Zapisywanie do Firebase
 function saveToCloud() {
-  syncDoc.set({ events, rates, rhGrid, rhMeta, certs }, { merge: true })
+  syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses }, { merge: true })
     .catch(err => console.error("Błąd zapisu do chmury:", err));
 }
 
-function saveEvents() { localStorage.setItem('crewxEvents', JSON.stringify(events)); saveToCloud(); }
-function saveRates()  { localStorage.setItem('crewxRates',  JSON.stringify(rates));  saveToCloud(); }
-function saveRHGrid() { localStorage.setItem('crewxRHGrid', JSON.stringify(rhGrid)); saveToCloud(); }
-function saveRHMeta() { localStorage.setItem('crewxRHMeta', JSON.stringify(rhMeta)); saveToCloud(); }
-function saveCerts()  { localStorage.setItem('crewxCerts',  JSON.stringify(certs));  saveToCloud(); }
+function saveEvents()   { localStorage.setItem('crewxEvents',   JSON.stringify(events));   saveToCloud(); }
+function saveRates()    { localStorage.setItem('crewxRates',    JSON.stringify(rates));    saveToCloud(); }
+function saveRHGrid()   { localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));   saveToCloud(); }
+function saveRHMeta()   { localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));   saveToCloud(); }
+function saveCerts()    { localStorage.setItem('crewxCerts',    JSON.stringify(certs));    saveToCloud(); }
+function saveExpenses() { localStorage.setItem('crewxExpenses', JSON.stringify(expenses)); saveToCloud(); }
 
 
 const MONTHS = ['January','February','March','April','May','June',
@@ -331,15 +334,41 @@ function renderPayroll() {
     return;
   }
 
-  let totalDays = 0, totalEarn = 0;
-  visible.forEach(p => { totalDays += p.days; totalEarn += p.earnings; });
+  let totalDays = 0, totalEarn = 0, totalExp = 0;
+  visible.forEach(p => {
+    totalDays += p.days;
+    totalEarn += p.earnings;
+    const periodExps = expenses.filter(e => e.payrollPeriod === p.periodEnd);
+    totalExp += periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
+  });
 
   const rows = visible.map(p => {
     const isCurrent = todayStr <= p.periodEnd && todayStr >= p.periodStart;
+    // Find expenses for this period
+    const periodExps = expenses.filter(e => e.payrollPeriod === p.periodEnd);
+    const expTotal   = periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
+
+    const expSection = periodExps.length > 0 ? `
+      <div class="exp-payroll-section">
+        <div class="exp-payroll-title">🧾 Travel Expenses</div>
+        ${periodExps.map(e => `
+          <div class="exp-payroll-row">
+            <span>${e.desc}</span>
+            <span>$${parseFloat(e.usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+          </div>`).join('')}
+        <div class="exp-payroll-total">
+          <span>Expenses total</span>
+          <span>$${expTotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        </div>
+      </div>` : '';
+
     return `<tr class="${isCurrent ? 'current-period' : ''}">
-      <td class="period-col">${p.label}</td>
+      <td class="period-col">
+        ${p.label}
+        ${expSection}
+      </td>
       <td class="days-col">${p.days}</td>
-      <td class="earn-col">$${p.earnings.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
+      <td class="earn-col">$${(p.earnings + expTotal).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
     </tr>`;
   }).join('');
 
@@ -353,9 +382,9 @@ function renderPayroll() {
       <tbody>
         ${rows}
         <tr class="total-row">
-          <td>Total</td>
+          <td>Total (incl. expenses)</td>
           <td class="days-col">${totalDays}</td>
-          <td class="earn-col">$${totalEarn.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
+          <td class="earn-col">$${(totalEarn + totalExp).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
         </tr>
       </tbody>
     </table>
@@ -586,8 +615,9 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
-  if (name === 'resthours')  { renderRH(); bindRHMetaFields(); }
+  if (name === 'resthours')    { renderRH(); bindRHMetaFields(); }
   if (name === 'certificates') renderCerts();
+  if (name === 'expenses')     renderExpenses();
   closeSidebar();
 }
 
@@ -896,7 +926,203 @@ function deleteCert(i) {
   saveCerts();
   renderCerts();
 }
-// ═══ AI SCANNER (CLAUDE) ══════════════════════════════════════════
+// ═══ TRAVEL EXPENSES ══════════════════════════════════════════════
+
+function getPayrollMonthOptions() {
+  const today = new Date();
+  const options = [];
+  const endOfYear = new Date(today.getFullYear(), 11, 31);
+  let y = today.getFullYear();
+  let m = today.getMonth();
+  // Start from 3 months ago
+  m -= 3; if (m < 0) { m += 12; y--; }
+  while (y < endOfYear.getFullYear() || (y === endOfYear.getFullYear() && m <= endOfYear.getMonth())) {
+    const nextM = m === 11 ? 0  : m + 1;
+    const nextY = m === 11 ? y+1 : y;
+    const periodEnd = dateStr(nextY, nextM, 20);
+    options.push({
+      label: `${MONTHS_S[m]} 21 – ${MONTHS_S[nextM]} 20, ${nextY}`,
+      value: periodEnd
+    });
+    m++; if (m > 11) { m = 0; y++; }
+  }
+  return options;
+}
+
+function renderExpenses() {
+  const wrap = document.getElementById('exp-list-wrap');
+  if (!wrap) return;
+
+  if (expenses.length === 0) {
+    wrap.innerHTML = '<div class="exp-empty">No expenses yet — upload a Word document above to get started</div>';
+    return;
+  }
+
+  // Group by payroll period
+  const grouped = {};
+  expenses.forEach((e, i) => {
+    const key = e.payrollPeriod || 'unassigned';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push({ ...e, _idx: i });
+  });
+
+  const opts = getPayrollMonthOptions();
+  const labelFor = val => {
+    const found = opts.find(o => o.value === val);
+    return found ? found.label : val;
+  };
+
+  wrap.innerHTML = Object.entries(grouped).map(([period, items]) => {
+    const periodTotal = items.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
+    return `
+      <div class="exp-group">
+        <div class="exp-group-title">
+          📅 ${labelFor(period)}
+          <span style="float:right;color:var(--green)">Total: $${periodTotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        </div>
+        ${items.map(e => `
+          <div class="exp-card">
+            <div class="exp-card-left">
+              <div class="exp-card-desc">${e.desc}</div>
+              <div class="exp-card-meta">
+                ${e.origAmount} ${e.currency} → <strong style="color:var(--green)">$${parseFloat(e.usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} USD</strong>
+                ${e.notes ? ` · ${e.notes}` : ''}
+              </div>
+            </div>
+            <div class="exp-card-actions">
+              <button class="exp-btn-edit" onclick="openExpModal(${e._idx})">✏️ Edit</button>
+              <button class="exp-btn-del"  onclick="deleteExpense(${e._idx})">✕</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+}
+
+function openExpModal(idx) {
+  const opts = getPayrollMonthOptions();
+  const sel  = document.getElementById('exp-month-in');
+  sel.innerHTML = opts.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+  document.getElementById('exp-editing-idx').value = idx !== undefined ? idx : '';
+
+  if (idx !== undefined && expenses[idx]) {
+    const e = expenses[idx];
+    document.getElementById('exp-desc-in').value     = e.desc     || '';
+    document.getElementById('exp-orig-in').value     = e.origAmount || '';
+    document.getElementById('exp-currency-in').value = e.currency  || 'USD';
+    document.getElementById('exp-usd-in').value      = e.usd       || '';
+    document.getElementById('exp-notes-in').value    = e.notes     || '';
+    document.getElementById('exp-month-in').value    = e.payrollPeriod || opts[0]?.value;
+  } else {
+    document.getElementById('exp-desc-in').value     = '';
+    document.getElementById('exp-orig-in').value     = '';
+    document.getElementById('exp-currency-in').value = 'USD';
+    document.getElementById('exp-usd-in').value      = '';
+    document.getElementById('exp-notes-in').value    = '';
+    document.getElementById('exp-month-in').value    = opts[3]?.value || opts[0]?.value;
+  }
+  document.getElementById('exp-modal').classList.add('open');
+}
+
+function closeExpModal() {
+  document.getElementById('exp-modal').classList.remove('open');
+}
+
+function handleExpModalOverlay(e) {
+  if (e.target === document.getElementById('exp-modal')) closeExpModal();
+}
+
+function saveExpense() {
+  const desc     = document.getElementById('exp-desc-in').value.trim();
+  const orig     = parseFloat(document.getElementById('exp-orig-in').value);
+  const currency = document.getElementById('exp-currency-in').value;
+  const usd      = parseFloat(document.getElementById('exp-usd-in').value);
+  const notes    = document.getElementById('exp-notes-in').value.trim();
+  const period   = document.getElementById('exp-month-in').value;
+  const idxStr   = document.getElementById('exp-editing-idx').value;
+
+  if (!desc)        { alert('Description is required.'); return; }
+  if (isNaN(orig))  { alert('Enter a valid original amount.'); return; }
+  if (isNaN(usd))   { alert('Enter a valid USD amount.'); return; }
+  if (!period)      { alert('Select a payroll period.'); return; }
+
+  const entry = { desc, origAmount: orig, currency, usd, notes, payrollPeriod: period };
+
+  if (idxStr !== '') expenses[parseInt(idxStr)] = entry;
+  else expenses.push(entry);
+
+  saveExpenses();
+  closeExpModal();
+  renderExpenses();
+  renderPayroll();
+}
+
+function deleteExpense(i) {
+  if (!confirm('Delete this expense?')) return;
+  expenses.splice(i, 1);
+  saveExpenses();
+  renderExpenses();
+  renderPayroll();
+}
+
+// ─── AI Expense Scanner (Word .docx) ────────────────────────────────
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload  = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = err => reject(err);
+  });
+}
+
+async function handleExpenseScan(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('exp-scan-status');
+  statusEl.style.display  = 'block';
+  statusEl.style.color    = 'var(--gold)';
+  statusEl.textContent    = '⏳ Skanowanie dokumentu... (może potrwać kilkanaście sekund)';
+
+  try {
+    const base64Data = await fileToBase64(file);
+
+    const CLOUD_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/scanExpense";
+
+    const response = await fetch(CLOUD_FUNCTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file: base64Data, fileName: file.name })
+    });
+
+    if (!response.ok) throw new Error("Błąd połączenia z chmurą");
+
+    const data = await response.json();
+
+    if (data.error) throw new Error(data.error);
+
+    statusEl.style.color   = 'var(--green)';
+    statusEl.textContent   = '✅ Gotowe! Sprawdź dane i zapisz.';
+
+    // Pre-fill modal with AI results
+    openExpModal();
+    setTimeout(() => {
+      if (data.description) document.getElementById('exp-desc-in').value     = data.description;
+      if (data.amount)      document.getElementById('exp-orig-in').value     = data.amount;
+      if (data.currency)    document.getElementById('exp-currency-in').value = data.currency;
+      if (data.usd)         document.getElementById('exp-usd-in').value      = data.usd;
+      if (data.notes)       document.getElementById('exp-notes-in').value    = data.notes;
+    }, 100);
+
+  } catch (err) {
+    console.error(err);
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = '❌ Błąd skanowania. Wprowadź dane ręcznie.';
+    openExpModal(); // Open modal for manual entry
+  } finally {
+    event.target.value = '';
+  }
+}
 
 // Konwersja pliku na tekst Base64
 function fileToBase64(file) {
