@@ -152,7 +152,6 @@ function initCloudSync() {
     renderRates();
     renderCalendar();
     updateStats();
-    if (document.getElementById('page-resthours')?.classList.contains('active')) renderRH();
     if (document.getElementById('page-certificates')?.classList.contains('active')) renderCerts();
     if (document.getElementById('page-expenses')?.classList.contains('active')) renderExpenses();
   }, err => {
@@ -801,7 +800,6 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
-  if (name === 'resthours')    { renderRH(); bindRHMetaFields(); }
   if (name === 'certificates') renderCerts();
   if (name === 'expenses')     renderExpenses();
   if (name === 'admin')        renderAdminPanel();
