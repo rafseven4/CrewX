@@ -204,7 +204,9 @@ function getPayrollPeriods() {
     if (m > 11) { m = 0; y++; }
   }
 
-  return periods.filter(p => p.days > 0);
+  const today = new Date().toISOString().slice(0,10);
+  // Pokaż okresy które mają dni LUB są w przyszłości (do końca roku)
+  return periods.filter(p => p.days > 0 || p.periodEnd >= today);
 }
 
 // ═══ RENDER RATES LIST ════════════════════════════════════════════
