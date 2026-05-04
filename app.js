@@ -1082,11 +1082,10 @@ async function handleExpenseScan(event) {
   const statusEl = document.getElementById('exp-scan-status');
   statusEl.style.display  = 'block';
   statusEl.style.color    = 'var(--gold)';
-  statusEl.textContent    = '⏳ Skanowanie dokumentu... (może potrwać kilkanaście sekund)';
+  statusEl.textContent    = '⏳ Czytam dokument i przeliczam waluty... (może potrwać ~15 sek)';
 
   try {
     const base64Data = await fileToBase64(file);
-
     const CLOUD_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/scanExpense";
 
     const response = await fetch(CLOUD_FUNCTION_URL, {
@@ -1095,30 +1094,42 @@ async function handleExpenseScan(event) {
       body: JSON.stringify({ file: base64Data, fileName: file.name })
     });
 
-    if (!response.ok) throw new Error("Błąd połączenia z chmurą");
-
+    if (!response.ok) throw new Error(`Błąd serwera: ${response.status}`);
     const data = await response.json();
-
     if (data.error) throw new Error(data.error);
 
-    statusEl.style.color   = 'var(--green)';
-    statusEl.textContent   = '✅ Gotowe! Sprawdź dane i zapisz.';
+    if (data._parseError) {
+      statusEl.style.color = 'var(--amber)';
+      statusEl.textContent = '⚠️ Częściowy odczyt — sprawdź dane i uzupełnij ręcznie.';
+      openExpModal();
+      return;
+    }
 
-    // Pre-fill modal with AI results
+    // Build notes from subtotals
+    const subtotalStr = (data.subtotals || [])
+      .map(s => `${s.currency} ${s.total} = $${parseFloat(s.usd).toFixed(2)}`)
+      .join(' · ');
+
+    const notes = subtotalStr || data.notes || '';
+
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✅ Znaleziono ${(data.items||[]).length} pozycji · Łącznie $${parseFloat(data.totalUSD).toFixed(2)} USD`;
+
+    // Open modal pre-filled
     openExpModal();
     setTimeout(() => {
-      if (data.description) document.getElementById('exp-desc-in').value     = data.description;
-      if (data.amount)      document.getElementById('exp-orig-in').value     = data.amount;
-      if (data.currency)    document.getElementById('exp-currency-in').value = data.currency;
-      if (data.usd)         document.getElementById('exp-usd-in').value      = data.usd;
-      if (data.notes)       document.getElementById('exp-notes-in').value    = data.notes;
+      document.getElementById('exp-desc-in').value     = data.description || file.name;
+      document.getElementById('exp-orig-in').value     = data.totalUSD || 0;
+      document.getElementById('exp-currency-in').value = 'USD';
+      document.getElementById('exp-usd-in').value      = parseFloat(data.totalUSD).toFixed(2) || 0;
+      document.getElementById('exp-notes-in').value    = notes.substring(0, 120);
     }, 100);
 
   } catch (err) {
     console.error(err);
     statusEl.style.color = 'var(--red)';
-    statusEl.textContent = '❌ Błąd skanowania. Wprowadź dane ręcznie.';
-    openExpModal(); // Open modal for manual entry
+    statusEl.textContent = `❌ ${err.message}`;
+    openExpModal();
   } finally {
     event.target.value = '';
   }
@@ -1145,7 +1156,7 @@ async function handleCertScan(event) {
   const statusEl = document.getElementById('scan-status');
   statusEl.style.display = 'block';
   statusEl.style.color = 'var(--gold)';
-  statusEl.textContent = '⏳ Skanowanie w toku... (może to potrwać kilkanaście sekund)';
+  statusEl.textContent = '⏳ Skanowanie w toku... (JPG/PNG/PDF — może potrwać kilkanaście sekund)';
 
   try {
     const base64Data = await fileToBase64(file);
