@@ -1383,3 +1383,126 @@ async function handleCertScan(event) {
     event.target.value = ''; // Resetujemy pole pliku
   }
 }
+
+// ═══ ADMIN EMAIL SETTINGS ════════════════════════════════════════════
+
+const EMAIL_SETTINGS_KEY = 'crewxEmailSettings';
+const TEST_EMAIL_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/sendTestCertEmail";
+const SAVE_SETTINGS_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/saveEmailSettings";
+
+function loadEmailSettings() {
+  // Load from Firestore admin settings doc
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
+
+  db.collection('adminSettings').doc('emailNotifications').get().then(doc => {
+    const settings = doc.exists ? doc.data() : {
+      enabled: true,
+      thresholds: [60, 30, 7],
+      customThreshold: null,
+      fromEmail: 'rafal.pietrzak.pl@gmail.com'
+    };
+
+    document.getElementById('alert-enabled').checked    = settings.enabled !== false;
+    document.getElementById('alert-60').checked         = settings.thresholds?.includes(60) !== false;
+    document.getElementById('alert-30').checked         = settings.thresholds?.includes(30) !== false;
+    document.getElementById('alert-7').checked          = settings.thresholds?.includes(7)  !== false;
+    document.getElementById('alert-custom').value       = settings.customThreshold || '';
+    document.getElementById('alert-from-email').value   = settings.fromEmail || 'rafal.pietrzak.pl@gmail.com';
+
+    updateSchedulePreview(settings);
+  }).catch(() => updateSchedulePreview(null));
+}
+
+function updateSchedulePreview(settings) {
+  const previewEl = document.getElementById('email-schedule-preview');
+  if (!previewEl) return;
+
+  const enabled = document.getElementById('alert-enabled')?.checked;
+  if (!enabled) {
+    previewEl.innerHTML = '<span style="color:var(--red)">⏸ Notifications are paused</span>';
+    return;
+  }
+
+  const thresholds = getSelectedThresholds();
+  if (thresholds.length === 0) {
+    previewEl.innerHTML = '<span style="color:var(--amber)">⚠️ No thresholds selected — no emails will be sent</span>';
+    return;
+  }
+
+  const lines = thresholds.sort((a,b) => b-a).map(d => {
+    const color = d <= 7 ? 'var(--red)' : d <= 30 ? 'var(--amber)' : 'var(--gold)';
+    return `<div>📧 Email sent when <strong style="color:${color}">${d} days</strong> remain before expiry</div>`;
+  });
+  lines.push('<div style="margin-top:6px;color:var(--gray400)">⏰ Runs daily at 08:00 Warsaw time</div>');
+  previewEl.innerHTML = lines.join('');
+}
+
+function getSelectedThresholds() {
+  const thresholds = [];
+  if (document.getElementById('alert-60')?.checked) thresholds.push(60);
+  if (document.getElementById('alert-30')?.checked) thresholds.push(30);
+  if (document.getElementById('alert-7')?.checked)  thresholds.push(7);
+  const custom = parseInt(document.getElementById('alert-custom')?.value);
+  if (!isNaN(custom) && custom > 0 && custom <= 365) thresholds.push(custom);
+  return [...new Set(thresholds)]; // remove duplicates
+}
+
+async function saveEmailSettings() {
+  const msgEl = document.getElementById('email-settings-msg');
+  if (!msgEl) return;
+
+  const settings = {
+    enabled:         document.getElementById('alert-enabled').checked,
+    thresholds:      getSelectedThresholds(),
+    customThreshold: parseInt(document.getElementById('alert-custom').value) || null,
+    fromEmail:       document.getElementById('alert-from-email').value.trim(),
+    updatedAt:       new Date().toISOString(),
+    updatedBy:       currentUser.email,
+  };
+
+  updateSchedulePreview(settings);
+
+  try {
+    // Save to Firestore adminSettings collection
+    await db.collection('adminSettings').doc('emailNotifications').set(settings);
+    msgEl.style.color   = 'var(--green)';
+    msgEl.textContent   = '✅ Settings saved!';
+    setTimeout(() => { msgEl.textContent = ''; }, 3000);
+  } catch (err) {
+    msgEl.style.color   = 'var(--red)';
+    msgEl.textContent   = '❌ Error: ' + err.message;
+  }
+}
+
+async function sendTestEmail() {
+  const msgEl = document.getElementById('email-settings-msg');
+  msgEl.style.color   = 'var(--gold)';
+  msgEl.textContent   = '⏳ Sending test email...';
+
+  try {
+    const token = await currentUser.getIdToken();
+    const fromEmail = document.getElementById('alert-from-email').value.trim();
+
+    const resp = await fetch(TEST_EMAIL_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ fromEmail })
+    });
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    msgEl.style.color   = 'var(--green)';
+    msgEl.textContent   = `✅ Test email sent to ${currentUser.email}!`;
+  } catch (err) {
+    msgEl.style.color   = 'var(--red)';
+    msgEl.textContent   = '❌ ' + err.message;
+  }
+}
+
+// Override renderAdminPanel to also load email settings
+const _origRenderAdminPanel = renderAdminPanel;
+async function renderAdminPanel() {
+  await _origRenderAdminPanel();
+  loadEmailSettings();
+}
