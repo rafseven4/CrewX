@@ -267,24 +267,74 @@ function deleteRate(i) {
   renderCalendar();
 }
 
-// ═══ RENDER PAYROLL ═══════════════════════════════════════════════
 function renderPayroll() {
   const body = document.getElementById('payroll-body');
   if (rates.length === 0) {
     body.innerHTML = '<div class="empty-state">Add a day rate above to see payroll calculations</div>';
     return;
   }
-  const periods = getPayrollPeriods();
-  if (periods.length === 0) {
+
+  // Generuj okresy do końca roku niezależnie od wyjazdów
+  const today = new Date();
+  const endOfYear = new Date(today.getFullYear(), 11, 31);
+
+  // Znajdź najwcześniejszą datę rate
+  const allDates = rates.map(r => r.from).sort();
+  if (allDates.length === 0) {
     body.innerHTML = '<div class="empty-state">Log trip events to calculate earnings</div>';
     return;
   }
 
-  const todayStr = new Date().toISOString().slice(0,10);
-  let totalDays = 0, totalEarn = 0;
-  periods.forEach(p => { totalDays += p.days; totalEarn += p.earnings; });
+  const awayDates = getRangeDates(getTrips());
+  const earliest = new Date(allDates[0] + 'T00:00:00');
 
-  const rows = periods.map(p => {
+  let y = earliest.getFullYear();
+  let m = earliest.getMonth();
+  if (m === 0) { m = 11; y--; } else m--;
+
+  const endY = endOfYear.getFullYear();
+  const endM = endOfYear.getMonth();
+
+  const periods = [];
+  while (y < endY || (y === endY && m <= endM)) {
+    const prevM = m === 0 ? 11 : m - 1;
+    const prevY = m === 0 ? y - 1 : y;
+    const periodStart = dateStr(prevY, prevM, 21);
+    const periodEnd   = dateStr(y, m, 20);
+
+    let days = 0, earnings = 0;
+    const s = new Date(periodStart + 'T00:00:00');
+    const e = new Date(periodEnd   + 'T00:00:00');
+    for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
+      const ds = c.toISOString().slice(0,10);
+      if (awayDates.has(ds)) {
+        days++;
+        earnings += getRateForDate(ds);
+      }
+    }
+
+    periods.push({
+      label: `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${y}`,
+      periodEnd, periodStart, days, earnings
+    });
+
+    m++;
+    if (m > 11) { m = 0; y++; }
+  }
+
+  // Pokaż: okresy z dniami + bieżący + wszystkie przyszłe
+  const todayStr = today.toISOString().slice(0,10);
+  const visible = periods.filter(p => p.days > 0 || p.periodEnd >= todayStr);
+
+  if (visible.length === 0) {
+    body.innerHTML = '<div class="empty-state">Log trip events to calculate earnings</div>';
+    return;
+  }
+
+  let totalDays = 0, totalEarn = 0;
+  visible.forEach(p => { totalDays += p.days; totalEarn += p.earnings; });
+
+  const rows = visible.map(p => {
     const isCurrent = todayStr <= p.periodEnd && todayStr >= p.periodStart;
     return `<tr class="${isCurrent ? 'current-period' : ''}">
       <td class="period-col">${p.label}</td>
