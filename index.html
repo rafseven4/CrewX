@@ -10,6 +10,35 @@
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg width="36" height="36" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="7" r="3" stroke="#38bdf8" stroke-width="1.6" fill="none"/>
+          <line x1="14" y1="10" x2="14" y2="22" stroke="#38bdf8" stroke-width="1.6"/>
+          <path d="M8 15 Q6 19 8.5 22" stroke="#38bdf8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <path d="M20 15 Q22 19 19.5 22" stroke="#38bdf8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <line x1="8.5" y1="22" x2="19.5" y2="22" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="8" y1="15" x2="20" y2="15" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span class="login-logo-text">CrewX</span>
+      </div>
+      <div class="login-title">Welcome back</div>
+      <div class="login-sub">Sign in to access your crew tracker</div>
+      <input class="login-input" id="login-email" type="email" placeholder="Email address" autocomplete="email"/>
+      <input class="login-input" id="login-pass"  type="password" placeholder="Password" autocomplete="current-password"/>
+      <div class="login-error" id="login-error"></div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="login-footer">Access is by invitation only</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP ROOT -->
+<div id="app-root" style="display:none">
+
 <!-- TOPBAR -->
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:4px">
@@ -34,6 +63,7 @@
       <div class="status-dot" id="status-dot" style="background:#94a3b8"></div>
       <span id="status-text">At home</span>
     </div>
+    <button onclick="doLogout()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:4px 10px;color:#94a3b8;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Sign out</button>
   </div>
 </div>
 
@@ -72,6 +102,9 @@
     </button>
     <button class="nav-item" id="nav-expenses" onclick="showPage('expenses')">
       <span class="nav-icon">🧾</span> Travel Expenses
+    </button>
+    <button class="nav-item" id="nav-admin" onclick="showPage('admin')" style="display:none">
+      <span class="nav-icon">⚙️</span> Admin
     </button>
   </nav>
 
@@ -537,9 +570,55 @@
   </div>
 </div>
 
+<!-- PAGE: ADMIN -->
+<div class="page" id="page-admin">
+<div class="page-wrap">
+  <div class="page-title">⚙️ Admin Panel</div>
+  <div class="page-sub">Manage users who can access CrewX</div>
+
+  <!-- CREATE USER -->
+  <div class="panel-card" style="margin-bottom:20px">
+    <div class="panel-header">
+      <span class="panel-header-icon">➕</span>
+      <span class="panel-title">Create New User</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-row">
+        <label class="form-label">Email address</label>
+        <input class="form-input" id="admin-new-email" type="email" placeholder="user@example.com"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Password (min. 6 characters)</label>
+        <input class="form-input" id="admin-new-pass" type="password" placeholder="Temporary password"/>
+      </div>
+      <div style="font-size:10px;color:var(--gray400);margin-bottom:10px">The user can change their password after first login</div>
+      <button class="btn-add" onclick="adminCreateUser()">Create user</button>
+      <div id="admin-create-msg" style="font-size:12px;margin-top:8px;font-weight:600"></div>
+    </div>
+  </div>
+
+  <!-- USER LIST -->
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-header-icon">👥</span>
+      <span class="panel-title">Active Users</span>
+      <button onclick="renderAdminPanel()" style="margin-left:auto;background:none;border:1px solid var(--navy3);border-radius:6px;padding:4px 10px;color:var(--gray400);font-size:11px;cursor:pointer;">↺ Refresh</button>
+    </div>
+    <div class="panel-body">
+      <div id="admin-users-list">
+        <div style="color:var(--gray400);font-size:13px">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- /app-root -->
+
 <!-- FIREBASE SKRYPTY -->
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
 <!-- Podłączenie zewnętrznego pliku JS z logiką -->
 <script src="app.js"></script>
