@@ -807,3 +807,66 @@ function deleteCert(i) {
   saveCerts();
   renderCerts();
 }
+// ═══ AI SCANNER (CLAUDE) ══════════════════════════════════════════
+
+// Konwersja pliku na tekst Base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+// Główna funkcja wysyłająca obraz do naszej chmury
+async function handleCertScan(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('scan-status');
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--gold)';
+  statusEl.textContent = '⏳ Skanowanie w toku... (może to potrwać kilkanaście sekund)';
+
+  try {
+    const base64Data = await fileToBase64(file);
+    const mediaType = file.type;
+
+    // Twój bezpieczny adres Firebase!
+    const CLOUD_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/scanCert";
+
+    const response = await fetch(CLOUD_FUNCTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        image: base64Data,
+        mediaType: mediaType
+      })
+    });
+
+    if (!response.ok) throw new Error("Błąd podczas połączenia z chmurą");
+
+    const aiData = await response.json();
+
+    // Wypełnianie inputów na żywo
+    document.getElementById('cert-name-in').value = aiData.name || '';
+    document.getElementById('cert-issuer-in').value = aiData.issuer || '';
+    document.getElementById('cert-number-in').value = aiData.number || '';
+    document.getElementById('cert-issue-in').value = aiData.issued || '';
+    document.getElementById('cert-expiry-in').value = aiData.expiry || '';
+
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = '✅ Gotowe! Sprawdź poprawność danych i kliknij Save.';
+
+  } catch (error) {
+    console.error(error);
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = '❌ Wystąpił błąd podczas skanowania. Wprowadź dane ręcznie.';
+  } finally {
+    event.target.value = ''; // Resetujemy pole pliku
+  }
+}
