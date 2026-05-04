@@ -70,6 +70,9 @@
       <span class="nav-icon">📜</span> Certificates
       <span class="nav-badge" id="cert-badge" style="display:none">!</span>
     </button>
+    <button class="nav-item" id="nav-expenses" onclick="showPage('expenses')">
+      <span class="nav-icon">🧾</span> Travel Expenses
+    </button>
   </nav>
 
   <div class="sidebar-footer">
@@ -462,6 +465,75 @@
 
     <button class="modal-clear" id="btn-clear" onclick="clearDay()" style="display:none">Remove all events from this day</button>
     <button class="modal-close" onclick="closeModal()">cancel</button>
+  </div>
+</div>
+
+<!-- PAGE: TRAVEL EXPENSES -->
+<div class="page" id="page-expenses">
+<div class="page-wrap">
+  <div class="page-title">🧾 Travel Expenses</div>
+  <div class="page-sub">Upload Word documents — AI extracts currency, amount and converts to USD</div>
+
+  <!-- UPLOAD ZONE -->
+  <div class="exp-upload-zone" id="exp-upload-zone" onclick="document.getElementById('exp-file-input').click()">
+    <input type="file" id="exp-file-input" accept=".docx" style="display:none" onchange="handleExpenseScan(event)"/>
+    <div class="exp-upload-icon">🤖</div>
+    <div class="exp-upload-title">Scan Expense Document (AI)</div>
+    <div class="exp-upload-sub">Click to upload a .docx file — Claude will extract currency, total and convert to USD</div>
+    <div id="exp-scan-status" style="display:none;margin-top:10px;font-size:12px;font-weight:600;"></div>
+  </div>
+
+  <!-- EXPENSES LIST -->
+  <div id="exp-list-wrap" style="margin-top:24px"></div>
+</div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="modal-overlay" id="exp-modal" onclick="handleExpModalOverlay(event)">
+  <div class="modal cert-modal-form">
+    <div class="modal-title">💰 Add / Edit Expense</div>
+    <div class="modal-sub" style="margin-bottom:1rem">Review AI results and select payroll month</div>
+
+    <div class="form-row">
+      <label class="form-label">Description</label>
+      <input class="form-input" id="exp-desc-in" type="text" placeholder="e.g. Travel reimbursement Q2"/>
+    </div>
+    <div class="form-row form-row-2col">
+      <div>
+        <label class="form-label">Original amount</label>
+        <input class="form-input" id="exp-orig-in" type="number" placeholder="0.00" step="0.01"/>
+      </div>
+      <div>
+        <label class="form-label">Currency</label>
+        <select class="form-input" id="exp-currency-in">
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+          <option value="BRL">BRL</option>
+          <option value="NOK">NOK</option>
+          <option value="SGD">SGD</option>
+          <option value="AED">AED</option>
+          <option value="JPY">JPY</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Amount in USD</label>
+      <input class="form-input" id="exp-usd-in" type="number" placeholder="0.00" step="0.01"/>
+      <div style="font-size:10px;color:var(--gray400);margin-top:3px">AI will fill this — you can edit manually</div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Add to payroll period (cut-off 20th)</label>
+      <select class="form-input" id="exp-month-in"></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Notes (optional)</label>
+      <input class="form-input" id="exp-notes-in" type="text" placeholder="e.g. flight + hotel"/>
+    </div>
+    <input type="hidden" id="exp-editing-idx"/>
+    <button class="btn-add" onclick="saveExpense()" style="margin-top:4px">Save expense</button>
+    <button class="modal-close" onclick="closeExpModal()">cancel</button>
   </div>
 </div>
 
