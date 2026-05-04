@@ -4,6 +4,17 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CrewX</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#0a1628"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="CrewX"/>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="description" content="Crew rotation, rest hours, certificates and payroll tracker"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <!-- Podłączenie zewnętrznego pliku CSS -->
 <link rel="stylesheet" href="style.css">
@@ -608,6 +619,81 @@
       <div id="admin-users-list">
         <div style="color:var(--gray400);font-size:13px">Loading...</div>
       </div>
+    </div>
+  </div>
+
+  <!-- EMAIL NOTIFICATIONS -->
+  <div class="panel-card" style="margin-top:20px">
+    <div class="panel-header">
+      <span class="panel-header-icon">📧</span>
+      <span class="panel-title">Certificate Expiry Notifications</span>
+    </div>
+    <div class="panel-body">
+
+      <div style="font-size:12px;color:var(--gray400);margin-bottom:16px;line-height:1.6">
+        Emails are sent automatically every day at <strong style="color:var(--sky)">08:00 Warsaw time</strong>.
+        Users receive alerts when their certificates expire in exactly 60, 30, or 7 days.
+      </div>
+
+      <!-- Alert thresholds -->
+      <div class="form-row">
+        <label class="form-label">Alert thresholds (days before expiry)</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <label class="admin-toggle-wrap">
+            <input type="checkbox" id="alert-60" checked onchange="saveEmailSettings()"/>
+            <span class="admin-toggle-label">60 days</span>
+          </label>
+          <label class="admin-toggle-wrap">
+            <input type="checkbox" id="alert-30" checked onchange="saveEmailSettings()"/>
+            <span class="admin-toggle-label">30 days</span>
+          </label>
+          <label class="admin-toggle-wrap">
+            <input type="checkbox" id="alert-7" checked onchange="saveEmailSettings()"/>
+            <span class="admin-toggle-label">7 days</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Custom threshold -->
+      <div class="form-row" style="margin-top:12px">
+        <label class="form-label">Custom threshold (optional)</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-input" id="alert-custom" type="number" placeholder="e.g. 14" min="1" max="365" style="width:100px"/>
+          <span style="font-size:12px;color:var(--gray400)">days before expiry</span>
+        </div>
+      </div>
+
+      <!-- From email -->
+      <div class="form-row" style="margin-top:12px">
+        <label class="form-label">Send notifications from email</label>
+        <input class="form-input" id="alert-from-email" type="email" value="rafal.pietrzak.pl@gmail.com" placeholder="from@example.com"/>
+        <div style="font-size:10px;color:var(--gray400);margin-top:3px">Must match verified sender in SendGrid</div>
+      </div>
+
+      <!-- Master toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--navy3)">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--white)">Notifications enabled</div>
+          <div style="font-size:11px;color:var(--gray400);margin-top:2px">Turn off to pause all certificate emails</div>
+        </div>
+        <label class="admin-master-toggle">
+          <input type="checkbox" id="alert-enabled" checked onchange="saveEmailSettings()"/>
+          <span class="admin-master-slider"></span>
+        </label>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px;align-items:center">
+        <button class="btn-add" onclick="saveEmailSettings()" style="flex:1">💾 Save settings</button>
+        <button onclick="sendTestEmail()" style="flex:1;background:none;border:1px solid var(--sky);border-radius:8px;padding:8px;color:var(--sky);font-size:12px;font-family:'Space Grotesk',sans-serif;cursor:pointer;">📧 Send test email</button>
+      </div>
+      <div id="email-settings-msg" style="font-size:12px;font-weight:600;margin-top:8px"></div>
+
+      <!-- Preview -->
+      <div style="margin-top:16px;padding:14px;background:var(--navy);border-radius:8px;border:1px solid var(--navy3)">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400);margin-bottom:8px">Current schedule preview</div>
+        <div id="email-schedule-preview" style="font-size:12px;color:var(--gray400);line-height:1.8"></div>
+      </div>
+
     </div>
   </div>
 </div>
