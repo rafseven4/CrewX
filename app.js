@@ -161,7 +161,9 @@ function getPayrollPeriods() {
 
   const earliest = new Date(allDates[0] + 'T00:00:00');
   const latest   = new Date();
-  latest.setMonth(latest.getMonth() + 2);
+  // Pokaż okresy do końca bieżącego roku (31 grudnia)
+  latest.setMonth(11);  // Grudzień
+  latest.setDate(31);
 
   const periods = [];
   let y = earliest.getFullYear();
