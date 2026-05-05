@@ -130,15 +130,15 @@
     <!-- stats -->
     <div class="stats-row">
       <div class="stat-card c-ocean">
-        <div class="stat-label">Days away <span class="stat-sublabel">paid days</span></div>
+        <div class="stat-label">Days away <span class="stat-sublabel">(paid days)</span></div>
         <div class="stat-value" id="stat-away">0 <span class="stat-unit">d</span></div>
       </div>
       <div class="stat-card c-green">
-        <div class="stat-label">🇧🇷 In Brazil <span class="stat-sublabel">tax</span></div>
+        <div class="stat-label">🇧🇷 In Brazil <span class="stat-sublabel">(tax)</span></div>
         <div class="stat-value" id="stat-brazil">0 <span class="stat-unit">d</span></div>
       </div>
       <div class="stat-card c-amber">
-        <div class="stat-label">⚓ Onboard <span class="stat-sublabel">sea time</span></div>
+        <div class="stat-label">⚓ Onboard <span class="stat-sublabel">(sea time)</span></div>
         <div class="stat-value" id="stat-onboard">0 <span class="stat-unit">d</span></div>
       </div>
       <div class="stat-card">
@@ -517,6 +517,19 @@
       <div style="margin-top:16px;padding:14px;background:var(--navy);border-radius:8px;border:1px solid var(--navy3)">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400);margin-bottom:8px">Current schedule preview</div>
         <div id="email-schedule-preview" style="font-size:12px;color:var(--gray400);line-height:1.8"></div>
+      </div>
+
+      <!-- LIVE FIRESTORE STATUS -->
+      <div style="margin-top:12px;padding:14px;background:var(--navy);border-radius:8px;border:1px solid var(--navy3)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400)">
+            ☁️ Saved in Firestore — adminSettings/emailNotifications
+          </div>
+          <button onclick="loadEmailSettings()" style="background:none;border:1px solid var(--navy3);border-radius:6px;padding:2px 8px;color:var(--gray400);font-size:10px;cursor:pointer;">↺ Reload</button>
+        </div>
+        <div id="firestore-settings-status">
+          <div style="color:var(--gray400);font-size:12px">Loading from Firestore...</div>
+        </div>
       </div>
 
     </div>
