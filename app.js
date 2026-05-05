@@ -176,47 +176,6 @@ function saveExpenses() { localStorage.setItem('crewxExpenses', JSON.stringify(e
 // ═══ ADMIN — user management ══════════════════════════════════════
 const ADMIN_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/adminManageUsers";
 
-async function renderAdminPanel() {
-  if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
-  const wrap = document.getElementById('admin-users-list');
-  if (!wrap) return;
-  wrap.innerHTML = '<div style="color:var(--gray400);font-size:13px">Loading users...</div>';
-
-  try {
-    const token = await currentUser.getIdToken();
-    const resp  = await fetch(ADMIN_FUNCTION_URL + '?action=list', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-
-    if (!data.users || data.users.length === 0) {
-      wrap.innerHTML = '<div class="exp-empty">No users yet.</div>';
-      return;
-    }
-
-    wrap.innerHTML = data.users.map(u => `
-      <div class="admin-user-card">
-        <div class="admin-user-info">
-          <div class="admin-user-email">${u.email}</div>
-          <div class="admin-user-meta">
-            Created: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
-            &nbsp;·&nbsp;
-            Last login: ${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : 'Never'}
-          </div>
-        </div>
-        <div class="admin-user-actions">
-          ${u.disabled
-            ? `<button class="admin-btn-enable" onclick="adminEnableUser('${u.uid}')">Enable</button>`
-            : `<button class="admin-btn-disable" onclick="adminDisableUser('${u.uid}')">Disable</button>`}
-          <button class="admin-btn-del" onclick="adminDeleteUser('${u.uid}', '${u.email}')">Delete</button>
-        </div>
-      </div>`).join('');
-  } catch (err) {
-    wrap.innerHTML = `<div style="color:var(--red);font-size:13px">Error: ${err.message}</div>`;
-  }
-}
-
 async function adminCreateUser() {
   const email = document.getElementById('admin-new-email').value.trim();
   const pass  = document.getElementById('admin-new-pass').value.trim();
@@ -1501,6 +1460,46 @@ async function sendTestEmail() {
 // Override renderAdminPanel to also load email settings
 const _origRenderAdminPanel = renderAdminPanel;
 async function renderAdminPanel() {
-  await _origRenderAdminPanel();
+  // List users
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
+  const wrap = document.getElementById('admin-users-list');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="color:var(--gray400);font-size:13px">Loading users...</div>';
+
+  try {
+    const token = await currentUser.getIdToken(true); // force refresh token
+    const resp  = await fetch(ADMIN_FUNCTION_URL + '?action=list', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    if (!data.users || data.users.length === 0) {
+      wrap.innerHTML = '<div class="exp-empty">No users yet.</div>';
+    } else {
+      wrap.innerHTML = data.users.map(u => `
+        <div class="admin-user-card">
+          <div class="admin-user-info">
+            <div class="admin-user-email">${u.email}</div>
+            <div class="admin-user-meta">
+              Created: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+              &nbsp;·&nbsp;
+              Last login: ${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : 'Never'}
+              ${u.disabled ? ' &nbsp;·&nbsp; <span style="color:var(--red)">DISABLED</span>' : ''}
+            </div>
+          </div>
+          <div class="admin-user-actions">
+            ${u.disabled
+              ? `<button class="admin-btn-enable" onclick="adminEnableUser('${u.uid}')">Enable</button>`
+              : `<button class="admin-btn-disable" onclick="adminDisableUser('${u.uid}')">Disable</button>`}
+            <button class="admin-btn-del" onclick="adminDeleteUser('${u.uid}', '${u.email}')">Delete</button>
+          </div>
+        </div>`).join('');
+    }
+  } catch (err) {
+    wrap.innerHTML = `<div style="color:var(--red);font-size:13px">❌ Error: ${err.message}</div>`;
+  }
+
+  // Also load email settings
   loadEmailSettings();
 }
