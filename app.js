@@ -540,39 +540,79 @@ function renderPayroll() {
 
 // ═══ STATS ════════════════════════════════════════════════════════
 function updateStats() {
+  // ── Populate year dropdown ────────────────────────────────────────
+  const sel = document.getElementById('stat-year-filter');
+  if (sel) {
+    // Collect all years from events
+    const years = [...new Set(events.map(e => e.date?.slice(0,4)).filter(Boolean))].sort();
+    const selectedVal = sel.value || 'all';
+    sel.innerHTML = '<option value="all">All years</option>' +
+      years.map(y => `<option value="${y}" ${y === selectedVal ? 'selected' : ''}>${y}</option>`).join('');
+  }
+
+  const filterYear = sel?.value || 'all';
+
+  // ── Filter helper: keep only dates in selected year ────────────────
+  function filterByYear(dateSet) {
+    if (filterYear === 'all') return dateSet;
+    const filtered = new Set();
+    for (const ds of dateSet) {
+      if (ds.startsWith(filterYear)) filtered.add(ds);
+    }
+    return filtered;
+  }
+
+  // ── Filter pairs by year ──────────────────────────────────────────
+  function filterPairsByYear(pairs) {
+    if (filterYear === 'all') return pairs;
+    return pairs.filter(p => p.start.startsWith(filterYear) || (p.end && p.end.startsWith(filterYear)));
+  }
+
   const trips        = getTrips();
   const brazilStays  = getBrazilStays();
   const onboardStays = getOnboardStays();
-  const awayDates    = getRangeDates(trips);
-  const brazilDates  = getRangeDates(brazilStays);
-  const onboardDates = getRangeDates(onboardStays);
 
-  const rotEvDates = new Set(events.filter(e => ['depart','arrive'].includes(e.type)).map(e => e.date));
+  const awayDates    = filterByYear(getRangeDates(trips));
+  const brazilDates  = filterByYear(getRangeDates(brazilStays));
+  const onboardDates = filterByYear(getRangeDates(onboardStays));
+
+  const rotEvDates = new Set(events
+    .filter(e => ['depart','arrive'].includes(e.type) && (filterYear === 'all' || e.date?.startsWith(filterYear)))
+    .map(e => e.date));
   let travel = 0;
   for (const ds of awayDates) { if (rotEvDates.has(ds)) travel++; }
+
+  const filteredTrips    = filterPairsByYear(trips);
+  const filteredBrazil   = filterPairsByYear(brazilStays);
+  const filteredOnboard  = filterPairsByYear(onboardStays);
 
   document.getElementById('stat-away').innerHTML     = `${awayDates.size} <span class="stat-unit">d</span>`;
   document.getElementById('stat-brazil').innerHTML   = `${brazilDates.size} <span class="stat-unit">d</span>`;
   document.getElementById('stat-onboard').innerHTML  = `${onboardDates.size} <span class="stat-unit">d</span>`;
   document.getElementById('stat-travel').innerHTML   = `${travel} <span class="stat-unit">d</span>`;
-  document.getElementById('stat-trips').textContent  = trips.filter(t=>t.end).length;
-  document.getElementById('stat-contracts').textContent = onboardStays.filter(o=>o.end).length;
+  document.getElementById('stat-trips').textContent  = filteredTrips.filter(t=>t.end).length;
+  document.getElementById('stat-contracts').textContent = filteredOnboard.filter(o=>o.end).length;
 
-  // status pill
+  // status pill — always based on today regardless of filter
   const todayStr = new Date().toISOString().slice(0,10);
+  const allAway    = getRangeDates(trips);
+  const allBrazil  = getRangeDates(brazilStays);
+  const allOnboard = getRangeDates(onboardStays);
   const dot  = document.getElementById('status-dot');
   const text = document.getElementById('status-text');
-  const inBrazil  = brazilDates.has(todayStr);
-  const isOnboard = onboardDates.has(todayStr);
-  if (isOnboard) {
-    dot.style.background = '#f97316'; text.textContent = '⚓ Onboard' + (inBrazil ? ' · 🇧🇷' : '');
-  } else if (awayDates.has(todayStr)) {
-    dot.style.background = '#38bdf8'; text.textContent = 'Away' + (inBrazil ? ' · 🇧🇷 Brazil' : '');
-  } else {
-    dot.style.background = '#94a3b8'; text.textContent = 'At home';
+  const inBrazil  = allBrazil.has(todayStr);
+  const isOnboard = allOnboard.has(todayStr);
+  if (text && text.textContent !== currentUser?.email?.split('@')[0]) {
+    if (isOnboard) {
+      dot.style.background = '#f97316'; text.textContent = '⚓ Onboard' + (inBrazil ? ' · 🇧🇷' : '');
+    } else if (allAway.has(todayStr)) {
+      dot.style.background = '#38bdf8'; text.textContent = 'Away' + (inBrazil ? ' · 🇧🇷 Brazil' : '');
+    } else {
+      dot.style.background = '#94a3b8'; text.textContent = 'At home';
+    }
   }
 
-  // lists
+  // lists — always show all (not filtered by year)
   const fmt = ds => ds.slice(5).replace('-','/');
   function renderList(listId, infoId, items, labelFn, badgeClass) {
     const info = document.getElementById(infoId);
