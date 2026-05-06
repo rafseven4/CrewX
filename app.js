@@ -134,13 +134,14 @@ function initCloudSync() {
   unsubscribeSnapshot = syncDoc.onSnapshot(doc => {
     if (!doc.exists) return;
     const data = doc.data();
-    events   = data.events   || [];
-    rates    = data.rates    || [];
-    rhGrid   = data.rhGrid   || {};
-    rhMeta   = data.rhMeta   || {};
-    certs    = data.certs    || [];
-    expenses = data.expenses || [];
-    cloudLoaded = true;
+    events       = data.events       || [];
+    rates        = data.rates        || [];
+    rhGrid       = data.rhGrid       || {};
+    rhMeta       = data.rhMeta       || {};
+    certs        = data.certs        || [];
+    expenses     = data.expenses     || [];
+    trainingRates = data.trainingRates || [];
+    cloudLoaded  = true;
 
     localStorage.setItem('crewxEvents',   JSON.stringify(events));
     localStorage.setItem('crewxRates',    JSON.stringify(rates));
@@ -266,9 +267,10 @@ function getPairs(inType, outType) {
   }
   return pairs;
 }
-function getTrips()        { return getPairs('depart',   'arrive');    }
-function getBrazilStays()  { return getPairs('brazil-in','brazil-out');}
-function getOnboardStays() { return getPairs('sign-on',  'sign-off');  }
+function getTrips()            { return getPairs('depart',         'arrive');        }
+function getBrazilStays()      { return getPairs('brazil-in',      'brazil-out');    }
+function getOnboardStays()     { return getPairs('sign-on',        'sign-off');      }
+function getTrainingPeriods()  { return getPairs('training-start', 'training-end'); }
 
 // calendarOnly=true  -> only closed pairs highlighted on calendar
 // calendarOnly=false -> open pairs extend to today (for stats)
@@ -478,12 +480,14 @@ function renderPayroll() {
     return;
   }
 
-  let totalDays = 0, totalEarn = 0, totalExp = 0;
+  let totalDays = 0, totalEarn = 0, totalExp = 0, totalTraining = 0;
   visible.forEach(p => {
     totalDays += p.days;
     totalEarn += p.earnings;
     const periodExps = expenses.filter(e => e.payrollPeriod === p.periodEnd);
     totalExp += periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
+    const periodTraining = (trainingRates || []).filter(t => t.end >= p.periodStart && t.end <= p.periodEnd);
+    totalTraining += periodTraining.reduce((s, t) => s + ((t.rate||0)*(t.days||0)), 0);
   });
 
   const rows = visible.map(p => {
@@ -491,6 +495,12 @@ function renderPayroll() {
     // Find expenses for this period
     const periodExps = expenses.filter(e => e.payrollPeriod === p.periodEnd);
     const expTotal   = periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
+
+    // Training rates for this period
+    const periodTraining = (trainingRates || []).filter(t =>
+      t.end >= p.periodStart && t.end <= p.periodEnd
+    );
+    const trainingTotal = periodTraining.reduce((s, t) => s + ((t.rate || 0) * (t.days || 0)), 0);
 
     const expSection = periodExps.length > 0 ? `
       <div class="exp-payroll-section">
@@ -506,13 +516,29 @@ function renderPayroll() {
         </div>
       </div>` : '';
 
+    const fmt2 = ds => ds.slice(5).replace('-','/');
+    const trainingSection = periodTraining.length > 0 ? `
+      <div class="exp-payroll-section">
+        <div class="exp-payroll-title">🎓 Training</div>
+        ${periodTraining.map(t => `
+          <div class="exp-payroll-row">
+            <span>${fmt2(t.start)} → ${fmt2(t.end)} (${t.days}d × $${t.rate}/d)</span>
+            <span>$${((t.rate||0)*(t.days||0)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+          </div>`).join('')}
+        <div class="exp-payroll-total">
+          <span>Training total</span>
+          <span>$${trainingTotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        </div>
+      </div>` : '';
+
     return `<tr class="${isCurrent ? 'current-period' : ''}">
       <td class="period-col">
         ${p.label}
         ${expSection}
+        ${trainingSection}
       </td>
       <td class="days-col">${p.days}</td>
-      <td class="earn-col">$${(p.earnings + expTotal).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
+      <td class="earn-col">$${(p.earnings + expTotal + trainingTotal).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
     </tr>`;
   }).join('');
 
@@ -526,9 +552,9 @@ function renderPayroll() {
       <tbody>
         ${rows}
         <tr class="total-row">
-          <td>Total (incl. expenses)</td>
+          <td>Total (incl. expenses + training)</td>
           <td class="days-col">${totalDays}</td>
-          <td class="earn-col">$${(totalEarn + totalExp).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
+          <td class="earn-col">$${(totalEarn + totalExp + totalTraining).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
         </tr>
       </tbody>
     </table>
@@ -568,13 +594,15 @@ function updateStats() {
     return pairs.filter(p => p.start.startsWith(filterYear) || (p.end && p.end.startsWith(filterYear)));
   }
 
-  const trips        = getTrips();
-  const brazilStays  = getBrazilStays();
-  const onboardStays = getOnboardStays();
+  const trips           = getTrips();
+  const brazilStays     = getBrazilStays();
+  const onboardStays    = getOnboardStays();
+  const trainingPeriods = getTrainingPeriods();
 
-  const awayDates    = filterByYear(getRangeDates(trips));
-  const brazilDates  = filterByYear(getRangeDates(brazilStays));
-  const onboardDates = filterByYear(getRangeDates(onboardStays));
+  const awayDates      = filterByYear(getRangeDates(trips));
+  const brazilDates    = filterByYear(getRangeDates(brazilStays));
+  const onboardDates   = filterByYear(getRangeDates(onboardStays));
+  const trainingDates  = filterByYear(getRangeDates(trainingPeriods));
 
   const rotEvDates = new Set(events
     .filter(e => ['depart','arrive'].includes(e.type) && (filterYear === 'all' || e.date?.startsWith(filterYear)))
@@ -589,6 +617,7 @@ function updateStats() {
   document.getElementById('stat-away').innerHTML     = `${awayDates.size} <span class="stat-unit">d</span>`;
   document.getElementById('stat-brazil').innerHTML   = `${brazilDates.size} <span class="stat-unit">d</span>`;
   document.getElementById('stat-onboard').innerHTML  = `${onboardDates.size} <span class="stat-unit">d</span>`;
+  document.getElementById('stat-training').innerHTML = `${trainingDates.size} <span class="stat-unit">d</span>`;
   document.getElementById('stat-travel').innerHTML   = `${travel} <span class="stat-unit">d</span>`;
   document.getElementById('stat-trips').textContent  = filteredTrips.filter(t=>t.end).length;
   document.getElementById('stat-contracts').textContent = filteredOnboard.filter(o=>o.end).length;
@@ -627,9 +656,10 @@ function updateStats() {
       list.appendChild(row);
     });
   }
-  renderList('trips-list',  'trips-info',  trips,        (t,i)=>`Trip ${i+1} &nbsp; ${fmt(t.start)} → ${t.end?fmt(t.end):'…'}`, 'ibadge-blue');
-  renderList('brazil-list', 'brazil-info', brazilStays,  (b,i)=>`Stay ${i+1} &nbsp; ${fmt(b.start)} → ${b.end?fmt(b.end):'…'}`, 'ibadge-green');
-  renderList('onboard-list','onboard-info',onboardStays, (o,i)=>`Contract ${i+1} &nbsp; ${fmt(o.start)} → ${o.end?fmt(o.end):'…'}`, 'ibadge-amber');
+  renderList('trips-list',   'trips-info',   trips,           (t,i)=>`Trip ${i+1} &nbsp; ${fmt(t.start)} → ${t.end?fmt(t.end):'…'}`, 'ibadge-blue');
+  renderList('brazil-list',  'brazil-info',  brazilStays,     (b,i)=>`Stay ${i+1} &nbsp; ${fmt(b.start)} → ${b.end?fmt(b.end):'…'}`, 'ibadge-green');
+  renderList('onboard-list', 'onboard-info', onboardStays,    (o,i)=>`Contract ${i+1} &nbsp; ${fmt(o.start)} → ${o.end?fmt(o.end):'…'}`, 'ibadge-amber');
+  renderList('training-list','training-info',trainingPeriods, (t,i)=>`Training ${i+1} &nbsp; ${fmt(t.start)} → ${t.end?fmt(t.end):'…'}`, 'ibadge-purple');
 }
 
 // ═══ CALENDAR RENDER ══════════════════════════════════════════════
@@ -643,11 +673,13 @@ function renderCalendar() {
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const today       = new Date();
 
-  const trips        = getTrips();
-  const onboardStays = getOnboardStays();
-  const awayDates    = getRangeDates(trips, true);
-  const brazilDates  = getRangeDates(getBrazilStays(), true);
-  const onboardDates = getRangeDates(onboardStays, true);
+  const trips           = getTrips();
+  const onboardStays    = getOnboardStays();
+  const trainingPeriods = getTrainingPeriods();
+  const awayDates       = getRangeDates(trips, true);
+  const brazilDates     = getRangeDates(getBrazilStays(), true);
+  const onboardDates    = getRangeDates(onboardStays, true);
+  const trainingDates   = getRangeDates(trainingPeriods, true);
 
   for (let i = 0; i < offset; i++) {
     const e = document.createElement('div'); e.className='day empty'; cal.appendChild(e);
@@ -656,12 +688,14 @@ function renderCalendar() {
   const EV_LABEL = {
     depart:'left home', arrive:'arrived',
     'brazil-in':'🇧🇷 in', 'brazil-out':'✈️ out',
-    'sign-on':'⚓ on', 'sign-off':'🔄 off'
+    'sign-on':'⚓ on', 'sign-off':'🔄 off',
+    'training-start':'🎓 start', 'training-end':'✅ end'
   };
   const EV_CLASS = {
     depart:'ev-depart', arrive:'ev-arrive',
     'brazil-in':'ev-brazil-in','brazil-out':'ev-brazil-out',
-    'sign-on':'ev-sign-on','sign-off':'ev-sign-off'
+    'sign-on':'ev-sign-on','sign-off':'ev-sign-off',
+    'training-start':'ev-training','training-end':'ev-training'
   };
 
   for (let d = 1; d <= daysInMonth; d++) {
@@ -670,12 +704,13 @@ function renderCalendar() {
     div.className = 'day';
 
     const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
-    if (isToday)              div.classList.add('today');
-    if (awayDates.has(ds))    div.classList.add('range-away');
-    if (brazilDates.has(ds))  div.classList.add('range-brazil');
-    if (onboardDates.has(ds)) div.classList.add('range-onboard');
-    if (d === 20)             div.classList.add('payroll-end');
-    if (d === 21)             div.classList.add('payroll-start');
+    if (isToday)                div.classList.add('today');
+    if (awayDates.has(ds))      div.classList.add('range-away');
+    if (brazilDates.has(ds))    div.classList.add('range-brazil');
+    if (onboardDates.has(ds))   div.classList.add('range-onboard');
+    if (trainingDates.has(ds))  div.classList.add('range-training');
+    if (d === 20)               div.classList.add('payroll-end');
+    if (d === 21)               div.classList.add('payroll-start');
 
     let html = `<div class="day-num">${d}</div>`;
     if (d === 20) html += `<div class="payroll-marker">✂ PAY</div>`;
@@ -689,6 +724,9 @@ function renderCalendar() {
 
     const contract = onboardStays.find(o => o.end === ds);
     if (contract && durDays(contract)) html += `<span class="badge-onboard">⚓${durDays(contract)}d</span>`;
+
+    const training = trainingPeriods.find(t => t.end === ds);
+    if (training && durDays(training)) html += `<span class="badge-training">🎓${durDays(training)}d</span>`;
 
     div.innerHTML = html;
     div.addEventListener('click', () => openModal(ds));
@@ -755,6 +793,23 @@ function logEvent(type) {
     events.sort((a,b) => a.date.localeCompare(b.date)||a.type.localeCompare(b.type));
   }
   saveEvents(); closeModal(); renderCalendar();
+
+  // When training ends — ask for daily rate
+  if (type === 'training-end') {
+    const trainingPeriods = getTrainingPeriods();
+    const lastTraining = trainingPeriods[trainingPeriods.length - 1];
+    if (lastTraining && lastTraining.end === selectedDate) {
+      const days = durDays(lastTraining);
+      const fmt = ds => ds.slice(5).replace('-','/');
+      document.getElementById('training-rate-sub').textContent =
+        `Training: ${fmt(lastTraining.start)} → ${fmt(lastTraining.end)} (${days} days). Enter the daily rate:`;
+      document.getElementById('training-rate-input').value = '';
+      document.getElementById('training-rate-modal').classList.add('open');
+      // Store reference to current training period
+      document.getElementById('training-rate-modal').dataset.start = lastTraining.start;
+      document.getElementById('training-rate-modal').dataset.end   = lastTraining.end;
+    }
+  }
 }
 
 function clearDay() {
@@ -1113,31 +1168,37 @@ function deleteCert(i) {
 // ═══ TRAVEL EXPENSES ══════════════════════════════════════════════
 
 function getPayrollMonthOptions() {
-  const currentYear = new Date().getFullYear();
+  const today = new Date();
+  const currentYear = today.getFullYear();
   const options = [];
-  const seen = new Set();
 
-  // Generate periods for prev year, current year and into next year
-  [currentYear - 1, currentYear, currentYear + 1].forEach(yr => {
-    for (let m = 0; m <= 11; m++) {
-      const nextM = m === 11 ? 0 : m + 1;
-      const nextY = m === 11 ? yr + 1 : yr;
-      const val   = dateStr(nextY, nextM, 20);
-      if (!seen.has(val)) {
-        seen.add(val);
-        options.push({
-          label: `${MONTHS_S[m]} 21 – ${MONTHS_S[nextM]} 20, ${nextY}`,
-          value: val
-        });
-      }
-    }
+  // Build ALL periods for current year: Dec(prev) 21 → Jan 20 through Dec 21 → Jan(next) 20
+  // That means months Dec(prev year) through Dec(current year)
+  const periods = [
+    { fromM: 11, fromY: currentYear - 1, toM: 0,  toY: currentYear },  // Dec 21 → Jan 20
+    { fromM: 0,  fromY: currentYear,     toM: 1,  toY: currentYear },  // Jan 21 → Feb 20
+    { fromM: 1,  fromY: currentYear,     toM: 2,  toY: currentYear },  // Feb 21 → Mar 20
+    { fromM: 2,  fromY: currentYear,     toM: 3,  toY: currentYear },  // Mar 21 → Apr 20
+    { fromM: 3,  fromY: currentYear,     toM: 4,  toY: currentYear },  // Apr 21 → May 20
+    { fromM: 4,  fromY: currentYear,     toM: 5,  toY: currentYear },  // May 21 → Jun 20
+    { fromM: 5,  fromY: currentYear,     toM: 6,  toY: currentYear },  // Jun 21 → Jul 20
+    { fromM: 6,  fromY: currentYear,     toM: 7,  toY: currentYear },  // Jul 21 → Aug 20
+    { fromM: 7,  fromY: currentYear,     toM: 8,  toY: currentYear },  // Aug 21 → Sep 20
+    { fromM: 8,  fromY: currentYear,     toM: 9,  toY: currentYear },  // Sep 21 → Oct 20
+    { fromM: 9,  fromY: currentYear,     toM: 10, toY: currentYear },  // Oct 21 → Nov 20
+    { fromM: 10, fromY: currentYear,     toM: 11, toY: currentYear },  // Nov 21 → Dec 20
+    { fromM: 11, fromY: currentYear,     toM: 0,  toY: currentYear+1 } // Dec 21 → Jan 20 (next)
+  ];
+
+  periods.forEach(p => {
+    const periodEnd = dateStr(p.toY, p.toM, 20);
+    options.push({
+      label: `${MONTHS_S[p.fromM]} 21 – ${MONTHS_S[p.toM]} 20, ${p.toY}`,
+      value: periodEnd
+    });
   });
 
-  // Sort chronologically
-  options.sort((a, b) => a.value.localeCompare(b.value));
-
-  // Keep only from Jan 2025 onwards
-  return options.filter(o => o.value >= `${currentYear - 1}-01-20`);
+  return options;
 }
 
 function renderExpenses() {
@@ -1389,6 +1450,52 @@ async function handleCertScan(event) {
   } finally {
     event.target.value = ''; // Resetujemy pole pliku
   }
+}
+
+// ═══ TRAINING RATE MODAL ═════════════════════════════════════════════
+
+// Store training rates: [{ start, end, rate, days }]
+let trainingRates = JSON.parse(localStorage.getItem('crewxTrainingRates') || '[]');
+
+function saveTrainingRates() {
+  localStorage.setItem('crewxTrainingRates', JSON.stringify(trainingRates));
+  saveToCloud();
+}
+
+function closeTrainingRateModal() {
+  document.getElementById('training-rate-modal').classList.remove('open');
+}
+
+function handleTrainingRateOverlay(e) {
+  if (e.target === document.getElementById('training-rate-modal')) closeTrainingRateModal();
+}
+
+function saveTrainingRate() {
+  const modal = document.getElementById('training-rate-modal');
+  const rate  = parseFloat(document.getElementById('training-rate-input').value) || 0;
+  const start = modal.dataset.start;
+  const end   = modal.dataset.end;
+
+  if (!start || !end) { closeTrainingRateModal(); return; }
+
+  const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
+
+  // Remove existing entry for same period
+  trainingRates = trainingRates.filter(r => !(r.start === start && r.end === end));
+  trainingRates.push({ start, end, rate, days });
+  trainingRates.sort((a,b) => a.start.localeCompare(b.start));
+  saveTrainingRates();
+
+  closeTrainingRateModal();
+  renderPayroll();
+}
+
+// Hook training rates into cloud sync
+const _origSaveToCloud = saveToCloud;
+function saveToCloud() {
+  if (!syncDoc) return;
+  syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses, trainingRates }, { merge: true })
+    .catch(err => console.error("Błąd zapisu:", err));
 }
 
 // ═══ ADMIN EMAIL SETTINGS ════════════════════════════════════════════
