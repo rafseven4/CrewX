@@ -822,6 +822,18 @@ function handleOverlayClick(e) {
   if (e.target === document.getElementById('modal')) closeModal();
 }
 
+function cleanOrphanedTrainingRates() {
+  // Remove trainingRates entries that no longer have matching training period in events
+  const activePeriods = getTrainingPeriods();
+  const before = trainingRates.length;
+  trainingRates = trainingRates.filter(r =>
+    activePeriods.some(p => p.start === r.start && p.end === r.end)
+  );
+  if (trainingRates.length !== before) {
+    saveTrainingRates();
+  }
+}
+
 function logEvent(type) {
   if (!selectedDate) return;
   const idx = events.findIndex(e => e.date===selectedDate && e.type===type);
@@ -830,7 +842,14 @@ function logEvent(type) {
     events.push({ date: selectedDate, type });
     events.sort((a,b) => a.date.localeCompare(b.date)||a.type.localeCompare(b.type));
   }
-  saveEvents(); closeModal(); renderCalendar();
+  saveEvents();
+
+  // Clean up orphaned training rates after any training event change
+  if (type === 'training-start' || type === 'training-end') {
+    cleanOrphanedTrainingRates();
+  }
+
+  closeModal(); renderCalendar();
 
   // When training ends — ask for daily rate
   if (type === 'training-end') {
@@ -843,7 +862,6 @@ function logEvent(type) {
         `Training: ${fmt(lastTraining.start)} → ${fmt(lastTraining.end)} (${days} days). Enter the daily rate:`;
       document.getElementById('training-rate-input').value = '';
       document.getElementById('training-rate-modal').classList.add('open');
-      // Store reference to current training period
       document.getElementById('training-rate-modal').dataset.start = lastTraining.start;
       document.getElementById('training-rate-modal').dataset.end   = lastTraining.end;
     }
@@ -853,7 +871,10 @@ function logEvent(type) {
 function clearDay() {
   if (!selectedDate) return;
   events = events.filter(e => e.date !== selectedDate);
-  saveEvents(); closeModal(); renderCalendar();
+  saveEvents();
+  // Clean up orphaned training rates
+  cleanOrphanedTrainingRates();
+  closeModal(); renderCalendar();
 }
 
 function clearAllRates() {
