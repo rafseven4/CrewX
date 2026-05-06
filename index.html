@@ -16,8 +16,8 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="description" content="Crew rotation, rest hours, certificates and payroll tracker"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<!-- Podłączenie zewnętrznego pliku CSS -->
-<link rel="stylesheet" href="style.css?v=5">
+<!-- External CSS file -->
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -227,7 +227,7 @@
             <input class="form-input" id="rate-from" type="text" placeholder="dd/mm/yyyy" maxlength="10"/>
             <input class="form-input" id="rate-to"   type="text" placeholder="dd/mm/yyyy or blank"/>
           </div>
-          <div style="font-size:10px;color:var(--gray400);margin-top:3px">leave "to" blank if rate is still current</div>
+          <div style="font-size:10px;color:var(--gray400);margin-top:3px">Leave "to" blank if rate is still active</div>
         </div>
         <button class="btn-add" onclick="addRate()">+ Add rate period</button>
         <button onclick="clearAllRates()" style="width:100%;margin-top:6px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px;color:#f87171;font-size:11px;font-family:'Space Grotesk',sans-serif;cursor:pointer;">Clear all rates</button>
@@ -272,8 +272,8 @@
     <div class="form-row" style="background: rgba(56,189,248,0.1); padding: 14px; border-radius: var(--radius-sm); border: 1px dashed rgba(56,189,248,0.4); text-align: center; margin-bottom: 15px;">
       <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
         <span style="font-size: 24px;">🤖</span>
-        <span style="font-size: 13px; font-weight: 600; color: var(--sky);">Skanuj certyfikat przez AI (Claude)</span>
-        <span style="font-size: 10px; color: var(--gray400);">Kliknij, aby wybrać zdjęcie lub PDF (JPG/PNG/PDF)</span>
+        <span style="font-size: 13px; font-weight: 600; color: var(--sky);">Scan certificate with AI</span>
+        <span style="font-size: 10px; color: var(--gray400);">Click to select image or PDF (JPG/PNG/PDF)</span>
         <input type="file" id="cert-scan-input" accept="image/jpeg, image/png, application/pdf" style="display: none;" onchange="handleCertScan(event)">
       </label>
       <div id="scan-status" style="font-size: 11px; font-weight: 500; margin-top: 8px; display: none;"></div>
@@ -575,13 +575,13 @@
 
 </div><!-- /app-root -->
 
-<!-- FIREBASE SKRYPTY -->
+<!-- FIREBASE SCRIPTS -->
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
-<!-- Podłączenie zewnętrznego pliku JS z logiką -->
-<script src="app.js?v=5"></script>
+<!-- External JS logic file -->
+<script src="app.js?v=6"></script>
 
 </body>
 </html>
