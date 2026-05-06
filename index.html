@@ -153,13 +153,6 @@
         <div class="stat-label">Contracts</div>
         <div class="stat-value" id="stat-contracts">0</div>
       </div>
-      <!-- YEAR FILTER -->
-      <div class="stat-card stat-year-card">
-        <div class="stat-label">Filter year</div>
-        <select id="stat-year-filter" class="stat-year-select" onchange="updateStats()">
-          <option value="all">All years</option>
-        </select>
-      </div>
     </div>
 
     <!-- calendar -->
@@ -401,7 +394,7 @@
     </div>
     <div class="form-row">
       <label class="form-label">Add to payroll period (cut-off 20th)</label>
-      <select class="form-input" id="exp-month-in"></select>
+      <select class="form-input" id="exp-month-in" style="color:var(--text);background:var(--navy2)"></select>
     </div>
     <div class="form-row">
       <label class="form-label">Notes (optional)</label>
@@ -524,6 +517,19 @@
       <div style="margin-top:16px;padding:14px;background:var(--navy);border-radius:8px;border:1px solid var(--navy3)">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400);margin-bottom:8px">Current schedule preview</div>
         <div id="email-schedule-preview" style="font-size:12px;color:var(--gray400);line-height:1.8"></div>
+      </div>
+
+      <!-- LIVE FIRESTORE STATUS -->
+      <div style="margin-top:12px;padding:14px;background:var(--navy);border-radius:8px;border:1px solid var(--navy3)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400)">
+            ☁️ Saved in Firestore — adminSettings/emailNotifications
+          </div>
+          <button onclick="loadEmailSettings()" style="background:none;border:1px solid var(--navy3);border-radius:6px;padding:2px 8px;color:var(--gray400);font-size:10px;cursor:pointer;">↺ Reload</button>
+        </div>
+        <div id="firestore-settings-status">
+          <div style="color:var(--gray400);font-size:12px">Loading from Firestore...</div>
+        </div>
       </div>
 
     </div>
