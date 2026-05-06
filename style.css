@@ -954,3 +954,103 @@ select.form-input option {
   color: #c4b5fd;
   border: 1px solid rgba(139,92,246,0.4);
 }
+
+/* ═══ PAYROLL CARDS ══════════════════════════════════════════════════ */
+.pc-card {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.pc-card:hover { border-color: rgba(56,189,248,0.2); }
+
+.pc-current {
+  border-color: rgba(56,189,248,0.4) !important;
+  background: rgba(56,189,248,0.04) !important;
+}
+
+.pc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.pc-period {
+  font-size: 12px; font-weight: 600;
+  color: var(--white); letter-spacing: 0.03em;
+}
+.pc-badge-current {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+  background: rgba(56,189,248,0.15); color: var(--sky);
+  border: 1px solid rgba(56,189,248,0.3);
+  border-radius: 100px; padding: 2px 8px;
+}
+
+.pc-body { padding: 6px 14px; }
+
+.pc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.pc-row:last-child { border-bottom: none; }
+.pc-row-zero { opacity: 0.4; }
+
+.pc-row-left {
+  display: flex; align-items: center; gap: 8px;
+}
+.pc-row-icon { font-size: 13px; }
+.pc-row-name { font-size: 12px; font-weight: 600; color: var(--white); }
+.pc-row-sub  { font-size: 10px; color: var(--gray400); }
+
+.pc-row-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 600; color: var(--gray400);
+}
+.pc-amount-main     { color: var(--sky) !important; }
+.pc-amount-training { color: #a78bfa !important; }
+.pc-amount-exp      { color: var(--gold) !important; }
+
+/* Sub-lines (expense items, training items) */
+.pc-line {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 3px 0 3px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.pc-line-label { font-size: 10px; color: var(--gray400); }
+.pc-line-val   { font-size: 10px; font-family: 'JetBrains Mono',monospace; color: var(--gray400); }
+
+/* Total row */
+.pc-total {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.pc-total span:first-child {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--gray400);
+}
+.pc-total-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px; font-weight: 700; color: var(--green);
+}
+
+/* Grand total */
+.pc-grand-total {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.25);
+  border-radius: var(--radius);
+  margin-top: 4px;
+}
+.pc-grand-total span:first-child {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--green);
+}
+.pc-grand-total span:last-child {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 700; color: var(--green);
+}
