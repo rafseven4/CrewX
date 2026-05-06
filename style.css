@@ -917,11 +917,7 @@ select.form-input {
 .ai-training-start { background: rgba(139,92,246,0.2) !important; }
 .ai-training-end   { background: rgba(139,92,246,0.2) !important; }
 
-/* Select options background fix */
-select.form-input option {
-  background: #112240;
-  color: #ffffff;
-}
+
 
 /* Training calendar range */
 .range-training {
@@ -1055,16 +1051,16 @@ select.form-input option {
   font-size: 18px; font-weight: 700; color: var(--green);
 }
 
-/* ═══ SELECT DROPDOWN FIX — always visible text ══════════════════ */
-#exp-currency-in,
-#exp-month-in,
+
+/* ═══ SELECT FIX — match input fields exactly ═══════════════════ */
 select.form-input {
-  color: #e2eaf4 !important;
-  background-color: #1e3d5c !important;
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.06) !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
 }
-#exp-currency-in option,
-#exp-month-in option,
 select.form-input option {
-  color: #e2eaf4 !important;
-  background-color: #112240 !important;
+  color: #ffffff !important;
+  background: #0d1f35 !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
