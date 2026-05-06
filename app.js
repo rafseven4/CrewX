@@ -423,19 +423,17 @@ function renderPayroll() {
     return;
   }
 
-  // Generuj okresy do końca roku niezależnie od wyjazdów
-  const today = new Date();
-  const endOfYear = new Date(today.getFullYear(), 11, 31);
-
-  // Znajdź najwcześniejszą datę rate
   const allDates = rates.map(r => r.from).sort();
   if (allDates.length === 0) {
     body.innerHTML = '<div class="empty-state">Log trip events to calculate earnings</div>';
     return;
   }
 
-  const awayDates = getRangeDates(getTrips());
-  const earliest = new Date(allDates[0] + 'T00:00:00');
+  const today      = new Date();
+  const todayStr   = today.toISOString().slice(0,10);
+  const endOfYear  = new Date(today.getFullYear(), 11, 31);
+  const awayDates  = getRangeDates(getTrips());
+  const earliest   = new Date(allDates[0] + 'T00:00:00');
 
   let y = earliest.getFullYear();
   let m = earliest.getMonth();
@@ -456,113 +454,122 @@ function renderPayroll() {
     const e = new Date(periodEnd   + 'T00:00:00');
     for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
       const ds = c.toISOString().slice(0,10);
-      if (awayDates.has(ds)) {
-        days++;
-        earnings += getRateForDate(ds);
-      }
+      if (awayDates.has(ds)) { days++; earnings += getRateForDate(ds); }
     }
 
-    periods.push({
-      label: `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${y}`,
-      periodEnd, periodStart, days, earnings
-    });
-
-    m++;
-    if (m > 11) { m = 0; y++; }
+    periods.push({ label: `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${y}`, periodEnd, periodStart, days, earnings });
+    m++; if (m > 11) { m = 0; y++; }
   }
 
-  // Pokaż: okresy z dniami + bieżący + wszystkie przyszłe
-  const todayStr = today.toISOString().slice(0,10);
   const visible = periods.filter(p => p.days > 0 || p.periodEnd >= todayStr);
-
   if (visible.length === 0) {
     body.innerHTML = '<div class="empty-state">Log trip events to calculate earnings</div>';
     return;
   }
 
-  let totalDays = 0, totalEarn = 0, totalExp = 0, totalTraining = 0;
-  visible.forEach(p => {
-    totalDays += p.days;
-    totalEarn += p.earnings;
-    const periodExps = expenses.filter(e => e.payrollPeriod === p.periodEnd);
-    totalExp += periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
+  const fmt = ds => ds ? ds.slice(5).replace('-','/') : '—';
+  const usd = (v, dec=0) => '$' + parseFloat(v||0).toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec});
+
+  let grandTotal = 0;
+
+  const cards = visible.map(p => {
+    const isCurrent = todayStr >= p.periodStart && todayStr <= p.periodEnd;
+
+    // Expenses
+    const periodExps     = (expenses || []).filter(e => e.payrollPeriod === p.periodEnd);
+    const expTotal       = periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
+
+    // Training
     const periodTraining = (trainingRates || []).filter(t => t.end >= p.periodStart && t.end <= p.periodEnd);
-    totalTraining += periodTraining.reduce((s, t) => s + ((t.rate||0)*(t.days||0)), 0);
-  });
+    const trainingTotal  = periodTraining.reduce((s, t) => s + ((t.rate||0) * (t.days||0)), 0);
+    const trainingDaysCount = periodTraining.reduce((s, t) => s + (t.days||0), 0);
 
-  const rows = visible.map(p => {
-    const isCurrent = todayStr <= p.periodEnd && todayStr >= p.periodStart;
-    // Find expenses for this period
-    const periodExps = expenses.filter(e => e.payrollPeriod === p.periodEnd);
-    const expTotal   = periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
+    const total = p.earnings + expTotal + trainingTotal;
+    grandTotal += total;
 
-    // Training rates for this period
-    const periodTraining = (trainingRates || []).filter(t =>
-      t.end >= p.periodStart && t.end <= p.periodEnd
-    );
-    const trainingTotal = periodTraining.reduce((s, t) => s + ((t.rate || 0) * (t.days || 0)), 0);
+    // Expense rows
+    const expRows = periodExps.map(e => `
+      <div class="pc-line">
+        <span class="pc-line-label">↳ ${e.desc}</span>
+        <span class="pc-line-val">${usd(e.usd,2)}</span>
+      </div>`).join('');
 
-    const expSection = periodExps.length > 0 ? `
-      <div class="exp-payroll-section">
-        <div class="exp-payroll-title">🧾 Travel Expenses</div>
-        ${periodExps.map(e => `
-          <div class="exp-payroll-row">
-            <span>${e.desc}</span>
-            <span>$${parseFloat(e.usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
-          </div>`).join('')}
-        <div class="exp-payroll-total">
-          <span>Expenses total</span>
-          <span>$${expTotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+    // Training rows
+    const trainRows = periodTraining.map(t => `
+      <div class="pc-line">
+        <span class="pc-line-label">↳ ${fmt(t.start)}→${fmt(t.end)} · ${t.days}d × ${usd(t.rate)}/d</span>
+        <span class="pc-line-val">${usd((t.rate||0)*(t.days||0),0)}</span>
+      </div>`).join('');
+
+    return `
+    <div class="pc-card ${isCurrent ? 'pc-current' : ''}">
+
+      <!-- Period header -->
+      <div class="pc-header">
+        <div class="pc-period">${p.label}</div>
+        ${isCurrent ? '<div class="pc-badge-current">current</div>' : ''}
+      </div>
+
+      <!-- Line items -->
+      <div class="pc-body">
+
+        <!-- Days Away -->
+        <div class="pc-row ${p.days === 0 ? 'pc-row-zero' : ''}">
+          <div class="pc-row-left">
+            <span class="pc-row-icon">📅</span>
+            <span class="pc-row-name">Days away</span>
+            <span class="pc-row-sub">${p.days} days × rate</span>
+          </div>
+          <span class="pc-row-amount ${p.days > 0 ? 'pc-amount-main' : ''}">${usd(p.earnings)}</span>
         </div>
-      </div>` : '';
 
-    const fmt2 = ds => ds.slice(5).replace('-','/');
-    const trainingSection = periodTraining.length > 0 ? `
-      <div class="exp-payroll-section">
-        <div class="exp-payroll-title">🎓 Training</div>
-        ${periodTraining.map(t => `
-          <div class="exp-payroll-row">
-            <span>${fmt2(t.start)} → ${fmt2(t.end)} (${t.days}d × $${t.rate}/d)</span>
-            <span>$${((t.rate||0)*(t.days||0)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
-          </div>`).join('')}
-        <div class="exp-payroll-total">
-          <span>Training total</span>
-          <span>$${trainingTotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        <!-- Training -->
+        ${trainingDaysCount > 0 ? `
+        <div class="pc-row">
+          <div class="pc-row-left">
+            <span class="pc-row-icon">🎓</span>
+            <span class="pc-row-name">Training</span>
+            <span class="pc-row-sub">${trainingDaysCount} days</span>
+          </div>
+          <span class="pc-row-amount pc-amount-training">${usd(trainingTotal)}</span>
         </div>
-      </div>` : '';
+        ${trainRows}` : ''}
 
-    return `<tr class="${isCurrent ? 'current-period' : ''}">
-      <td class="period-col">
-        ${p.label}
-        ${expSection}
-        ${trainingSection}
-      </td>
-      <td class="days-col">${p.days}</td>
-      <td class="earn-col">$${(p.earnings + expTotal + trainingTotal).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
-    </tr>`;
+        <!-- Expenses -->
+        ${expTotal > 0 ? `
+        <div class="pc-row">
+          <div class="pc-row-left">
+            <span class="pc-row-icon">🧾</span>
+            <span class="pc-row-name">Expenses</span>
+            <span class="pc-row-sub">${periodExps.length} item${periodExps.length !== 1 ? 's' : ''}</span>
+          </div>
+          <span class="pc-row-amount pc-amount-exp">${usd(expTotal,2)}</span>
+        </div>
+        ${expRows}` : ''}
+
+      </div>
+
+      <!-- Total -->
+      <div class="pc-total">
+        <span>Total payout</span>
+        <span class="pc-total-amount">${usd(total)}</span>
+      </div>
+
+    </div>`;
   }).join('');
 
   body.innerHTML = `
-    <table class="payroll-table">
-      <thead><tr>
-        <th>Period</th>
-        <th style="text-align:center">Days</th>
-        <th style="text-align:right">Earned</th>
-      </tr></thead>
-      <tbody>
-        ${rows}
-        <tr class="total-row">
-          <td>Total (incl. expenses + training)</td>
-          <td class="days-col">${totalDays}</td>
-          <td class="earn-col">$${(totalEarn + totalExp + totalTraining).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</td>
-        </tr>
-      </tbody>
-    </table>
+    ${cards}
+    <div class="pc-grand-total">
+      <span>Grand total (all periods)</span>
+      <span>${usd(grandTotal)}</span>
+    </div>
     <div style="font-size:10px;color:var(--gray400);margin-top:8px;text-align:center">
-      Highlighted row = current active period &nbsp;·&nbsp; cut-off: 20th each month
+      Cut-off: 20th each month &nbsp;·&nbsp; ${isCurrent ? 'Highlighted' : 'Blue border'} = current period
     </div>
   `;
 }
+
 
 // ═══ STATS ════════════════════════════════════════════════════════
 function updateStats() {
