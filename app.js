@@ -1113,45 +1113,31 @@ function deleteCert(i) {
 // ═══ TRAVEL EXPENSES ══════════════════════════════════════════════
 
 function getPayrollMonthOptions() {
-  const today = new Date();
-  const currentYear = today.getFullYear();
+  const currentYear = new Date().getFullYear();
   const options = [];
-
-  // Build ALL periods for current year: Dec(prev) 21 → Jan 20 through Dec 21 → Jan(next) 20
-  // That means months Dec(prev year) through Dec(current year)
-  // Generate all periods for previous year + current year + next period
-  // Sorted newest first so dropdown shows most relevant at top
-  const allPeriods = [];
-
-  // Previous year periods (Oct-Dec of prev year → relevant carry-over)
-  for (let m = 0; m <= 11; m++) {
-    const nextM = m === 11 ? 0 : m + 1;
-    const nextY = m === 11 ? currentYear : currentYear - 1;
-    const fromY = currentYear - 1;
-    allPeriods.push({
-      label: `${MONTHS_S[m]} 21 – ${MONTHS_S[nextM]} 20, ${nextY}`,
-      value: dateStr(nextY, nextM, 20)
-    });
-  }
-
-  // Current year + next jan
-  for (let m = 0; m <= 11; m++) {
-    const nextM = m === 11 ? 0 : m + 1;
-    const nextY = m === 11 ? currentYear + 1 : currentYear;
-    allPeriods.push({
-      label: `${MONTHS_S[m]} 21 – ${MONTHS_S[nextM]} 20, ${nextY}`,
-      value: dateStr(nextY, nextM, 20)
-    });
-  }
-
-  // Remove duplicates and sort oldest first
   const seen = new Set();
-  allPeriods.forEach(p => {
-    if (!seen.has(p.value)) { seen.add(p.value); options.push(p); }
+
+  // Generate periods for prev year, current year and into next year
+  [currentYear - 1, currentYear, currentYear + 1].forEach(yr => {
+    for (let m = 0; m <= 11; m++) {
+      const nextM = m === 11 ? 0 : m + 1;
+      const nextY = m === 11 ? yr + 1 : yr;
+      const val   = dateStr(nextY, nextM, 20);
+      if (!seen.has(val)) {
+        seen.add(val);
+        options.push({
+          label: `${MONTHS_S[m]} 21 – ${MONTHS_S[nextM]} 20, ${nextY}`,
+          value: val
+        });
+      }
+    }
   });
+
+  // Sort chronologically
   options.sort((a, b) => a.value.localeCompare(b.value));
 
-  return options;
+  // Keep only from Jan 2025 onwards
+  return options.filter(o => o.value >= `${currentYear - 1}-01-20`);
 }
 
 function renderExpenses() {
