@@ -20,9 +20,10 @@ let syncDoc       = null;
 let unsubscribeSnapshot = null;
 
 // ═══ STATE ════════════════════════════════════════════════════════
-let events   = [];
-let rates    = [];
-let rhGrid   = {};
+let events        = [];
+let rates         = [];
+let rhGrid        = {};
+let trainingRates = JSON.parse(localStorage.getItem('crewxTrainingRates') || '[]');
 let rhMeta   = {};
 let certs    = [];
 let expenses = [];
@@ -127,9 +128,9 @@ function initCloudSync() {
 
   syncDoc.get().then(doc => {
     if (!doc.exists) {
-      console.log("Nowy użytkownik — czysta instalacja");
+      console.log("New user — clean install");
     }
-  }).catch(err => console.error("Błąd sprawdzania chmury:", err));
+  }).catch(err => console.error("Cloud check error:", err));
 
   unsubscribeSnapshot = syncDoc.onSnapshot(doc => {
     if (!doc.exists) return;
@@ -156,7 +157,7 @@ function initCloudSync() {
     if (document.getElementById('page-certificates')?.classList.contains('active')) renderCerts();
     if (document.getElementById('page-expenses')?.classList.contains('active')) renderExpenses();
   }, err => {
-    console.error("Błąd nasłuchiwania chmury:", err);
+    console.error("Cloud listener error:", err);
     renderRates(); renderCalendar(); updateStats();
   });
 }
@@ -164,7 +165,7 @@ function initCloudSync() {
 function saveToCloud() {
   if (!syncDoc) return;
   syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses }, { merge: true })
-    .catch(err => console.error("Błąd zapisu:", err));
+    .catch(err => console.error("Save error:", err));
 }
 
 function saveEvents()   { localStorage.setItem('crewxEvents',   JSON.stringify(events));   saveToCloud(); }
@@ -433,6 +434,9 @@ function renderPayroll() {
   const todayStr   = today.toISOString().slice(0,10);
   const endOfYear  = new Date(today.getFullYear(), 11, 31);
   const awayDates  = getRangeDates(getTrips());
+
+  // Build set of ALL training dates so we can exclude them from Days Away
+  const allTrainingDates = getRangeDates(getTrainingPeriods());
   const earliest   = new Date(allDates[0] + 'T00:00:00');
 
   let y = earliest.getFullYear();
@@ -454,7 +458,10 @@ function renderPayroll() {
     const e = new Date(periodEnd   + 'T00:00:00');
     for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
       const ds = c.toISOString().slice(0,10);
-      if (awayDates.has(ds)) { days++; earnings += getRateForDate(ds); }
+      // Exclude training days from Days Away to avoid double counting
+      if (awayDates.has(ds) && !allTrainingDates.has(ds)) {
+        days++; earnings += getRateForDate(ds);
+      }
     }
 
     periods.push({ label: `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${y}`, periodEnd, periodStart, days, earnings });
@@ -467,7 +474,7 @@ function renderPayroll() {
     return;
   }
 
-  const fmt = ds => ds ? ds.slice(5).replace('-','/') : '—';
+  const fmt = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
   const usd = (v, dec=0) => '$' + parseFloat(v||0).toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec});
 
   let grandTotal = 0;
@@ -650,7 +657,7 @@ function updateStats() {
   }
 
   // lists — always show all (not filtered by year)
-  const fmt = ds => ds.slice(5).replace('-','/');
+  const fmt = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
   function renderList(listId, infoId, items, labelFn, badgeClass) {
     const info = document.getElementById(infoId);
     const list = document.getElementById(listId);
@@ -831,7 +838,7 @@ function logEvent(type) {
     const lastTraining = trainingPeriods[trainingPeriods.length - 1];
     if (lastTraining && lastTraining.end === selectedDate) {
       const days = durDays(lastTraining);
-      const fmt = ds => ds.slice(5).replace('-','/');
+      const fmt = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
       document.getElementById('training-rate-sub').textContent =
         `Training: ${fmt(lastTraining.start)} → ${fmt(lastTraining.end)} (${days} days). Enter the daily rate:`;
       document.getElementById('training-rate-input').value = '';
@@ -1368,7 +1375,7 @@ async function handleExpenseScan(event) {
   const statusEl = document.getElementById('exp-scan-status');
   statusEl.style.display  = 'block';
   statusEl.style.color    = 'var(--gold)';
-  statusEl.textContent    = '⏳ Czytam dokument i przeliczam waluty... (może potrwać ~15 sek)';
+  statusEl.textContent    = '⏳ Reading document and converting currencies... (~15 seconds)';
 
   try {
     const base64Data = await fileToBase64(file);
@@ -1380,7 +1387,7 @@ async function handleExpenseScan(event) {
       body: JSON.stringify({ file: base64Data, fileName: file.name })
     });
 
-    if (!response.ok) throw new Error(`Błąd serwera: ${response.status}`);
+    if (!response.ok) throw new Error(`Server error: ${response.status}`);
     const data = await response.json();
     if (data.error) throw new Error(data.error);
 
@@ -1434,7 +1441,7 @@ function fileToBase64(file) {
   });
 }
 
-// Główna funkcja wysyłająca obraz do naszej chmury
+// Main function to send image to cloud
 async function handleCertScan(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -1442,7 +1449,7 @@ async function handleCertScan(event) {
   const statusEl = document.getElementById('scan-status');
   statusEl.style.display = 'block';
   statusEl.style.color = 'var(--gold)';
-  statusEl.textContent = '⏳ Skanowanie w toku... (JPG/PNG/PDF — może potrwać kilkanaście sekund)';
+  statusEl.textContent = '⏳ Scanning... (JPG/PNG/PDF — may take a few seconds)';
 
   try {
     const base64Data = await fileToBase64(file);
@@ -1460,7 +1467,7 @@ async function handleCertScan(event) {
       })
     });
 
-    if (!response.ok) throw new Error("Błąd podczas połączenia z chmurą");
+    if (!response.ok) throw new Error("Connection error");
 
     const aiData = await response.json();
 
@@ -1472,12 +1479,12 @@ async function handleCertScan(event) {
     document.getElementById('cert-expiry-in').value = aiData.expiry || '';
 
     statusEl.style.color = 'var(--green)';
-    statusEl.textContent = '✅ Gotowe! Sprawdź poprawność danych i kliknij Save.';
+    statusEl.textContent = '✅ Done! Review the data and click Save.';
 
   } catch (error) {
     console.error(error);
     statusEl.style.color = 'var(--red)';
-    statusEl.textContent = '❌ Wystąpił błąd podczas skanowania. Wprowadź dane ręcznie.';
+    statusEl.textContent = '❌ Scan failed. Please enter details manually.';
   } finally {
     event.target.value = ''; // Resetujemy pole pliku
   }
@@ -1485,8 +1492,7 @@ async function handleCertScan(event) {
 
 // ═══ TRAINING RATE MODAL ═════════════════════════════════════════════
 
-// Store training rates: [{ start, end, rate, days }]
-let trainingRates = JSON.parse(localStorage.getItem('crewxTrainingRates') || '[]');
+// Training rates stored in state variables at top of file
 
 function saveTrainingRates() {
   localStorage.setItem('crewxTrainingRates', JSON.stringify(trainingRates));
@@ -1505,7 +1511,7 @@ function editTrainingRate(start, end) {
   const modal = document.getElementById('training-rate-modal');
   const existing = (trainingRates || []).find(r => r.start === start && r.end === end);
   const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
-  const fmt2 = ds => ds.slice(5).replace('-','/');
+  const fmt2 = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
   document.getElementById('training-rate-sub').textContent =
     `Training: ${fmt2(start)} → ${fmt2(end)} (${days} days). Enter the daily rate:`;
   document.getElementById('training-rate-input').value = existing ? existing.rate : '';
@@ -1539,7 +1545,7 @@ const _origSaveToCloud = saveToCloud;
 function saveToCloud() {
   if (!syncDoc) return;
   syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses, trainingRates }, { merge: true })
-    .catch(err => console.error("Błąd zapisu:", err));
+    .catch(err => console.error("Save error:", err));
 }
 
 // ═══ ADMIN EMAIL SETTINGS ════════════════════════════════════════════
@@ -1681,9 +1687,9 @@ async function renderAdminPanel() {
           <div class="admin-user-info">
             <div class="admin-user-email">${u.email}</div>
             <div class="admin-user-meta">
-              Created: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+              Created: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB') : '—'}
               &nbsp;·&nbsp;
-              Last login: ${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : 'Never'}
+              Last login: ${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-GB') : 'Never'}
               ${u.disabled ? ' &nbsp;·&nbsp; <span style="color:var(--red)">DISABLED</span>' : ''}
             </div>
           </div>
