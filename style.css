@@ -869,29 +869,16 @@ body {
   margin-top: 1px;
 }
 
-/* ═══ YEAR FILTER ════════════════════════════════════════════════════ */
-.stat-year-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border: 1px dashed rgba(56,189,248,0.3) !important;
-  background: rgba(56,189,248,0.04) !important;
+/* ═══ FIX SELECT OPTION COLORS ═══════════════════════════════════ */
+select.form-input,
+select.form-input option,
+select.rh-select,
+select.rh-select option {
+  color: var(--text) !important;
+  background: var(--navy2) !important;
 }
-.stat-year-select {
-  margin-top: 6px;
-  background: var(--navy);
-  border: 1px solid var(--navy3);
-  border-radius: 6px;
-  color: var(--sky);
-  font-size: 14px;
-  font-weight: 600;
-  font-family: 'Space Grotesk', sans-serif;
-  padding: 4px 8px;
-  cursor: pointer;
-  width: 100%;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.stat-year-select:hover, .stat-year-select:focus {
-  border-color: var(--sky);
+select.form-input option:checked,
+select.form-input option:hover {
+  background: var(--navy3) !important;
+  color: var(--sky) !important;
 }
