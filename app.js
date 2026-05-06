@@ -619,8 +619,9 @@ function updateStats() {
   document.getElementById('stat-onboard').innerHTML  = `${onboardDates.size} <span class="stat-unit">d</span>`;
   document.getElementById('stat-training').innerHTML = `${trainingDates.size} <span class="stat-unit">d</span>`;
   document.getElementById('stat-travel').innerHTML   = `${travel} <span class="stat-unit">d</span>`;
-  document.getElementById('stat-trips').textContent  = filteredTrips.filter(t=>t.end).length;
-  document.getElementById('stat-contracts').textContent = filteredOnboard.filter(o=>o.end).length;
+  const tripCount     = filteredTrips.filter(t=>t.end).length;
+  const contractCount = filteredOnboard.filter(o=>o.end).length;
+  document.getElementById('stat-trips').innerHTML    = `${tripCount} <span id="stat-contracts" style="font-size:13px;color:var(--gray400)">/ ${contractCount}</span>`;
 
   // status pill — always based on today regardless of filter
   const todayStr = new Date().toISOString().slice(0,10);
@@ -659,7 +660,30 @@ function updateStats() {
   renderList('trips-list',   'trips-info',   trips,           (t,i)=>`Trip ${i+1} &nbsp; ${fmt(t.start)} → ${t.end?fmt(t.end):'…'}`, 'ibadge-blue');
   renderList('brazil-list',  'brazil-info',  brazilStays,     (b,i)=>`Stay ${i+1} &nbsp; ${fmt(b.start)} → ${b.end?fmt(b.end):'…'}`, 'ibadge-green');
   renderList('onboard-list', 'onboard-info', onboardStays,    (o,i)=>`Contract ${i+1} &nbsp; ${fmt(o.start)} → ${o.end?fmt(o.end):'…'}`, 'ibadge-amber');
-  renderList('training-list','training-info',trainingPeriods, (t,i)=>`Training ${i+1} &nbsp; ${fmt(t.start)} → ${t.end?fmt(t.end):'…'}`, 'ibadge-purple');
+
+  // Training — custom render with rate display and edit button
+  const trainingInfo = document.getElementById('training-info');
+  const trainingList = document.getElementById('training-list');
+  if (trainingPeriods.length === 0) {
+    trainingInfo.style.display = 'none';
+  } else {
+    trainingInfo.style.display = 'block';
+    trainingList.innerHTML = trainingPeriods.map((t, i) => {
+      const rateEntry = (trainingRates || []).find(r => r.start === t.start && r.end === t.end);
+      const rate      = rateEntry ? rateEntry.rate : null;
+      const days      = durDays(t) || '?';
+      const earned    = rate !== null ? `$${(rate * days).toLocaleString()}` : '—';
+      return `<div class="info-row" style="align-items:center">
+        <span>Training ${i+1} &nbsp; ${fmt(t.start)} → ${t.end ? fmt(t.end) : '…'}</span>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+          <span style="font-size:11px;color:var(--gray400)">
+            ${rate !== null ? `$${rate}/d · ${days}d · <strong style="color:#a78bfa">${earned}</strong>` : '<span style="color:var(--amber)">⚠️ no rate set</span>'}
+          </span>
+          <span class="ibadge ibadge-purple" style="cursor:pointer" onclick="editTrainingRate('${t.start}','${t.end}')">✏️ rate</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 
 // ═══ CALENDAR RENDER ══════════════════════════════════════════════
@@ -1468,6 +1492,19 @@ function closeTrainingRateModal() {
 
 function handleTrainingRateOverlay(e) {
   if (e.target === document.getElementById('training-rate-modal')) closeTrainingRateModal();
+}
+
+function editTrainingRate(start, end) {
+  const modal = document.getElementById('training-rate-modal');
+  const existing = (trainingRates || []).find(r => r.start === start && r.end === end);
+  const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
+  const fmt2 = ds => ds.slice(5).replace('-','/');
+  document.getElementById('training-rate-sub').textContent =
+    `Training: ${fmt2(start)} → ${fmt2(end)} (${days} days). Enter the daily rate:`;
+  document.getElementById('training-rate-input').value = existing ? existing.rate : '';
+  modal.dataset.start = start;
+  modal.dataset.end   = end;
+  modal.classList.add('open');
 }
 
 function saveTrainingRate() {
