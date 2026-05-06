@@ -1119,29 +1119,37 @@ function getPayrollMonthOptions() {
 
   // Build ALL periods for current year: Dec(prev) 21 → Jan 20 through Dec 21 → Jan(next) 20
   // That means months Dec(prev year) through Dec(current year)
-  const periods = [
-    { fromM: 11, fromY: currentYear - 1, toM: 0,  toY: currentYear },  // Dec 21 → Jan 20
-    { fromM: 0,  fromY: currentYear,     toM: 1,  toY: currentYear },  // Jan 21 → Feb 20
-    { fromM: 1,  fromY: currentYear,     toM: 2,  toY: currentYear },  // Feb 21 → Mar 20
-    { fromM: 2,  fromY: currentYear,     toM: 3,  toY: currentYear },  // Mar 21 → Apr 20
-    { fromM: 3,  fromY: currentYear,     toM: 4,  toY: currentYear },  // Apr 21 → May 20
-    { fromM: 4,  fromY: currentYear,     toM: 5,  toY: currentYear },  // May 21 → Jun 20
-    { fromM: 5,  fromY: currentYear,     toM: 6,  toY: currentYear },  // Jun 21 → Jul 20
-    { fromM: 6,  fromY: currentYear,     toM: 7,  toY: currentYear },  // Jul 21 → Aug 20
-    { fromM: 7,  fromY: currentYear,     toM: 8,  toY: currentYear },  // Aug 21 → Sep 20
-    { fromM: 8,  fromY: currentYear,     toM: 9,  toY: currentYear },  // Sep 21 → Oct 20
-    { fromM: 9,  fromY: currentYear,     toM: 10, toY: currentYear },  // Oct 21 → Nov 20
-    { fromM: 10, fromY: currentYear,     toM: 11, toY: currentYear },  // Nov 21 → Dec 20
-    { fromM: 11, fromY: currentYear,     toM: 0,  toY: currentYear+1 } // Dec 21 → Jan 20 (next)
-  ];
+  // Generate all periods for previous year + current year + next period
+  // Sorted newest first so dropdown shows most relevant at top
+  const allPeriods = [];
 
-  periods.forEach(p => {
-    const periodEnd = dateStr(p.toY, p.toM, 20);
-    options.push({
-      label: `${MONTHS_S[p.fromM]} 21 – ${MONTHS_S[p.toM]} 20, ${p.toY}`,
-      value: periodEnd
+  // Previous year periods (Oct-Dec of prev year → relevant carry-over)
+  for (let m = 0; m <= 11; m++) {
+    const nextM = m === 11 ? 0 : m + 1;
+    const nextY = m === 11 ? currentYear : currentYear - 1;
+    const fromY = currentYear - 1;
+    allPeriods.push({
+      label: `${MONTHS_S[m]} 21 – ${MONTHS_S[nextM]} 20, ${nextY}`,
+      value: dateStr(nextY, nextM, 20)
     });
+  }
+
+  // Current year + next jan
+  for (let m = 0; m <= 11; m++) {
+    const nextM = m === 11 ? 0 : m + 1;
+    const nextY = m === 11 ? currentYear + 1 : currentYear;
+    allPeriods.push({
+      label: `${MONTHS_S[m]} 21 – ${MONTHS_S[nextM]} 20, ${nextY}`,
+      value: dateStr(nextY, nextM, 20)
+    });
+  }
+
+  // Remove duplicates and sort oldest first
+  const seen = new Set();
+  allPeriods.forEach(p => {
+    if (!seen.has(p.value)) { seen.add(p.value); options.push(p); }
   });
+  options.sort((a, b) => a.value.localeCompare(b.value));
 
   return options;
 }
