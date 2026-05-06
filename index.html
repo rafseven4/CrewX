@@ -141,6 +141,10 @@
         <div class="stat-label">⚓ Onboard <span class="stat-sublabel">(sea time)</span></div>
         <div class="stat-value" id="stat-onboard">0 <span class="stat-unit">d</span></div>
       </div>
+      <div class="stat-card c-purple">
+        <div class="stat-label">🎓 Training <span class="stat-sublabel">(days)</span></div>
+        <div class="stat-value" id="stat-training">0 <span class="stat-unit">d</span></div>
+      </div>
       <div class="stat-card">
         <div class="stat-label">Travel days</div>
         <div class="stat-value" id="stat-travel">0 <span class="stat-unit">d</span></div>
@@ -175,6 +179,7 @@
         <div class="legend-item"><div class="ldot" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4)"></div>Brazil</div>
         <div class="legend-item"><div class="lstripe-l"></div>Away+BR</div>
         <div class="legend-item"><div class="lstripe-r"></div>Onboard</div>
+        <div class="legend-item"><div class="ldot" style="background:rgba(139,92,246,0.4);border:1px solid #8b5cf6"></div>Training</div>
         <div class="legend-item"><div class="ldot" style="background:rgba(245,158,11,0.5);border:1px solid #f59e0b"></div>Left home</div>
         <div class="legend-item"><div class="ldot" style="background:rgba(56,189,248,0.4);border:1px solid #38bdf8"></div>Arrived</div>
         <div class="legend-item"><div class="ldot" style="width:9px;height:6px;background:var(--gold);border-top:2px solid var(--gold)"></div>Payroll cut</div>
@@ -192,6 +197,10 @@
       <div class="info-section" id="onboard-info" style="display:none">
         <div class="section-title">⚓ Onboard contracts</div>
         <div id="onboard-list"></div>
+      </div>
+      <div class="info-section" id="training-info" style="display:none">
+        <div class="section-title">🎓 Training periods</div>
+        <div id="training-list"></div>
       </div>
     </div>
   </div>
@@ -296,6 +305,21 @@
   </div>
 </div>
 
+<!-- TRAINING RATE MODAL -->
+<div class="modal-overlay" id="training-rate-modal" onclick="handleTrainingRateOverlay(event)">
+  <div class="modal">
+    <div class="modal-title">🎓 Training completed!</div>
+    <div class="modal-sub" id="training-rate-sub">Enter the daily rate for this training period</div>
+    <div class="form-row" style="margin-top:16px">
+      <label class="form-label">Daily rate (USD)</label>
+      <input class="form-input" id="training-rate-input" type="number" placeholder="e.g. 400" min="0" step="1"/>
+      <div style="font-size:10px;color:var(--gray400);margin-top:4px">Leave 0 if training was unpaid</div>
+    </div>
+    <button class="btn-add" onclick="saveTrainingRate()" style="margin-top:12px">Save training rate</button>
+    <button class="modal-close" onclick="closeTrainingRateModal()">skip</button>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
   <div class="modal">
@@ -329,6 +353,16 @@
       </button>
       <button class="action-btn" id="btn-sign-off" onclick="logEvent('sign-off')">
         <div class="action-icon ai-sign-off">🔄</div> Sign Off (left ship)
+      </button>
+    </div>
+
+    <div class="modal-section-label">Training</div>
+    <div class="modal-actions">
+      <button class="action-btn" id="btn-training-start" onclick="logEvent('training-start')">
+        <div class="action-icon ai-training-start">🎓</div> Training start
+      </button>
+      <button class="action-btn" id="btn-training-end" onclick="logEvent('training-end')">
+        <div class="action-icon ai-training-end">✅</div> Training end
       </button>
     </div>
 
@@ -374,7 +408,7 @@
       </div>
       <div>
         <label class="form-label">Currency</label>
-        <select class="form-input" id="exp-currency-in" style="color:#e2eaf4;background:#112240">
+        <select class="form-input" id="exp-currency-in">
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
           <option value="GBP">GBP</option>
@@ -394,7 +428,7 @@
     </div>
     <div class="form-row">
       <label class="form-label">Add to payroll period (cut-off 20th)</label>
-      <select class="form-input" id="exp-month-in" style="color:#e2eaf4;background:#112240"></select>
+      <select class="form-input" id="exp-month-in"></select>
     </div>
     <div class="form-row">
       <label class="form-label">Notes (optional)</label>
@@ -545,7 +579,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
 <!-- Podłączenie zewnętrznego pliku JS z logiką -->
-<script src="app.js?v=3"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
