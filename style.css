@@ -869,21 +869,8 @@ body {
   margin-top: 1px;
 }
 
-/* ═══ FIX SELECT OPTION COLORS ═══════════════════════════════════ */
-select.form-input,
-select.form-input option,
-select.rh-select,
-select.rh-select option {
-  color: var(--text) !important;
-  background: var(--navy2) !important;
-}
-select.form-input option:checked,
-select.form-input option:hover {
-  background: var(--navy3) !important;
-  color: var(--sky) !important;
-}
-/* Fix for selected value shown in closed select */
-select.form-input {
-  color: var(--text) !important;
-  -webkit-text-fill-color: var(--text);
+/* Select options background fix */
+select.form-input option {
+  background: #112240;
+  color: #ffffff;
 }
