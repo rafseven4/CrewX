@@ -150,12 +150,14 @@
         <div class="stat-value" id="stat-travel">0 <span class="stat-unit">d</span></div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Trips</div>
-        <div class="stat-value" id="stat-trips">0</div>
+        <div class="stat-label">Trips / Contracts</div>
+        <div class="stat-value" id="stat-trips">0 <span id="stat-contracts" style="font-size:13px;color:var(--gray400)">/0</span></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Contracts</div>
-        <div class="stat-value" id="stat-contracts">0</div>
+      <div class="stat-card stat-year-card">
+        <div class="stat-label">Filter year</div>
+        <select id="stat-year-filter" class="stat-year-select" onchange="updateStats()">
+          <option value="all">All years</option>
+        </select>
       </div>
     </div>
 
