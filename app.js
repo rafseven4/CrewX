@@ -156,6 +156,7 @@ function initCloudSync() {
     updateStats();
     if (document.getElementById('page-certificates')?.classList.contains('active')) renderCerts();
     if (document.getElementById('page-expenses')?.classList.contains('active')) renderExpenses();
+    cleanOrphanedTrainingRates();
   }, err => {
     console.error("Cloud listener error:", err);
     renderRates(); renderCalendar(); updateStats();
@@ -486,10 +487,17 @@ function renderPayroll() {
     const periodExps     = (expenses || []).filter(e => e.payrollPeriod === p.periodEnd);
     const expTotal       = periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
 
-    // Training
-    const periodTraining = (trainingRates || []).filter(t => t.end >= p.periodStart && t.end <= p.periodEnd);
-    const trainingTotal  = periodTraining.reduce((s, t) => s + ((t.rate||0) * (t.days||0)), 0);
-    const trainingDaysCount = periodTraining.reduce((s, t) => s + (t.days||0), 0);
+    // Training — always from calendar, rate from trainingRates
+    const allTrainingPeriods = getTrainingPeriods().filter(t =>
+      t.end && t.end >= p.periodStart && t.end <= p.periodEnd
+    );
+    const trainingTotal = allTrainingPeriods.reduce((s, t) => {
+      const rateEntry = (trainingRates || []).find(r => r.start === t.start && r.end === t.end);
+      const rate = rateEntry ? (rateEntry.rate || 0) : 0;
+      const days = durDays(t) || 0;
+      return s + (rate * days);
+    }, 0);
+    const trainingDaysCount = allTrainingPeriods.reduce((s, t) => s + (durDays(t) || 0), 0);
 
     const total = p.earnings + expTotal + trainingTotal;
     grandTotal += total;
@@ -502,11 +510,17 @@ function renderPayroll() {
       </div>`).join('');
 
     // Training rows
-    const trainRows = periodTraining.map(t => `
-      <div class="pc-line">
-        <span class="pc-line-label">↳ ${fmt(t.start)}→${fmt(t.end)} · ${t.days}d × ${usd(t.rate)}/d</span>
-        <span class="pc-line-val">${usd((t.rate||0)*(t.days||0),0)}</span>
-      </div>`).join('');
+    const trainRows = allTrainingPeriods.map(t => {
+      const rateEntry = (trainingRates || []).find(r => r.start === t.start && r.end === t.end);
+      const rate = rateEntry ? (rateEntry.rate || 0) : null;
+      const days = durDays(t) || 0;
+      const earned = rate !== null ? usd(rate * days) : '—';
+      const rateLabel = rate !== null ? `${days}d × ${usd(rate)}/d` : `${days}d · <span style="color:var(--amber)">⚠️ rate not set</span>`;
+      return `<div class="pc-line">
+        <span class="pc-line-label">↳ ${fmt(t.start)}→${fmt(t.end)} · ${rateLabel}</span>
+        <span class="pc-line-val">${earned}</span>
+      </div>`;
+    }).join('');
 
     return `
     <div class="pc-card ${isCurrent ? 'pc-current' : ''}">
@@ -823,14 +837,24 @@ function handleOverlayClick(e) {
 }
 
 function cleanOrphanedTrainingRates() {
-  // Remove trainingRates entries that no longer have matching training period in events
+  if (!trainingRates || trainingRates.length === 0) return;
   const activePeriods = getTrainingPeriods();
   const before = trainingRates.length;
-  trainingRates = trainingRates.filter(r =>
-    activePeriods.some(p => p.start === r.start && p.end === r.end)
-  );
+
+  if (activePeriods.length === 0) {
+    // No training periods at all — clear everything
+    trainingRates = [];
+  } else {
+    // Keep only rates that have a matching COMPLETE period (both start and end)
+    trainingRates = trainingRates.filter(r =>
+      activePeriods.some(p => p.start === r.start && p.end === r.end && p.end !== null)
+    );
+  }
+
   if (trainingRates.length !== before) {
+    console.log(`Cleaned ${before - trainingRates.length} orphaned training rate(s)`);
     saveTrainingRates();
+    renderPayroll();
   }
 }
 
