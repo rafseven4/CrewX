@@ -882,3 +882,8 @@ select.form-input option:hover {
   background: var(--navy3) !important;
   color: var(--sky) !important;
 }
+/* Fix for selected value shown in closed select */
+select.form-input {
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text);
+}
