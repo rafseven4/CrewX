@@ -869,8 +869,88 @@ body {
   margin-top: 1px;
 }
 
+/* ═══ FIX SELECT OPTION COLORS ═══════════════════════════════════ */
+select.form-input,
+select.form-input option,
+select.rh-select,
+select.rh-select option {
+  color: var(--text) !important;
+  background: var(--navy2) !important;
+}
+select.form-input option:checked,
+select.form-input option:hover {
+  background: var(--navy3) !important;
+  color: var(--sky) !important;
+}
+/* Fix for selected value shown in closed select */
+select.form-input {
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text);
+}
+
+/* ═══ TRAINING ════════════════════════════════════════════════════ */
+.c-purple {
+  background: linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(109,40,217,0.08) 100%);
+  border-color: rgba(139,92,246,0.3) !important;
+}
+.c-purple .stat-label { color: #c4b5fd; }
+.c-purple .stat-value { color: #a78bfa; }
+
+/* Training calendar days */
+.cal-day.training {
+  background: rgba(139,92,246,0.25);
+  border: 1px solid rgba(139,92,246,0.5);
+}
+.cal-day.training.training-start::before {
+  content: '🎓';
+  position: absolute;
+  top: 1px; left: 2px;
+  font-size: 8px;
+}
+.cal-day.training.training-end::after {
+  content: '✅';
+  position: absolute;
+  bottom: 1px; right: 2px;
+  font-size: 8px;
+}
+
+.ai-training-start { background: rgba(139,92,246,0.2) !important; }
+.ai-training-end   { background: rgba(139,92,246,0.2) !important; }
+
 /* Select options background fix */
 select.form-input option {
   background: #112240;
   color: #ffffff;
+}
+
+/* Training calendar range */
+.range-training {
+  background: rgba(139,92,246,0.2) !important;
+  border-color: rgba(139,92,246,0.4) !important;
+}
+
+/* Training badge on calendar day */
+.badge-training {
+  display: inline-block;
+  background: rgba(139,92,246,0.3);
+  color: #c4b5fd;
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 9px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Training event marker */
+.ev-training {
+  background: rgba(139,92,246,0.25) !important;
+  color: #c4b5fd !important;
+  border-left: 2px solid #8b5cf6 !important;
+}
+
+/* ibadge purple */
+.ibadge-purple {
+  background: rgba(139,92,246,0.2);
+  color: #c4b5fd;
+  border: 1px solid rgba(139,92,246,0.4);
 }
