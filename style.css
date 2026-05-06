@@ -1054,3 +1054,17 @@ select.form-input option {
   font-family: 'JetBrains Mono', monospace;
   font-size: 18px; font-weight: 700; color: var(--green);
 }
+
+/* ═══ SELECT DROPDOWN FIX — always visible text ══════════════════ */
+#exp-currency-in,
+#exp-month-in,
+select.form-input {
+  color: #e2eaf4 !important;
+  background-color: #1e3d5c !important;
+}
+#exp-currency-in option,
+#exp-month-in option,
+select.form-input option {
+  color: #e2eaf4 !important;
+  background-color: #112240 !important;
+}
