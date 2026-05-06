@@ -565,7 +565,7 @@ function renderPayroll() {
       <span>${usd(grandTotal)}</span>
     </div>
     <div style="font-size:10px;color:var(--gray400);margin-top:8px;text-align:center">
-      Cut-off: 20th each month &nbsp;·&nbsp; ${isCurrent ? 'Highlighted' : 'Blue border'} = current period
+      Cut-off: 20th each month &nbsp;·&nbsp; Blue border = current period
     </div>
   `;
 }
