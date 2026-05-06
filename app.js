@@ -1116,10 +1116,12 @@ function getPayrollMonthOptions() {
   const today = new Date();
   const options = [];
   const endOfYear = new Date(today.getFullYear(), 11, 31);
+
+  // Always start from Dec 21 (prev year) → Jan 20 (current year) — first period of the year
   let y = today.getFullYear();
-  let m = today.getMonth();
-  // Start from 3 months ago
-  m -= 3; if (m < 0) { m += 12; y--; }
+  let m = 11; // December of previous year
+  y -= 1;     // previous year
+
   while (y < endOfYear.getFullYear() || (y === endOfYear.getFullYear() && m <= endOfYear.getMonth())) {
     const nextM = m === 11 ? 0  : m + 1;
     const nextY = m === 11 ? y+1 : y;
