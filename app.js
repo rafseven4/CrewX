@@ -165,7 +165,7 @@ function initCloudSync() {
 
 function saveToCloud() {
   if (!syncDoc) return;
-  syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses, trainingRates }, { merge: true })
+  syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses }, { merge: true })
     .catch(err => console.error("Save error:", err));
 }
 
@@ -302,7 +302,63 @@ function getRateForDate(ds) {
   return 0;
 }
 
-// Payroll periods calculated inside renderPayroll()
+// ═══ PAYROLL CALCULATION ══════════════════════════════════════════
+function getPayrollPeriods() {
+  const awayDates = getRangeDates(getTrips());
+  if (awayDates.size === 0 && rates.length === 0) return [];
+
+  const allDates = [...events.map(e => e.date), ...rates.map(r => r.from)].sort();
+  if (allDates.length === 0) return [];
+
+  const earliest = new Date(allDates[0] + 'T00:00:00');
+  const latest   = new Date();
+  // Pokaż okresy do końca bieżącego roku (31 grudnia)
+  latest.setMonth(11);  // Grudzień
+  latest.setDate(31);
+
+  const periods = [];
+  let y = earliest.getFullYear();
+  let m = earliest.getMonth(); 
+
+  if (m === 0) { m = 11; y--; } else m--;
+
+  const endY = latest.getFullYear();
+  const endM = latest.getMonth();
+
+  while (y < endY || (y === endY && m <= endM)) {
+    const prevM = m === 0 ? 11 : m - 1;
+    const prevY = m === 0 ? y - 1 : y;
+    const periodStart = dateStr(prevY, prevM, 21); 
+    const periodEnd   = dateStr(y, m, 20);         
+
+    let days = 0;
+    let earnings = 0;
+    const s = new Date(periodStart + 'T00:00:00');
+    const e = new Date(periodEnd   + 'T00:00:00');
+    for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
+      const ds = c.toISOString().slice(0,10);
+      if (awayDates.has(ds)) {
+        days++;
+        earnings += getRateForDate(ds);
+      }
+    }
+
+    periods.push({
+      label: `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${y}`,
+      periodEnd,
+      periodStart,
+      days,
+      earnings
+    });
+
+    m++;
+    if (m > 11) { m = 0; y++; }
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  // Pokaż okresy które mają dni LUB są w przyszłości (do końca roku)
+  return periods.filter(p => p.days > 0 || p.periodEnd >= today);
+}
 
 // ═══ RENDER RATES LIST ════════════════════════════════════════════
 function renderRates() {
@@ -324,13 +380,6 @@ function fmtDate(ds) {
   if (!ds) return 'ongoing';
   const [y,m,d] = ds.split('-');
   return `${d}/${m}/${y}`;
-}
-
-// Short format DD/MM without year — for calendar and payroll displays
-function fmtShort(ds) {
-  if (!ds) return '—';
-  const [y,m,d] = ds.split('-');
-  return `${d}/${m}`;
 }
 
 function parseDMY(str) {
@@ -426,7 +475,7 @@ function renderPayroll() {
     return;
   }
 
-  const fmt = fmtShort;
+  const fmt = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
   const usd = (v, dec=0) => '$' + parseFloat(v||0).toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec});
 
   let grandTotal = 0;
@@ -611,8 +660,7 @@ function updateStats() {
   const text = document.getElementById('status-text');
   const inBrazil  = allBrazil.has(todayStr);
   const isOnboard = allOnboard.has(todayStr);
-  // Always update status regardless of current text
-  if (dot && text) {
+  if (text && text.textContent !== currentUser?.email?.split('@')[0]) {
     if (isOnboard) {
       dot.style.background = '#f97316'; text.textContent = '⚓ Onboard' + (inBrazil ? ' · 🇧🇷' : '');
     } else if (allAway.has(todayStr)) {
@@ -623,7 +671,7 @@ function updateStats() {
   }
 
   // lists — always show all (not filtered by year)
-  const fmt = fmtShort;
+  const fmt = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
   function renderList(listId, infoId, items, labelFn, badgeClass) {
     const info = document.getElementById(infoId);
     const list = document.getElementById(listId);
@@ -757,8 +805,7 @@ function openModal(ds) {
   const EV_LABEL = {
     depart:'left home', arrive:'arrived home',
     'brazil-in':'entered Brazil','brazil-out':'left Brazil',
-    'sign-on':'sign on','sign-off':'sign off',
-    'training-start':'training start','training-end':'training end'
+    'sign-on':'sign on','sign-off':'sign off'
   };
   document.getElementById('modal-sub').textContent = dayEvs.length
     ? 'Logged: ' + dayEvs.map(e=>EV_LABEL[e.type]).join(', ')
@@ -834,7 +881,7 @@ function logEvent(type) {
     const lastTraining = trainingPeriods[trainingPeriods.length - 1];
     if (lastTraining && lastTraining.end === selectedDate) {
       const days = durDays(lastTraining);
-      const fmt = fmtShort;
+      const fmt = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
       document.getElementById('training-rate-sub').textContent =
         `Training: ${fmt(lastTraining.start)} → ${fmt(lastTraining.end)} (${days} days). Enter the daily rate:`;
       document.getElementById('training-rate-input').value = '';
@@ -896,6 +943,199 @@ function showPage(name) {
   closeSidebar();
 }
 
+// ═══ REST HOURS ═══════════════════════════════════════════════════
+const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTHS_FULL = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
+
+function shiftToSlots(shift) {
+  if (shift === '06-18') return [12, 36];
+  if (shift === '18-06') return [[36, 48],[0, 12]]; 
+  if (shift === '00-12') return [0, 24];
+  if (shift === '12-24') return [24, 48];
+  return null;
+}
+
+function rhMonthKey(y, m) { return y + '-' + String(m).padStart(2,'0'); }
+
+function getSlots(y, m, day) {
+  const k = rhMonthKey(y, m);
+  if (!rhGrid[k]) rhGrid[k] = {};
+  if (!rhGrid[k][day]) rhGrid[k][day] = new Array(48).fill(false); 
+  return rhGrid[k][day];
+}
+
+function applyRHSetup() {
+  const y     = parseInt(document.getElementById('rh-year').value);
+  const m     = parseInt(document.getElementById('rh-month').value);
+  const shift = document.getElementById('rh-shift').value;
+  const signIn  = document.getElementById('rh-signin').value.trim();
+  const signOff = document.getElementById('rh-signoff').value.trim();
+
+  rhMeta.signIn  = signIn;
+  rhMeta.signOff = signOff;
+  document.getElementById('rh-signin-disp').value  = signIn;
+  document.getElementById('rh-signoff-disp').value = signOff;
+  saveRHMeta();
+
+  if (shift && shift !== 'custom') {
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const k = rhMonthKey(y, m);
+    rhGrid[k] = {};
+
+    let signInDay = 0, signOffDay = daysInMonth + 1;
+    if (signIn) {
+      const parts = signIn.split('/');
+      if (parts.length >= 1) signInDay = parseInt(parts[0]) || 0;
+    }
+    if (signOff) {
+      const parts = signOff.split('/');
+      if (parts.length >= 1) signOffDay = parseInt(parts[0]) || daysInMonth + 1;
+    }
+
+    const ranges = shiftToSlots(shift);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const slots = new Array(48).fill(false); 
+      const active = d >= signInDay && d <= signOffDay;
+      if (active && ranges !== null) {
+        if (Array.isArray(ranges[0])) {
+          for (let s = ranges[0][0]; s < ranges[0][1]; s++) slots[s] = true;
+          for (let s = ranges[1][0]; s < ranges[1][1]; s++) slots[s] = true;
+        } else {
+          for (let s = ranges[0]; s < ranges[1]; s++) slots[s] = true;
+        }
+      }
+      rhGrid[k][d] = slots;
+    }
+    saveRHGrid();
+  }
+  renderRH();
+}
+
+function toggleSlot(y, m, day, slotIdx) {
+  const slots = getSlots(y, m, day);
+  slots[slotIdx] = !slots[slotIdx];
+  saveRHGrid();
+  renderRH();
+}
+
+function renderRH() {
+  const m = rhMeta;
+  const fields = {
+    'rh-vessel': m.vessel, 'rh-emp-name': m.empName,
+    'rh-company': m.company, 'rh-rank': m.rank,
+    'rh-flag': m.flag, 'rh-emp-num': m.empNum,
+    'rh-captain': m.captain,
+    'rh-signin-disp': m.signIn, 'rh-signoff-disp': m.signOff,
+    'rh-comments': m.comments
+  };
+  for (const [id, val] of Object.entries(fields)) {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.value = val;
+  }
+
+  const y = parseInt(document.getElementById('rh-year')?.value || new Date().getFullYear());
+  const mo = parseInt(document.getElementById('rh-month')?.value ?? new Date().getMonth());
+
+  document.getElementById('rh-display-month').textContent = MONTHS_FULL[mo] + ' ' + y;
+  const shiftEl = document.getElementById('rh-shift');
+  document.getElementById('rh-display-shift').textContent = shiftEl?.options[shiftEl?.selectedIndex]?.text || '—';
+
+  const headBot = document.getElementById('rh-head-bot');
+  if (headBot) {
+    headBot.innerHTML = Array.from({length:48},(_,i)=>`<th>${i%2===0?'00':'30'}</th>`).join('');
+  }
+
+  const tbody = document.getElementById('rh-tbody');
+  if (!tbody) return;
+
+  const daysInMonth = new Date(y, mo + 1, 0).getDate();
+  const k = rhMonthKey(y, mo);
+  let totalRestSlots = 0, totalWorkSlots = 0;
+
+  let signInDay = 1, signOffDay = daysInMonth;
+  if (rhMeta.signIn) {
+    const p = rhMeta.signIn.split('/');
+    if (p.length >= 1) signInDay = parseInt(p[0]) || 1;
+  }
+  if (rhMeta.signOff) {
+    const p = rhMeta.signOff.split('/');
+    if (p.length >= 1) signOffDay = parseInt(p[0]) || daysInMonth;
+  }
+
+  let rows = '';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(y, mo, d);
+    const wday = WEEKDAYS[date.getDay() === 0 ? 6 : date.getDay() - 1];
+    const slots = rhGrid[k]?.[d] || new Array(48).fill(false);
+    const active = d >= signInDay && d <= signOffDay;
+
+    let restSlots = 0, workSlots = 0;
+    let slotCells = '';
+    for (let s = 0; s < 48; s++) {
+      const isWork = slots[s];
+      if (active) {
+        if (isWork) workSlots++; else restSlots++;
+        const cls = isWork ? 'work' : 'rest';
+        slotCells += `<td class="rh-slot ${cls}" onclick="toggleSlot(${y},${mo},${d},${s})" title="${Math.floor(s/2)}:${s%2===0?'00':'30'}"></td>`;
+      } else {
+        slotCells += `<td class="rh-slot inactive-slot"></td>`;
+      }
+    }
+
+    if (active) { totalRestSlots += restSlots; totalWorkSlots += workSlots; }
+
+    const restH = (restSlots * 0.5).toFixed(1);
+    const workH = (workSlots * 0.5).toFixed(1);
+    const minRest = 20; 
+    let stCls = 'ok', stTxt = 'OK';
+    if (active) {
+      if (restSlots < minRest) { stCls = 'fail'; stTxt = 'VIOL'; }
+      else if (restSlots < 22) { stCls = 'warn'; stTxt = 'LOW'; }
+    }
+
+    rows += `<tr class="${active ? '' : 'inactive'}">
+      <td class="rh-cell-date">${d}</td>
+      <td class="rh-cell-day">${wday}</td>
+      ${slotCells}
+      <td class="rh-cell-rest">${active ? restH : ''}</td>
+      <td class="rh-cell-work">${active ? workH : ''}</td>
+      <td class="rh-cell-status ${stCls}">${active ? stTxt : ''}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = rows;
+
+  const totalRestH = (totalRestSlots * 0.5).toFixed(1);
+  const totalWorkH = (totalWorkSlots * 0.5).toFixed(1);
+  document.getElementById('rh-total-rest').textContent = totalRestH;
+  document.getElementById('rh-total-work').textContent = totalWorkH;
+
+  const badge = document.getElementById('rh-badge');
+  if (badge) badge.style.display = (totalRestSlots < 154) ? 'inline' : 'none'; 
+}
+
+function bindRHMetaFields() {
+  const map = {
+    'rh-vessel':'vessel','rh-emp-name':'empName','rh-company':'company',
+    'rh-rank':'rank','rh-flag':'flag','rh-emp-num':'empNum',
+    'rh-captain':'captain','rh-signin-disp':'signIn',
+    'rh-signoff-disp':'signOff','rh-comments':'comments'
+  };
+  for (const [id, key] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { rhMeta[key] = el.value; saveRHMeta(); });
+  }
+  const cap = document.getElementById('rh-captain');
+  const emp = document.getElementById('rh-emp-name');
+  if (cap) cap.addEventListener('input', () => {
+    const sig = document.getElementById('rh-sig-captain');
+    if (sig) sig.textContent = cap.value || '__________________________';
+  });
+  if (emp) emp.addEventListener('input', () => {
+    const sig = document.getElementById('rh-sig-seafarer');
+    if (sig) sig.textContent = emp.value || '__________________________';
+  });
+}
 
 // ═══ CERTIFICATES ═════════════════════════════════════════════════
 
@@ -1233,6 +1473,19 @@ async function handleExpenseScan(event) {
   }
 }
 
+// Konwersja pliku na tekst Base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
 // Main function to send image to cloud
 async function handleCertScan(event) {
   const file = event.target.files[0];
@@ -1303,7 +1556,7 @@ function editTrainingRate(start, end) {
   const modal = document.getElementById('training-rate-modal');
   const existing = (trainingRates || []).find(r => r.start === start && r.end === end);
   const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
-  const fmt2 = fmtShort;
+  const fmt2 = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
   document.getElementById('training-rate-sub').textContent =
     `Training: ${fmt2(start)} → ${fmt2(end)} (${days} days). Enter the daily rate:`;
   document.getElementById('training-rate-input').value = existing ? existing.rate : '';
@@ -1332,7 +1585,13 @@ function saveTrainingRate() {
   renderPayroll();
 }
 
-// saveToCloud includes trainingRates (defined above)
+// Hook training rates into cloud sync
+const _origSaveToCloud = saveToCloud;
+function saveToCloud() {
+  if (!syncDoc) return;
+  syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses, trainingRates }, { merge: true })
+    .catch(err => console.error("Save error:", err));
+}
 
 // ═══ ADMIN EMAIL SETTINGS ════════════════════════════════════════════
 
