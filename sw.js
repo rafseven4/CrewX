@@ -1,40 +1,79 @@
-const CACHE_NAME = 'crewx-v8';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/manifest.json'
+const CACHE_VERSION = 'crewx-cache-v9';
+
+const APP_SHELL = [
+  './',
+  './index.html',
+  './style.css?v=9',
+  './app.js?v=9',
+  './manifest.json',
+  './offline.html',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache);
-    })
-  );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      // Zwróć plik z pamięci jeżeli istnieje, pociągnij z sieci jako fallback
-      return response || fetch(event.request);
-    })
+    caches.open(CACHE_VERSION)
+      .then(cache => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
+    caches.keys()
+      .then(keys => Promise.all(
+        keys
+          .filter(key => key !== CACHE_VERSION)
+          .map(key => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', event => {
+  const { request } = event;
+
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+
+  // Nie cache'ujemy Firebase, Google Fonts, Cloud Functions ani innych zewnętrznych API.
+  if (url.origin !== self.location.origin) return;
+
+  // HTML navigation: najpierw sieć, potem cache/offline.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_VERSION).then(cache => cache.put('./index.html', copy));
+          return response;
         })
-      );
+        .catch(async () => {
+          const cachedIndex = await caches.match('./index.html');
+          return cachedIndex || caches.match('./offline.html');
+        })
+    );
+    return;
+  }
+
+  // Static files: cache first + update w tle.
+  event.respondWith(
+    caches.match(request).then(cached => {
+      const fetchPromise = fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_VERSION).then(cache => cache.put(request, copy));
+          }
+
+          return response;
+        })
+        .catch(() => cached);
+
+      return cached || fetchPromise;
     })
   );
 });
