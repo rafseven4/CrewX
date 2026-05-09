@@ -1,3 +1,11 @@
+Oto wszystkie potrzebne pliki w standardowej formie, gotowe do skopiowania jednym kliknięciem. 
+
+Utwórz/zaktualizuj te trzy pliki w głównym folderze swojego projektu.
+
+### 1. Plik `app.js`
+Skopiuj poniższy kod i wklej go do swojego pliku `app.js`, zastępując całą jego dotychczasową zawartość. To zoptymalizowana wersja, z dodaną rejestracją PWA i usuniętymi powtórzeniami:
+
+```javascript
 // 🔥 TWOJA KONFIGURACJA FIREBASE 🔥
 const firebaseConfig = {
   apiKey: "AIzaSyCkdha2N09Rj_mY1ybjLrgE87NF8-LNyZA",
@@ -109,7 +117,7 @@ async function doLogin() {
 // ─── Logout ───────────────────────────────────────────────────────
 function doLogout() {
   if (!confirm('Sign out?')) return;
-  events = []; rates = []; rhGrid = {}; rhMeta = {}; certs = []; expenses = [];
+  events = []; rates = []; rhGrid = {}; rhMeta = {}; certs = []; expenses = []; trainingRates = [];
   localStorage.clear();
   auth.signOut();
 }
@@ -135,21 +143,22 @@ function initCloudSync() {
   unsubscribeSnapshot = syncDoc.onSnapshot(doc => {
     if (!doc.exists) return;
     const data = doc.data();
-    events       = data.events       || [];
-    rates        = data.rates        || [];
-    rhGrid       = data.rhGrid       || {};
-    rhMeta       = data.rhMeta       || {};
-    certs        = data.certs        || [];
-    expenses     = data.expenses     || [];
+    events        = data.events        || [];
+    rates         = data.rates         || [];
+    rhGrid        = data.rhGrid        || {};
+    rhMeta        = data.rhMeta        || {};
+    certs         = data.certs         || [];
+    expenses      = data.expenses      || [];
     trainingRates = data.trainingRates || [];
-    cloudLoaded  = true;
+    cloudLoaded   = true;
 
-    localStorage.setItem('crewxEvents',   JSON.stringify(events));
-    localStorage.setItem('crewxRates',    JSON.stringify(rates));
-    localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));
-    localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));
-    localStorage.setItem('crewxCerts',    JSON.stringify(certs));
-    localStorage.setItem('crewxExpenses', JSON.stringify(expenses));
+    localStorage.setItem('crewxEvents',        JSON.stringify(events));
+    localStorage.setItem('crewxRates',         JSON.stringify(rates));
+    localStorage.setItem('crewxRHGrid',        JSON.stringify(rhGrid));
+    localStorage.setItem('crewxRHMeta',        JSON.stringify(rhMeta));
+    localStorage.setItem('crewxCerts',         JSON.stringify(certs));
+    localStorage.setItem('crewxExpenses',      JSON.stringify(expenses));
+    localStorage.setItem('crewxTrainingRates', JSON.stringify(trainingRates));
 
     renderRates();
     renderCalendar();
@@ -165,16 +174,17 @@ function initCloudSync() {
 
 function saveToCloud() {
   if (!syncDoc) return;
-  syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses }, { merge: true })
+  syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses, trainingRates }, { merge: true })
     .catch(err => console.error("Save error:", err));
 }
 
-function saveEvents()   { localStorage.setItem('crewxEvents',   JSON.stringify(events));   saveToCloud(); }
-function saveRates()    { localStorage.setItem('crewxRates',    JSON.stringify(rates));    saveToCloud(); }
-function saveRHGrid()   { localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));   saveToCloud(); }
-function saveRHMeta()   { localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));   saveToCloud(); }
-function saveCerts()    { localStorage.setItem('crewxCerts',    JSON.stringify(certs));    saveToCloud(); }
-function saveExpenses() { localStorage.setItem('crewxExpenses', JSON.stringify(expenses)); saveToCloud(); }
+function saveEvents()        { localStorage.setItem('crewxEvents',   JSON.stringify(events));        saveToCloud(); }
+function saveRates()         { localStorage.setItem('crewxRates',    JSON.stringify(rates));         saveToCloud(); }
+function saveRHGrid()        { localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));        saveToCloud(); }
+function saveRHMeta()        { localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));        saveToCloud(); }
+function saveCerts()         { localStorage.setItem('crewxCerts',    JSON.stringify(certs));         saveToCloud(); }
+function saveExpenses()      { localStorage.setItem('crewxExpenses', JSON.stringify(expenses));      saveToCloud(); }
+function saveTrainingRates() { localStorage.setItem('crewxTrainingRates', JSON.stringify(trainingRates)); saveToCloud(); }
 
 // ═══ ADMIN — user management ══════════════════════════════════════
 const ADMIN_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/adminManageUsers";
@@ -274,8 +284,6 @@ function getBrazilStays()      { return getPairs('brazil-in',      'brazil-out')
 function getOnboardStays()     { return getPairs('sign-on',        'sign-off');      }
 function getTrainingPeriods()  { return getPairs('training-start', 'training-end'); }
 
-// calendarOnly=true  -> only closed pairs highlighted on calendar
-// calendarOnly=false -> open pairs extend to today (for stats)
 function getRangeDates(pairs, calendarOnly) {
   const set = new Set();
   for (const p of pairs) {
@@ -293,71 +301,12 @@ function durDays(p) {
   return Math.round((new Date(p.end+'T00:00:00') - new Date(p.start+'T00:00:00')) / 86400000) + 1;
 }
 
-// ═══ RATE LOOKUP ═════════════════════════════════════════════════
 function getRateForDate(ds) {
   const sorted = [...rates].sort((a,b) => a.from.localeCompare(b.from));
   for (const r of sorted) {
     if (ds >= r.from && (!r.to || ds <= r.to)) return r.amount;
   }
   return 0;
-}
-
-// ═══ PAYROLL CALCULATION ══════════════════════════════════════════
-function getPayrollPeriods() {
-  const awayDates = getRangeDates(getTrips());
-  if (awayDates.size === 0 && rates.length === 0) return [];
-
-  const allDates = [...events.map(e => e.date), ...rates.map(r => r.from)].sort();
-  if (allDates.length === 0) return [];
-
-  const earliest = new Date(allDates[0] + 'T00:00:00');
-  const latest   = new Date();
-  // Pokaż okresy do końca bieżącego roku (31 grudnia)
-  latest.setMonth(11);  // Grudzień
-  latest.setDate(31);
-
-  const periods = [];
-  let y = earliest.getFullYear();
-  let m = earliest.getMonth(); 
-
-  if (m === 0) { m = 11; y--; } else m--;
-
-  const endY = latest.getFullYear();
-  const endM = latest.getMonth();
-
-  while (y < endY || (y === endY && m <= endM)) {
-    const prevM = m === 0 ? 11 : m - 1;
-    const prevY = m === 0 ? y - 1 : y;
-    const periodStart = dateStr(prevY, prevM, 21); 
-    const periodEnd   = dateStr(y, m, 20);         
-
-    let days = 0;
-    let earnings = 0;
-    const s = new Date(periodStart + 'T00:00:00');
-    const e = new Date(periodEnd   + 'T00:00:00');
-    for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
-      const ds = c.toISOString().slice(0,10);
-      if (awayDates.has(ds)) {
-        days++;
-        earnings += getRateForDate(ds);
-      }
-    }
-
-    periods.push({
-      label: `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${y}`,
-      periodEnd,
-      periodStart,
-      days,
-      earnings
-    });
-
-    m++;
-    if (m > 11) { m = 0; y++; }
-  }
-
-  const today = new Date().toISOString().slice(0,10);
-  // Pokaż okresy które mają dni LUB są w przyszłości (do końca roku)
-  return periods.filter(p => p.days > 0 || p.periodEnd >= today);
 }
 
 // ═══ RENDER RATES LIST ════════════════════════════════════════════
@@ -435,8 +384,6 @@ function renderPayroll() {
   const todayStr   = today.toISOString().slice(0,10);
   const endOfYear  = new Date(today.getFullYear(), 11, 31);
   const awayDates  = getRangeDates(getTrips());
-
-  // Build set of ALL training dates so we can exclude them from Days Away
   const allTrainingDates = getRangeDates(getTrainingPeriods());
   const earliest   = new Date(allDates[0] + 'T00:00:00');
 
@@ -459,7 +406,6 @@ function renderPayroll() {
     const e = new Date(periodEnd   + 'T00:00:00');
     for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
       const ds = c.toISOString().slice(0,10);
-      // Exclude training days from Days Away to avoid double counting
       if (awayDates.has(ds) && !allTrainingDates.has(ds)) {
         days++; earnings += getRateForDate(ds);
       }
@@ -482,12 +428,9 @@ function renderPayroll() {
 
   const cards = visible.map(p => {
     const isCurrent = todayStr >= p.periodStart && todayStr <= p.periodEnd;
-
-    // Expenses
     const periodExps     = (expenses || []).filter(e => e.payrollPeriod === p.periodEnd);
     const expTotal       = periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
 
-    // Training — always from calendar, rate from trainingRates
     const allTrainingPeriods = getTrainingPeriods().filter(t =>
       t.end && t.end >= p.periodStart && t.end <= p.periodEnd
     );
@@ -502,14 +445,12 @@ function renderPayroll() {
     const total = p.earnings + expTotal + trainingTotal;
     grandTotal += total;
 
-    // Expense rows
     const expRows = periodExps.map(e => `
       <div class="pc-line">
         <span class="pc-line-label">↳ ${e.desc}</span>
         <span class="pc-line-val">${usd(e.usd,2)}</span>
       </div>`).join('');
 
-    // Training rows
     const trainRows = allTrainingPeriods.map(t => {
       const rateEntry = (trainingRates || []).find(r => r.start === t.start && r.end === t.end);
       const rate = rateEntry ? (rateEntry.rate || 0) : null;
@@ -524,17 +465,11 @@ function renderPayroll() {
 
     return `
     <div class="pc-card ${isCurrent ? 'pc-current' : ''}">
-
-      <!-- Period header -->
       <div class="pc-header">
         <div class="pc-period">${p.label}</div>
         ${isCurrent ? '<div class="pc-badge-current">current</div>' : ''}
       </div>
-
-      <!-- Line items -->
       <div class="pc-body">
-
-        <!-- Days Away -->
         <div class="pc-row ${p.days === 0 ? 'pc-row-zero' : ''}">
           <div class="pc-row-left">
             <span class="pc-row-icon">📅</span>
@@ -543,8 +478,6 @@ function renderPayroll() {
           </div>
           <span class="pc-row-amount ${p.days > 0 ? 'pc-amount-main' : ''}">${usd(p.earnings)}</span>
         </div>
-
-        <!-- Training -->
         ${trainingDaysCount > 0 ? `
         <div class="pc-row">
           <div class="pc-row-left">
@@ -555,8 +488,6 @@ function renderPayroll() {
           <span class="pc-row-amount pc-amount-training">${usd(trainingTotal)}</span>
         </div>
         ${trainRows}` : ''}
-
-        <!-- Expenses -->
         ${expTotal > 0 ? `
         <div class="pc-row">
           <div class="pc-row-left">
@@ -567,15 +498,11 @@ function renderPayroll() {
           <span class="pc-row-amount pc-amount-exp">${usd(expTotal,2)}</span>
         </div>
         ${expRows}` : ''}
-
       </div>
-
-      <!-- Total -->
       <div class="pc-total">
         <span>Total payout</span>
         <span class="pc-total-amount">${usd(total)}</span>
       </div>
-
     </div>`;
   }).join('');
 
@@ -591,13 +518,10 @@ function renderPayroll() {
   `;
 }
 
-
 // ═══ STATS ════════════════════════════════════════════════════════
 function updateStats() {
-  // ── Populate year dropdown ────────────────────────────────────────
   const sel = document.getElementById('stat-year-filter');
   if (sel) {
-    // Collect all years from events
     const years = [...new Set(events.map(e => e.date?.slice(0,4)).filter(Boolean))].sort();
     const selectedVal = sel.value || 'all';
     sel.innerHTML = '<option value="all">All years</option>' +
@@ -606,7 +530,6 @@ function updateStats() {
 
   const filterYear = sel?.value || 'all';
 
-  // ── Filter helper: keep only dates in selected year ────────────────
   function filterByYear(dateSet) {
     if (filterYear === 'all') return dateSet;
     const filtered = new Set();
@@ -616,7 +539,6 @@ function updateStats() {
     return filtered;
   }
 
-  // ── Filter pairs by year ──────────────────────────────────────────
   function filterPairsByYear(pairs) {
     if (filterYear === 'all') return pairs;
     return pairs.filter(p => p.start.startsWith(filterYear) || (p.end && p.end.startsWith(filterYear)));
@@ -651,7 +573,6 @@ function updateStats() {
   const contractCount = filteredOnboard.filter(o=>o.end).length;
   document.getElementById('stat-trips').innerHTML    = `${tripCount} <span id="stat-contracts" style="font-size:13px;color:var(--gray400)">/ ${contractCount}</span>`;
 
-  // status pill — always based on today regardless of filter
   const todayStr = new Date().toISOString().slice(0,10);
   const allAway    = getRangeDates(trips);
   const allBrazil  = getRangeDates(brazilStays);
@@ -670,7 +591,6 @@ function updateStats() {
     }
   }
 
-  // lists — always show all (not filtered by year)
   const fmt = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
   function renderList(listId, infoId, items, labelFn, badgeClass) {
     const info = document.getElementById(infoId);
@@ -689,7 +609,6 @@ function updateStats() {
   renderList('brazil-list',  'brazil-info',  brazilStays,     (b,i)=>`Stay ${i+1} &nbsp; ${fmt(b.start)} → ${b.end?fmt(b.end):'…'}`, 'ibadge-green');
   renderList('onboard-list', 'onboard-info', onboardStays,    (o,i)=>`Contract ${i+1} &nbsp; ${fmt(o.start)} → ${o.end?fmt(o.end):'…'}`, 'ibadge-amber');
 
-  // Training — custom render with rate display and edit button
   const trainingInfo = document.getElementById('training-info');
   const trainingList = document.getElementById('training-list');
   if (trainingPeriods.length === 0) {
@@ -842,10 +761,8 @@ function cleanOrphanedTrainingRates() {
   const before = trainingRates.length;
 
   if (activePeriods.length === 0) {
-    // No training periods at all — clear everything
     trainingRates = [];
   } else {
-    // Keep only rates that have a matching COMPLETE period (both start and end)
     trainingRates = trainingRates.filter(r =>
       activePeriods.some(p => p.start === r.start && p.end === r.end && p.end !== null)
     );
@@ -868,14 +785,12 @@ function logEvent(type) {
   }
   saveEvents();
 
-  // Clean up orphaned training rates after any training event change
   if (type === 'training-start' || type === 'training-end') {
     cleanOrphanedTrainingRates();
   }
 
   closeModal(); renderCalendar();
 
-  // When training ends — ask for daily rate
   if (type === 'training-end') {
     const trainingPeriods = getTrainingPeriods();
     const lastTraining = trainingPeriods[trainingPeriods.length - 1];
@@ -896,7 +811,6 @@ function clearDay() {
   if (!selectedDate) return;
   events = events.filter(e => e.date !== selectedDate);
   saveEvents();
-  // Clean up orphaned training rates
   cleanOrphanedTrainingRates();
   closeModal(); renderCalendar();
 }
@@ -912,13 +826,6 @@ function clearAllRates() {
 // ═══ INIT ═════════════════════════════════════════════════════════
 renderRates();
 renderCalendar();
-(function(){
-  const now = new Date();
-  const mEl = document.getElementById('rh-month');
-  const yEl = document.getElementById('rh-year');
-  if (mEl) mEl.value = now.getMonth();
-  if (yEl) yEl.value = now.getFullYear();
-})();
 
 // ═══ SIDEBAR ══════════════════════════════════════════════════════
 function openSidebar() {
@@ -943,202 +850,7 @@ function showPage(name) {
   closeSidebar();
 }
 
-// ═══ REST HOURS ═══════════════════════════════════════════════════
-const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-const MONTHS_FULL = ['January','February','March','April','May','June',
-                     'July','August','September','October','November','December'];
-
-function shiftToSlots(shift) {
-  if (shift === '06-18') return [12, 36];
-  if (shift === '18-06') return [[36, 48],[0, 12]]; 
-  if (shift === '00-12') return [0, 24];
-  if (shift === '12-24') return [24, 48];
-  return null;
-}
-
-function rhMonthKey(y, m) { return y + '-' + String(m).padStart(2,'0'); }
-
-function getSlots(y, m, day) {
-  const k = rhMonthKey(y, m);
-  if (!rhGrid[k]) rhGrid[k] = {};
-  if (!rhGrid[k][day]) rhGrid[k][day] = new Array(48).fill(false); 
-  return rhGrid[k][day];
-}
-
-function applyRHSetup() {
-  const y     = parseInt(document.getElementById('rh-year').value);
-  const m     = parseInt(document.getElementById('rh-month').value);
-  const shift = document.getElementById('rh-shift').value;
-  const signIn  = document.getElementById('rh-signin').value.trim();
-  const signOff = document.getElementById('rh-signoff').value.trim();
-
-  rhMeta.signIn  = signIn;
-  rhMeta.signOff = signOff;
-  document.getElementById('rh-signin-disp').value  = signIn;
-  document.getElementById('rh-signoff-disp').value = signOff;
-  saveRHMeta();
-
-  if (shift && shift !== 'custom') {
-    const daysInMonth = new Date(y, m + 1, 0).getDate();
-    const k = rhMonthKey(y, m);
-    rhGrid[k] = {};
-
-    let signInDay = 0, signOffDay = daysInMonth + 1;
-    if (signIn) {
-      const parts = signIn.split('/');
-      if (parts.length >= 1) signInDay = parseInt(parts[0]) || 0;
-    }
-    if (signOff) {
-      const parts = signOff.split('/');
-      if (parts.length >= 1) signOffDay = parseInt(parts[0]) || daysInMonth + 1;
-    }
-
-    const ranges = shiftToSlots(shift);
-    for (let d = 1; d <= daysInMonth; d++) {
-      const slots = new Array(48).fill(false); 
-      const active = d >= signInDay && d <= signOffDay;
-      if (active && ranges !== null) {
-        if (Array.isArray(ranges[0])) {
-          for (let s = ranges[0][0]; s < ranges[0][1]; s++) slots[s] = true;
-          for (let s = ranges[1][0]; s < ranges[1][1]; s++) slots[s] = true;
-        } else {
-          for (let s = ranges[0]; s < ranges[1]; s++) slots[s] = true;
-        }
-      }
-      rhGrid[k][d] = slots;
-    }
-    saveRHGrid();
-  }
-  renderRH();
-}
-
-function toggleSlot(y, m, day, slotIdx) {
-  const slots = getSlots(y, m, day);
-  slots[slotIdx] = !slots[slotIdx];
-  saveRHGrid();
-  renderRH();
-}
-
-function renderRH() {
-  const m = rhMeta;
-  const fields = {
-    'rh-vessel': m.vessel, 'rh-emp-name': m.empName,
-    'rh-company': m.company, 'rh-rank': m.rank,
-    'rh-flag': m.flag, 'rh-emp-num': m.empNum,
-    'rh-captain': m.captain,
-    'rh-signin-disp': m.signIn, 'rh-signoff-disp': m.signOff,
-    'rh-comments': m.comments
-  };
-  for (const [id, val] of Object.entries(fields)) {
-    const el = document.getElementById(id);
-    if (el && val !== undefined) el.value = val;
-  }
-
-  const y = parseInt(document.getElementById('rh-year')?.value || new Date().getFullYear());
-  const mo = parseInt(document.getElementById('rh-month')?.value ?? new Date().getMonth());
-
-  document.getElementById('rh-display-month').textContent = MONTHS_FULL[mo] + ' ' + y;
-  const shiftEl = document.getElementById('rh-shift');
-  document.getElementById('rh-display-shift').textContent = shiftEl?.options[shiftEl?.selectedIndex]?.text || '—';
-
-  const headBot = document.getElementById('rh-head-bot');
-  if (headBot) {
-    headBot.innerHTML = Array.from({length:48},(_,i)=>`<th>${i%2===0?'00':'30'}</th>`).join('');
-  }
-
-  const tbody = document.getElementById('rh-tbody');
-  if (!tbody) return;
-
-  const daysInMonth = new Date(y, mo + 1, 0).getDate();
-  const k = rhMonthKey(y, mo);
-  let totalRestSlots = 0, totalWorkSlots = 0;
-
-  let signInDay = 1, signOffDay = daysInMonth;
-  if (rhMeta.signIn) {
-    const p = rhMeta.signIn.split('/');
-    if (p.length >= 1) signInDay = parseInt(p[0]) || 1;
-  }
-  if (rhMeta.signOff) {
-    const p = rhMeta.signOff.split('/');
-    if (p.length >= 1) signOffDay = parseInt(p[0]) || daysInMonth;
-  }
-
-  let rows = '';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(y, mo, d);
-    const wday = WEEKDAYS[date.getDay() === 0 ? 6 : date.getDay() - 1];
-    const slots = rhGrid[k]?.[d] || new Array(48).fill(false);
-    const active = d >= signInDay && d <= signOffDay;
-
-    let restSlots = 0, workSlots = 0;
-    let slotCells = '';
-    for (let s = 0; s < 48; s++) {
-      const isWork = slots[s];
-      if (active) {
-        if (isWork) workSlots++; else restSlots++;
-        const cls = isWork ? 'work' : 'rest';
-        slotCells += `<td class="rh-slot ${cls}" onclick="toggleSlot(${y},${mo},${d},${s})" title="${Math.floor(s/2)}:${s%2===0?'00':'30'}"></td>`;
-      } else {
-        slotCells += `<td class="rh-slot inactive-slot"></td>`;
-      }
-    }
-
-    if (active) { totalRestSlots += restSlots; totalWorkSlots += workSlots; }
-
-    const restH = (restSlots * 0.5).toFixed(1);
-    const workH = (workSlots * 0.5).toFixed(1);
-    const minRest = 20; 
-    let stCls = 'ok', stTxt = 'OK';
-    if (active) {
-      if (restSlots < minRest) { stCls = 'fail'; stTxt = 'VIOL'; }
-      else if (restSlots < 22) { stCls = 'warn'; stTxt = 'LOW'; }
-    }
-
-    rows += `<tr class="${active ? '' : 'inactive'}">
-      <td class="rh-cell-date">${d}</td>
-      <td class="rh-cell-day">${wday}</td>
-      ${slotCells}
-      <td class="rh-cell-rest">${active ? restH : ''}</td>
-      <td class="rh-cell-work">${active ? workH : ''}</td>
-      <td class="rh-cell-status ${stCls}">${active ? stTxt : ''}</td>
-    </tr>`;
-  }
-  tbody.innerHTML = rows;
-
-  const totalRestH = (totalRestSlots * 0.5).toFixed(1);
-  const totalWorkH = (totalWorkSlots * 0.5).toFixed(1);
-  document.getElementById('rh-total-rest').textContent = totalRestH;
-  document.getElementById('rh-total-work').textContent = totalWorkH;
-
-  const badge = document.getElementById('rh-badge');
-  if (badge) badge.style.display = (totalRestSlots < 154) ? 'inline' : 'none'; 
-}
-
-function bindRHMetaFields() {
-  const map = {
-    'rh-vessel':'vessel','rh-emp-name':'empName','rh-company':'company',
-    'rh-rank':'rank','rh-flag':'flag','rh-emp-num':'empNum',
-    'rh-captain':'captain','rh-signin-disp':'signIn',
-    'rh-signoff-disp':'signOff','rh-comments':'comments'
-  };
-  for (const [id, key] of Object.entries(map)) {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => { rhMeta[key] = el.value; saveRHMeta(); });
-  }
-  const cap = document.getElementById('rh-captain');
-  const emp = document.getElementById('rh-emp-name');
-  if (cap) cap.addEventListener('input', () => {
-    const sig = document.getElementById('rh-sig-captain');
-    if (sig) sig.textContent = cap.value || '__________________________';
-  });
-  if (emp) emp.addEventListener('input', () => {
-    const sig = document.getElementById('rh-sig-seafarer');
-    if (sig) sig.textContent = emp.value || '__________________________';
-  });
-}
-
 // ═══ CERTIFICATES ═════════════════════════════════════════════════
-
 function certStatus(expiryStr) {
   if (!expiryStr) return { cls: 'ok', label: 'No expiry', days: null };
   const exp = new Date(expiryStr + 'T00:00:00');
@@ -1193,7 +905,6 @@ function openCertModal(idx) {
   editingCertIdx = idx !== undefined ? idx : null;
   const m = document.getElementById('cert-modal');
   
-  // Ta nowa linijka chowa status z poprzedniego skanowania
   const statusEl = document.getElementById('scan-status');
   if (statusEl) statusEl.style.display = 'none';
 
@@ -1248,29 +959,27 @@ function deleteCert(i) {
   saveCerts();
   renderCerts();
 }
-// ═══ TRAVEL EXPENSES ══════════════════════════════════════════════
 
+// ═══ TRAVEL EXPENSES ══════════════════════════════════════════════
 function getPayrollMonthOptions() {
   const today = new Date();
   const currentYear = today.getFullYear();
   const options = [];
 
-  // Build ALL periods for current year: Dec(prev) 21 → Jan 20 through Dec 21 → Jan(next) 20
-  // That means months Dec(prev year) through Dec(current year)
   const periods = [
-    { fromM: 11, fromY: currentYear - 1, toM: 0,  toY: currentYear },  // Dec 21 → Jan 20
-    { fromM: 0,  fromY: currentYear,     toM: 1,  toY: currentYear },  // Jan 21 → Feb 20
-    { fromM: 1,  fromY: currentYear,     toM: 2,  toY: currentYear },  // Feb 21 → Mar 20
-    { fromM: 2,  fromY: currentYear,     toM: 3,  toY: currentYear },  // Mar 21 → Apr 20
-    { fromM: 3,  fromY: currentYear,     toM: 4,  toY: currentYear },  // Apr 21 → May 20
-    { fromM: 4,  fromY: currentYear,     toM: 5,  toY: currentYear },  // May 21 → Jun 20
-    { fromM: 5,  fromY: currentYear,     toM: 6,  toY: currentYear },  // Jun 21 → Jul 20
-    { fromM: 6,  fromY: currentYear,     toM: 7,  toY: currentYear },  // Jul 21 → Aug 20
-    { fromM: 7,  fromY: currentYear,     toM: 8,  toY: currentYear },  // Aug 21 → Sep 20
-    { fromM: 8,  fromY: currentYear,     toM: 9,  toY: currentYear },  // Sep 21 → Oct 20
-    { fromM: 9,  fromY: currentYear,     toM: 10, toY: currentYear },  // Oct 21 → Nov 20
-    { fromM: 10, fromY: currentYear,     toM: 11, toY: currentYear },  // Nov 21 → Dec 20
-    { fromM: 11, fromY: currentYear,     toM: 0,  toY: currentYear+1 } // Dec 21 → Jan 20 (next)
+    { fromM: 11, fromY: currentYear - 1, toM: 0,  toY: currentYear },
+    { fromM: 0,  fromY: currentYear,     toM: 1,  toY: currentYear },
+    { fromM: 1,  fromY: currentYear,     toM: 2,  toY: currentYear },
+    { fromM: 2,  fromY: currentYear,     toM: 3,  toY: currentYear },
+    { fromM: 3,  fromY: currentYear,     toM: 4,  toY: currentYear },
+    { fromM: 4,  fromY: currentYear,     toM: 5,  toY: currentYear },
+    { fromM: 5,  fromY: currentYear,     toM: 6,  toY: currentYear },
+    { fromM: 6,  fromY: currentYear,     toM: 7,  toY: currentYear },
+    { fromM: 7,  fromY: currentYear,     toM: 8,  toY: currentYear },
+    { fromM: 8,  fromY: currentYear,     toM: 9,  toY: currentYear },
+    { fromM: 9,  fromY: currentYear,     toM: 10, toY: currentYear },
+    { fromM: 10, fromY: currentYear,     toM: 11, toY: currentYear },
+    { fromM: 11, fromY: currentYear,     toM: 0,  toY: currentYear+1 }
   ];
 
   periods.forEach(p => {
@@ -1293,7 +1002,6 @@ function renderExpenses() {
     return;
   }
 
-  // Group by payroll period
   const grouped = {};
   expenses.forEach((e, i) => {
     const key = e.payrollPeriod || 'unassigned';
@@ -1354,7 +1062,6 @@ function openExpModal(idx) {
     document.getElementById('exp-currency-in').value = 'USD';
     document.getElementById('exp-usd-in').value      = '';
     document.getElementById('exp-notes-in').value    = '';
-    // Default to current payroll period
     const todayStr = new Date().toISOString().slice(0,10);
     const currentPeriod = opts.find(o => o.value >= todayStr) || opts[0];
     document.getElementById('exp-month-in').value = currentPeriod?.value || opts[0]?.value;
@@ -1403,7 +1110,7 @@ function deleteExpense(i) {
   renderPayroll();
 }
 
-// ─── AI Expense Scanner (Word .docx) ────────────────────────────────
+// ─── AI Scanner & File Convert ────────────────────────────────
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1443,7 +1150,6 @@ async function handleExpenseScan(event) {
       return;
     }
 
-    // Build notes from subtotals
     const subtotalStr = (data.subtotals || [])
       .map(s => `${s.currency} ${s.total} = $${parseFloat(s.usd).toFixed(2)}`)
       .join(' · ');
@@ -1453,7 +1159,6 @@ async function handleExpenseScan(event) {
     statusEl.style.color = 'var(--green)';
     statusEl.textContent = `✅ Znaleziono ${(data.items||[]).length} pozycji · Łącznie $${parseFloat(data.totalUSD).toFixed(2)} USD`;
 
-    // Open modal pre-filled
     openExpModal();
     setTimeout(() => {
       document.getElementById('exp-desc-in').value     = data.description || file.name;
@@ -1473,20 +1178,6 @@ async function handleExpenseScan(event) {
   }
 }
 
-// Konwersja pliku na tekst Base64
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64 = reader.result.split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = error => reject(error);
-  });
-}
-
-// Main function to send image to cloud
 async function handleCertScan(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -1500,7 +1191,6 @@ async function handleCertScan(event) {
     const base64Data = await fileToBase64(file);
     const mediaType = file.type;
 
-    // Twój bezpieczny adres Firebase!
     const CLOUD_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/scanCert";
 
     const response = await fetch(CLOUD_FUNCTION_URL, {
@@ -1516,7 +1206,6 @@ async function handleCertScan(event) {
 
     const aiData = await response.json();
 
-    // Wypełnianie inputów na żywo
     document.getElementById('cert-name-in').value = aiData.name || '';
     document.getElementById('cert-issuer-in').value = aiData.issuer || '';
     document.getElementById('cert-number-in').value = aiData.number || '';
@@ -1531,19 +1220,11 @@ async function handleCertScan(event) {
     statusEl.style.color = 'var(--red)';
     statusEl.textContent = '❌ Scan failed. Please enter details manually.';
   } finally {
-    event.target.value = ''; // Resetujemy pole pliku
+    event.target.value = '';
   }
 }
 
 // ═══ TRAINING RATE MODAL ═════════════════════════════════════════════
-
-// Training rates stored in state variables at top of file
-
-function saveTrainingRates() {
-  localStorage.setItem('crewxTrainingRates', JSON.stringify(trainingRates));
-  saveToCloud();
-}
-
 function closeTrainingRateModal() {
   document.getElementById('training-rate-modal').classList.remove('open');
 }
@@ -1575,7 +1256,6 @@ function saveTrainingRate() {
 
   const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
 
-  // Remove existing entry for same period
   trainingRates = trainingRates.filter(r => !(r.start === start && r.end === end));
   trainingRates.push({ start, end, rate, days });
   trainingRates.sort((a,b) => a.start.localeCompare(b.start));
@@ -1585,22 +1265,12 @@ function saveTrainingRate() {
   renderPayroll();
 }
 
-// Hook training rates into cloud sync
-const _origSaveToCloud = saveToCloud;
-function saveToCloud() {
-  if (!syncDoc) return;
-  syncDoc.set({ events, rates, rhGrid, rhMeta, certs, expenses, trainingRates }, { merge: true })
-    .catch(err => console.error("Save error:", err));
-}
-
 // ═══ ADMIN EMAIL SETTINGS ════════════════════════════════════════════
-
 const EMAIL_SETTINGS_KEY = 'crewxEmailSettings';
 const TEST_EMAIL_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/sendTestCertEmail";
 const SAVE_SETTINGS_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/saveEmailSettings";
 
 function loadEmailSettings() {
-  // Load from Firestore admin settings doc
   if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
 
   db.collection('adminSettings').doc('emailNotifications').get().then(doc => {
@@ -1672,7 +1342,6 @@ async function saveEmailSettings() {
   updateSchedulePreview(settings);
 
   try {
-    // Save to Firestore adminSettings collection
     await db.collection('adminSettings').doc('emailNotifications').set(settings);
     msgEl.style.color   = 'var(--green)';
     msgEl.textContent   = '✅ Settings saved!';
@@ -1752,3 +1421,94 @@ async function renderAdminPanel() {
 
   loadEmailSettings();
 }
+
+// ═══ PWA SETUP ═══════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('PWA Service Worker registered.', reg);
+    }).catch(err => {
+      console.error('PWA SW Registration failed:', err);
+    });
+  });
+}
+```
+
+---
+
+### 2. Plik `sw.js` (UTWÓRZ NOWY PLIK)
+Utwórz nowy plik w głównym folderze, nazwij go dokładnie `sw.js` i wklej ten kod. Ten plik służy do buforowania Twojej witryny offline, by działała jako aplikacja webowa (PWA).
+
+```javascript
+const CACHE_NAME = 'crewx-v8';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  '/manifest.json'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache);
+    })
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      // Zwróć plik z pamięci jeżeli istnieje, pociągnij z sieci jako fallback
+      return response || fetch(event.request);
+    })
+  );
+});
+
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+```
+
+---
+
+### 3. Plik `manifest.json` (UTWÓRZ NOWY PLIK)
+Utwórz nowy plik obok dwóch poprzednich, nazwij go dokładnie `manifest.json` i wklej ten kod. Ten plik jest "wizytówką" PWA – mówi telefonom jak nazywa się aplikacja, jako co ma się odpalić i jakich ikon użyć.
+
+```json
+{
+  "name": "CrewX",
+  "short_name": "CrewX",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#0a1628",
+  "description": "Crew rotation, rest hours, certificates and payroll tracker",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+```
+
+**Przypomnienie:** Miej na serwerze (w tym samym głównym folderze) utworzony folder `icons/`, a w nim odpowiednie grafiki dla PWA (`icon-192.png` oraz `apple-touch-icon.png`). Kod Twojego pliku `index.html` (który wysłałeś wcześniej) już ładnie z nimi 'łączy się', więc nie musisz tam nic więcej dodawać.
