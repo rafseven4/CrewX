@@ -10,29 +10,29 @@ const firebaseConfig = {
 
 // INICJALIZACJA FIREBASE
 firebase.initializeApp(firebaseConfig);
-const db   = firebase.firestore();
+const db = firebase.firestore();
 const auth = firebase.auth();
 
 // ═══ ADMIN ════════════════════════════════════════════════════════
 const ADMIN_EMAIL = 'rafal.pietrzak.pl@gmail.com';
-let currentUser   = null;
-let syncDoc       = null;
+let currentUser = null;
+let syncDoc = null;
 let unsubscribeSnapshot = null;
 
 // ═══ STATE ════════════════════════════════════════════════════════
-let events        = [];
-let rates         = [];
-let rhGrid        = {};
+let events = [];
+let rates = [];
+let rhGrid = {};
 let trainingRates = JSON.parse(localStorage.getItem('crewxTrainingRates') || '[]');
-let rhMeta   = {};
-let certs    = [];
+let rhMeta = {};
+let certs = [];
 let expenses = [];
 
-let currentYear    = new Date().getFullYear();
-let currentMonth   = new Date().getMonth();
-let selectedDate   = null;
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let selectedDate = null;
 let editingCertIdx = null;
-let cloudLoaded    = false;
+let cloudLoaded = false;
 
 // ═══ AUTH STATE OBSERVER ══════════════════════════════════════════
 auth.onAuthStateChanged(user => {
@@ -109,7 +109,7 @@ async function doLogin() {
 // ─── Logout ───────────────────────────────────────────────────────
 function doLogout() {
   if (!confirm('Sign out?')) return;
-  events = []; rates = []; rhGrid = {}; rhMeta = {}; certs = []; expenses = []; trainingRates = [];
+  events = []; rates = []; rhGrid = {}; rhMeta = {}; certs = []; expenses = [];
   localStorage.clear();
   auth.signOut();
 }
@@ -135,22 +135,21 @@ function initCloudSync() {
   unsubscribeSnapshot = syncDoc.onSnapshot(doc => {
     if (!doc.exists) return;
     const data = doc.data();
-    events        = data.events        || [];
-    rates         = data.rates         || [];
-    rhGrid        = data.rhGrid        || {};
-    rhMeta        = data.rhMeta        || {};
-    certs         = data.certs         || [];
-    expenses      = data.expenses      || [];
+    events       = data.events       || [];
+    rates        = data.rates        || [];
+    rhGrid       = data.rhGrid       || {};
+    rhMeta       = data.rhMeta       || {};
+    certs        = data.certs        || [];
+    expenses     = data.expenses     || [];
     trainingRates = data.trainingRates || [];
-    cloudLoaded   = true;
+    cloudLoaded  = true;
 
-    localStorage.setItem('crewxEvents',        JSON.stringify(events));
-    localStorage.setItem('crewxRates',         JSON.stringify(rates));
-    localStorage.setItem('crewxRHGrid',        JSON.stringify(rhGrid));
-    localStorage.setItem('crewxRHMeta',        JSON.stringify(rhMeta));
-    localStorage.setItem('crewxCerts',         JSON.stringify(certs));
-    localStorage.setItem('crewxExpenses',      JSON.stringify(expenses));
-    localStorage.setItem('crewxTrainingRates', JSON.stringify(trainingRates));
+    localStorage.setItem('crewxEvents',   JSON.stringify(events));
+    localStorage.setItem('crewxRates',    JSON.stringify(rates));
+    localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));
+    localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));
+    localStorage.setItem('crewxCerts',    JSON.stringify(certs));
+    localStorage.setItem('crewxExpenses', JSON.stringify(expenses));
 
     renderRates();
     renderCalendar();
@@ -170,13 +169,12 @@ function saveToCloud() {
     .catch(err => console.error("Save error:", err));
 }
 
-function saveEvents()        { localStorage.setItem('crewxEvents',   JSON.stringify(events));        saveToCloud(); }
-function saveRates()         { localStorage.setItem('crewxRates',    JSON.stringify(rates));         saveToCloud(); }
-function saveRHGrid()        { localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));        saveToCloud(); }
-function saveRHMeta()        { localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));        saveToCloud(); }
-function saveCerts()         { localStorage.setItem('crewxCerts',    JSON.stringify(certs));         saveToCloud(); }
-function saveExpenses()      { localStorage.setItem('crewxExpenses', JSON.stringify(expenses));      saveToCloud(); }
-function saveTrainingRates() { localStorage.setItem('crewxTrainingRates', JSON.stringify(trainingRates)); saveToCloud(); }
+function saveEvents()   { localStorage.setItem('crewxEvents',   JSON.stringify(events));   saveToCloud(); }
+function saveRates()    { localStorage.setItem('crewxRates',    JSON.stringify(rates));    saveToCloud(); }
+function saveRHGrid()   { localStorage.setItem('crewxRHGrid',   JSON.stringify(rhGrid));   saveToCloud(); }
+function saveRHMeta()   { localStorage.setItem('crewxRHMeta',   JSON.stringify(rhMeta));   saveToCloud(); }
+function saveCerts()    { localStorage.setItem('crewxCerts',    JSON.stringify(certs));    saveToCloud(); }
+function saveExpenses() { localStorage.setItem('crewxExpenses', JSON.stringify(expenses)); saveToCloud(); }
 
 // ═══ ADMIN — user management ══════════════════════════════════════
 const ADMIN_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/adminManageUsers";
@@ -249,7 +247,6 @@ async function adminEnableUser(uid) {
   } catch (err) { alert('Error: ' + err.message); }
 }
 
-
 const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
 const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -276,6 +273,8 @@ function getBrazilStays()      { return getPairs('brazil-in',      'brazil-out')
 function getOnboardStays()     { return getPairs('sign-on',        'sign-off');      }
 function getTrainingPeriods()  { return getPairs('training-start', 'training-end'); }
 
+// calendarOnly=true  -> only closed pairs highlighted on calendar
+// calendarOnly=false -> open pairs extend to today (for stats)
 function getRangeDates(pairs, calendarOnly) {
   const set = new Set();
   for (const p of pairs) {
@@ -293,12 +292,71 @@ function durDays(p) {
   return Math.round((new Date(p.end+'T00:00:00') - new Date(p.start+'T00:00:00')) / 86400000) + 1;
 }
 
+// ═══ RATE LOOKUP ═════════════════════════════════════════════════
 function getRateForDate(ds) {
   const sorted = [...rates].sort((a,b) => a.from.localeCompare(b.from));
   for (const r of sorted) {
     if (ds >= r.from && (!r.to || ds <= r.to)) return r.amount;
   }
   return 0;
+}
+
+// ═══ PAYROLL CALCULATION ══════════════════════════════════════════
+function getPayrollPeriods() {
+  const awayDates = getRangeDates(getTrips());
+  if (awayDates.size === 0 && rates.length === 0) return [];
+
+  const allDates = [...events.map(e => e.date), ...rates.map(r => r.from)].sort();
+  if (allDates.length === 0) return [];
+
+  const earliest = new Date(allDates[0] + 'T00:00:00');
+  const latest   = new Date();
+  // Pokaż okresy do końca bieżącego roku (31 grudnia)
+  latest.setMonth(11);  // Grudzień
+  latest.setDate(31);
+
+  const periods = [];
+  let y = earliest.getFullYear();
+  let m = earliest.getMonth(); 
+
+  if (m === 0) { m = 11; y--; } else m--;
+
+  const endY = latest.getFullYear();
+  const endM = latest.getMonth();
+
+  while (y < endY || (y === endY && m <= endM)) {
+    const prevM = m === 0 ? 11 : m - 1;
+    const prevY = m === 0 ? y - 1 : y;
+    const periodStart = dateStr(prevY, prevM, 21); 
+    const periodEnd   = dateStr(y, m, 20);         
+
+    let days = 0;
+    let earnings = 0;
+    const s = new Date(periodStart + 'T00:00:00');
+    const e = new Date(periodEnd   + 'T00:00:00');
+    for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
+      const ds = c.toISOString().slice(0,10);
+      if (awayDates.has(ds)) {
+        days++;
+        earnings += getRateForDate(ds);
+      }
+    }
+
+    periods.push({
+      label: `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${y}`,
+      periodEnd,
+      periodStart,
+      days,
+      earnings
+    });
+
+    m++;
+    if (m > 11) { m = 0; y++; }
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  // Pokaż okresy które mają dni LUB są w przyszłości (do końca roku)
+  return periods.filter(p => p.days > 0 || p.periodEnd >= today);
 }
 
 // ═══ RENDER RATES LIST ════════════════════════════════════════════
@@ -376,6 +434,8 @@ function renderPayroll() {
   const todayStr   = today.toISOString().slice(0,10);
   const endOfYear  = new Date(today.getFullYear(), 11, 31);
   const awayDates  = getRangeDates(getTrips());
+
+  // Build set of ALL training dates so we can exclude them from Days Away
   const allTrainingDates = getRangeDates(getTrainingPeriods());
   const earliest   = new Date(allDates[0] + 'T00:00:00');
 
@@ -398,6 +458,7 @@ function renderPayroll() {
     const e = new Date(periodEnd   + 'T00:00:00');
     for (let c = new Date(s); c <= e; c.setDate(c.getDate()+1)) {
       const ds = c.toISOString().slice(0,10);
+      // Exclude training days from Days Away to avoid double counting
       if (awayDates.has(ds) && !allTrainingDates.has(ds)) {
         days++; earnings += getRateForDate(ds);
       }
@@ -420,9 +481,12 @@ function renderPayroll() {
 
   const cards = visible.map(p => {
     const isCurrent = todayStr >= p.periodStart && todayStr <= p.periodEnd;
+
+    // Expenses
     const periodExps     = (expenses || []).filter(e => e.payrollPeriod === p.periodEnd);
     const expTotal       = periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
 
+    // Training — always from calendar, rate from trainingRates
     const allTrainingPeriods = getTrainingPeriods().filter(t =>
       t.end && t.end >= p.periodStart && t.end <= p.periodEnd
     );
@@ -437,12 +501,14 @@ function renderPayroll() {
     const total = p.earnings + expTotal + trainingTotal;
     grandTotal += total;
 
+    // Expense rows
     const expRows = periodExps.map(e => `
       <div class="pc-line">
         <span class="pc-line-label">↳ ${e.desc}</span>
         <span class="pc-line-val">${usd(e.usd,2)}</span>
       </div>`).join('');
 
+    // Training rows
     const trainRows = allTrainingPeriods.map(t => {
       const rateEntry = (trainingRates || []).find(r => r.start === t.start && r.end === t.end);
       const rate = rateEntry ? (rateEntry.rate || 0) : null;
@@ -457,11 +523,17 @@ function renderPayroll() {
 
     return `
     <div class="pc-card ${isCurrent ? 'pc-current' : ''}">
+
+      <!-- Period header -->
       <div class="pc-header">
         <div class="pc-period">${p.label}</div>
         ${isCurrent ? '<div class="pc-badge-current">current</div>' : ''}
       </div>
+
+      <!-- Line items -->
       <div class="pc-body">
+
+        <!-- Days Away -->
         <div class="pc-row ${p.days === 0 ? 'pc-row-zero' : ''}">
           <div class="pc-row-left">
             <span class="pc-row-icon">📅</span>
@@ -470,6 +542,8 @@ function renderPayroll() {
           </div>
           <span class="pc-row-amount ${p.days > 0 ? 'pc-amount-main' : ''}">${usd(p.earnings)}</span>
         </div>
+
+        <!-- Training -->
         ${trainingDaysCount > 0 ? `
         <div class="pc-row">
           <div class="pc-row-left">
@@ -480,6 +554,8 @@ function renderPayroll() {
           <span class="pc-row-amount pc-amount-training">${usd(trainingTotal)}</span>
         </div>
         ${trainRows}` : ''}
+
+        <!-- Expenses -->
         ${expTotal > 0 ? `
         <div class="pc-row">
           <div class="pc-row-left">
@@ -490,11 +566,15 @@ function renderPayroll() {
           <span class="pc-row-amount pc-amount-exp">${usd(expTotal,2)}</span>
         </div>
         ${expRows}` : ''}
+
       </div>
+
+      <!-- Total -->
       <div class="pc-total">
         <span>Total payout</span>
         <span class="pc-total-amount">${usd(total)}</span>
       </div>
+
     </div>`;
   }).join('');
 
@@ -512,8 +592,10 @@ function renderPayroll() {
 
 // ═══ STATS ════════════════════════════════════════════════════════
 function updateStats() {
+  // ── Populate year dropdown ────────────────────────────────────────
   const sel = document.getElementById('stat-year-filter');
   if (sel) {
+    // Collect all years from events
     const years = [...new Set(events.map(e => e.date?.slice(0,4)).filter(Boolean))].sort();
     const selectedVal = sel.value || 'all';
     sel.innerHTML = '<option value="all">All years</option>' +
@@ -522,6 +604,7 @@ function updateStats() {
 
   const filterYear = sel?.value || 'all';
 
+  // ── Filter helper: keep only dates in selected year ───────────────
   function filterByYear(dateSet) {
     if (filterYear === 'all') return dateSet;
     const filtered = new Set();
@@ -531,6 +614,7 @@ function updateStats() {
     return filtered;
   }
 
+  // ── Filter pairs by year ──────────────────────────────────────────
   function filterPairsByYear(pairs) {
     if (filterYear === 'all') return pairs;
     return pairs.filter(p => p.start.startsWith(filterYear) || (p.end && p.end.startsWith(filterYear)));
@@ -565,6 +649,7 @@ function updateStats() {
   const contractCount = filteredOnboard.filter(o=>o.end).length;
   document.getElementById('stat-trips').innerHTML    = `${tripCount} <span id="stat-contracts" style="font-size:13px;color:var(--gray400)">/ ${contractCount}</span>`;
 
+  // status pill — always based on today regardless of filter
   const todayStr = new Date().toISOString().slice(0,10);
   const allAway    = getRangeDates(trips);
   const allBrazil  = getRangeDates(brazilStays);
@@ -583,6 +668,7 @@ function updateStats() {
     }
   }
 
+  // lists — always show all (not filtered by year)
   const fmt = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
   function renderList(listId, infoId, items, labelFn, badgeClass) {
     const info = document.getElementById(infoId);
@@ -601,6 +687,7 @@ function updateStats() {
   renderList('brazil-list',  'brazil-info',  brazilStays,     (b,i)=>`Stay ${i+1} &nbsp; ${fmt(b.start)} → ${b.end?fmt(b.end):'…'}`, 'ibadge-green');
   renderList('onboard-list', 'onboard-info', onboardStays,    (o,i)=>`Contract ${i+1} &nbsp; ${fmt(o.start)} → ${o.end?fmt(o.end):'…'}`, 'ibadge-amber');
 
+  // Training — custom render with rate display and edit button
   const trainingInfo = document.getElementById('training-info');
   const trainingList = document.getElementById('training-list');
   if (trainingPeriods.length === 0) {
@@ -726,7 +813,7 @@ function openModal(ds) {
   const green = ['brazil-in','brazil-out'];
   const amber = ['sign-on','sign-off'];
   [...blue,...green,...amber].forEach(t => {
-    const btn = document.getElementById('btn-'+t);
+    const btn = document.getElementById(`btn-${t}`);
     btn.classList.remove('active','active-green','active-amber');
     if (dayEvs.some(e=>e.type===t)) {
       if (blue.includes(t))  btn.classList.add('active');
@@ -753,8 +840,10 @@ function cleanOrphanedTrainingRates() {
   const before = trainingRates.length;
 
   if (activePeriods.length === 0) {
+    // No training periods at all — clear everything
     trainingRates = [];
   } else {
+    // Keep only rates that have a matching COMPLETE period (both start and end)
     trainingRates = trainingRates.filter(r =>
       activePeriods.some(p => p.start === r.start && p.end === r.end && p.end !== null)
     );
@@ -777,12 +866,14 @@ function logEvent(type) {
   }
   saveEvents();
 
+  // Clean up orphaned training rates after any training event change
   if (type === 'training-start' || type === 'training-end') {
     cleanOrphanedTrainingRates();
   }
 
   closeModal(); renderCalendar();
 
+  // When training ends — ask for daily rate
   if (type === 'training-end') {
     const trainingPeriods = getTrainingPeriods();
     const lastTraining = trainingPeriods[trainingPeriods.length - 1];
@@ -803,624 +894,10 @@ function clearDay() {
   if (!selectedDate) return;
   events = events.filter(e => e.date !== selectedDate);
   saveEvents();
+  // Clean up orphaned training rates
   cleanOrphanedTrainingRates();
   closeModal(); renderCalendar();
 }
 
 function clearAllRates() {
-  if (!confirm('Remove all rate periods?')) return;
-  rates = [];
-  saveRates();
-  renderRates();
-  renderPayroll();
-}
-
-// ═══ INIT ═════════════════════════════════════════════════════════
-renderRates();
-renderCalendar();
-
-// ═══ SIDEBAR ══════════════════════════════════════════════════════
-function openSidebar() {
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('sidebar-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('nav-' + name).classList.add('active');
-  if (name === 'certificates') renderCerts();
-  if (name === 'expenses')     renderExpenses();
-  if (name === 'admin')        renderAdminPanel();
-  closeSidebar();
-}
-
-// ═══ CERTIFICATES ═════════════════════════════════════════════════
-function certStatus(expiryStr) {
-  if (!expiryStr) return { cls: 'ok', label: 'No expiry', days: null };
-  const exp = new Date(expiryStr + 'T00:00:00');
-  const today = new Date(); today.setHours(0,0,0,0);
-  const diff = Math.round((exp - today) / 86400000);
-  if (diff < 0)  return { cls: 'expired',  label: 'Expired',    days: diff };
-  if (diff < 30) return { cls: 'expiring', label: 'Expires soon', days: diff };
-  if (diff < 90) return { cls: 'expiring', label: `${diff}d left`, days: diff };
-  return { cls: 'ok', label: `${diff}d left`, days: diff };
-}
-
-function renderCerts() {
-  const grid = document.getElementById('cert-grid');
-  if (!grid) return;
-
-  let expCount = 0;
-  let html = certs.map((c, i) => {
-    const st = certStatus(c.expiry);
-    if (st.cls !== 'ok') expCount++;
-    const expDateFmt = c.expiry ? fmtDate(c.expiry) : '—';
-    const daysHtml = st.days !== null
-      ? `<span class="cert-days-left ${st.cls}">${st.days < 0 ? 'Expired ' + Math.abs(st.days) + 'd ago' : st.days + 'd left'}</span>`
-      : '';
-    return `<div class="cert-card ${st.cls}">
-      <button class="cert-delete" onclick="deleteCert(${i})" title="Delete">✕</button>
-      <div class="cert-name">${c.name}</div>
-      <div class="cert-issuer">${c.issuer || ''}</div>
-      ${c.number ? `<div class="cert-num">${c.number}</div>` : ''}
-      <div class="cert-footer">
-        <div>
-          <div class="cert-exp-label">Expires</div>
-          <div class="cert-exp-val ${st.cls}">${expDateFmt}</div>
-        </div>
-        ${daysHtml}
-      </div>
-    </div>`;
-  }).join('');
-
-  html += `<button class="cert-add-btn" onclick="openCertModal()">
-    <span class="cert-add-icon">＋</span>
-    Add certificate
-  </button>`;
-
-  grid.innerHTML = html;
-
-  const badge = document.getElementById('cert-badge');
-  if (badge) badge.style.display = expCount > 0 ? 'inline' : 'none';
-  if (badge && expCount > 0) badge.textContent = expCount;
-}
-
-function openCertModal(idx) {
-  editingCertIdx = idx !== undefined ? idx : null;
-  const m = document.getElementById('cert-modal');
-  
-  const statusEl = document.getElementById('scan-status');
-  if (statusEl) statusEl.style.display = 'none';
-
-  document.getElementById('cert-modal-title').textContent = editingCertIdx !== null ? 'Edit Certificate' : 'Add Certificate';
-  if (editingCertIdx !== null) {
-    const c = certs[editingCertIdx];
-    document.getElementById('cert-name-in').value   = c.name   || '';
-    document.getElementById('cert-issuer-in').value = c.issuer || '';
-    document.getElementById('cert-number-in').value = c.number || '';
-    document.getElementById('cert-issue-in').value  = c.issued ? fmtDate(c.issued)  : '';
-    document.getElementById('cert-expiry-in').value = c.expiry ? fmtDate(c.expiry) : '';
-  } else {
-    ['cert-name-in','cert-issuer-in','cert-number-in','cert-issue-in','cert-expiry-in'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-  }
-  m.classList.add('open');
-}
-
-function closeCertModal() {
-  document.getElementById('cert-modal').classList.remove('open');
-  editingCertIdx = null;
-}
-
-function handleCertOverlay(e) {
-  if (e.target === document.getElementById('cert-modal')) closeCertModal();
-}
-
-function saveCert() {
-  const name   = document.getElementById('cert-name-in').value.trim();
-  const issuer = document.getElementById('cert-issuer-in').value.trim();
-  const number = document.getElementById('cert-number-in').value.trim();
-  const issued = parseDMY(document.getElementById('cert-issue-in').value);
-  const expiry = parseDMY(document.getElementById('cert-expiry-in').value);
-  if (!name) { alert('Certificate name is required.'); return; }
-  const cert = { name, issuer, number, issued, expiry };
-  if (editingCertIdx !== null) certs[editingCertIdx] = cert;
-  else certs.push(cert);
-  
-  certs.sort((a,b) => {
-    if (!a.expiry) return 1; if (!b.expiry) return -1;
-    return a.expiry.localeCompare(b.expiry);
-  });
-  saveCerts();
-  closeCertModal();
-  renderCerts();
-}
-
-function deleteCert(i) {
-  if (!confirm('Delete this certificate?')) return;
-  certs.splice(i, 1);
-  saveCerts();
-  renderCerts();
-}
-
-// ═══ TRAVEL EXPENSES ══════════════════════════════════════════════
-function getPayrollMonthOptions() {
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const options = [];
-
-  const periods = [
-    { fromM: 11, fromY: currentYear - 1, toM: 0,  toY: currentYear },
-    { fromM: 0,  fromY: currentYear,     toM: 1,  toY: currentYear },
-    { fromM: 1,  fromY: currentYear,     toM: 2,  toY: currentYear },
-    { fromM: 2,  fromY: currentYear,     toM: 3,  toY: currentYear },
-    { fromM: 3,  fromY: currentYear,     toM: 4,  toY: currentYear },
-    { fromM: 4,  fromY: currentYear,     toM: 5,  toY: currentYear },
-    { fromM: 5,  fromY: currentYear,     toM: 6,  toY: currentYear },
-    { fromM: 6,  fromY: currentYear,     toM: 7,  toY: currentYear },
-    { fromM: 7,  fromY: currentYear,     toM: 8,  toY: currentYear },
-    { fromM: 8,  fromY: currentYear,     toM: 9,  toY: currentYear },
-    { fromM: 9,  fromY: currentYear,     toM: 10, toY: currentYear },
-    { fromM: 10, fromY: currentYear,     toM: 11, toY: currentYear },
-    { fromM: 11, fromY: currentYear,     toM: 0,  toY: currentYear+1 }
-  ];
-
-  periods.forEach(p => {
-    const periodEnd = dateStr(p.toY, p.toM, 20);
-    options.push({
-      label: `${MONTHS_S[p.fromM]} 21 – ${MONTHS_S[p.toM]} 20, ${p.toY}`,
-      value: periodEnd
-    });
-  });
-
-  return options;
-}
-
-function renderExpenses() {
-  const wrap = document.getElementById('exp-list-wrap');
-  if (!wrap) return;
-
-  if (expenses.length === 0) {
-    wrap.innerHTML = '<div class="exp-empty">No expenses yet — upload a Word document above to get started</div>';
-    return;
-  }
-
-  const grouped = {};
-  expenses.forEach((e, i) => {
-    const key = e.payrollPeriod || 'unassigned';
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push({ ...e, _idx: i });
-  });
-
-  const opts = getPayrollMonthOptions();
-  const labelFor = val => {
-    const found = opts.find(o => o.value === val);
-    return found ? found.label : val;
-  };
-
-  wrap.innerHTML = Object.entries(grouped).map(([period, items]) => {
-    const periodTotal = items.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
-    return `
-      <div class="exp-group">
-        <div class="exp-group-title">
-          📅 ${labelFor(period)}
-          <span style="float:right;color:var(--green)">Total: $${periodTotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
-        </div>
-        ${items.map(e => `
-          <div class="exp-card">
-            <div class="exp-card-left">
-              <div class="exp-card-desc">${e.desc}</div>
-              <div class="exp-card-meta">
-                ${e.origAmount} ${e.currency} → <strong style="color:var(--green)">$${parseFloat(e.usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} USD</strong>
-                ${e.notes ? ` · ${e.notes}` : ''}
-              </div>
-            </div>
-            <div class="exp-card-actions">
-              <button class="exp-btn-edit" onclick="openExpModal(${e._idx})">✏️ Edit</button>
-              <button class="exp-btn-del"  onclick="deleteExpense(${e._idx})">✕</button>
-            </div>
-          </div>`).join('')}
-      </div>`;
-  }).join('');
-}
-
-function openExpModal(idx) {
-  const opts = getPayrollMonthOptions();
-  const sel  = document.getElementById('exp-month-in');
-  sel.innerHTML = opts.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
-
-  document.getElementById('exp-editing-idx').value = idx !== undefined ? idx : '';
-
-  if (idx !== undefined && expenses[idx]) {
-    const e = expenses[idx];
-    document.getElementById('exp-desc-in').value     = e.desc     || '';
-    document.getElementById('exp-orig-in').value     = e.origAmount || '';
-    document.getElementById('exp-currency-in').value = e.currency  || 'USD';
-    document.getElementById('exp-usd-in').value      = e.usd       || '';
-    document.getElementById('exp-notes-in').value    = e.notes     || '';
-    document.getElementById('exp-month-in').value    = e.payrollPeriod || opts[0]?.value;
-  } else {
-    document.getElementById('exp-desc-in').value     = '';
-    document.getElementById('exp-orig-in').value     = '';
-    document.getElementById('exp-currency-in').value = 'USD';
-    document.getElementById('exp-usd-in').value      = '';
-    document.getElementById('exp-notes-in').value    = '';
-    const todayStr = new Date().toISOString().slice(0,10);
-    const currentPeriod = opts.find(o => o.value >= todayStr) || opts[0];
-    document.getElementById('exp-month-in').value = currentPeriod?.value || opts[0]?.value;
-  }
-  document.getElementById('exp-modal').classList.add('open');
-}
-
-function closeExpModal() {
-  document.getElementById('exp-modal').classList.remove('open');
-}
-
-function handleExpModalOverlay(e) {
-  if (e.target === document.getElementById('exp-modal')) closeExpModal();
-}
-
-function saveExpense() {
-  const desc     = document.getElementById('exp-desc-in').value.trim();
-  const orig     = parseFloat(document.getElementById('exp-orig-in').value);
-  const currency = document.getElementById('exp-currency-in').value;
-  const usd      = parseFloat(document.getElementById('exp-usd-in').value);
-  const notes    = document.getElementById('exp-notes-in').value.trim();
-  const period   = document.getElementById('exp-month-in').value;
-  const idxStr   = document.getElementById('exp-editing-idx').value;
-
-  if (!desc)        { alert('Description is required.'); return; }
-  if (isNaN(orig))  { alert('Enter a valid original amount.'); return; }
-  if (isNaN(usd))   { alert('Enter a valid USD amount.'); return; }
-  if (!period)      { alert('Select a payroll period.'); return; }
-
-  const entry = { desc, origAmount: orig, currency, usd, notes, payrollPeriod: period };
-
-  if (idxStr !== '') expenses[parseInt(idxStr)] = entry;
-  else expenses.push(entry);
-
-  saveExpenses();
-  closeExpModal();
-  renderExpenses();
-  renderPayroll();
-}
-
-function deleteExpense(i) {
-  if (!confirm('Delete this expense?')) return;
-  expenses.splice(i, 1);
-  saveExpenses();
-  renderExpenses();
-  renderPayroll();
-}
-
-// ─── AI Scanner & File Convert ────────────────────────────────
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload  = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = err => reject(err);
-  });
-}
-
-async function handleExpenseScan(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const statusEl = document.getElementById('exp-scan-status');
-  statusEl.style.display  = 'block';
-  statusEl.style.color    = 'var(--gold)';
-  statusEl.textContent    = '⏳ Reading document and converting currencies... (~15 seconds)';
-
-  try {
-    const base64Data = await fileToBase64(file);
-    const CLOUD_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/scanExpense";
-
-    const response = await fetch(CLOUD_FUNCTION_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ file: base64Data, fileName: file.name })
-    });
-
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
-
-    if (data._parseError) {
-      statusEl.style.color = 'var(--amber)';
-      statusEl.textContent = '⚠️ Częściowy odczyt — sprawdź dane i uzupełnij ręcznie.';
-      openExpModal();
-      return;
-    }
-
-    const subtotalStr = (data.subtotals || [])
-      .map(s => `${s.currency} ${s.total} = $${parseFloat(s.usd).toFixed(2)}`)
-      .join(' · ');
-
-    const notes = subtotalStr || data.notes || '';
-
-    statusEl.style.color = 'var(--green)';
-    statusEl.textContent = `✅ Znaleziono ${(data.items||[]).length} pozycji · Łącznie $${parseFloat(data.totalUSD).toFixed(2)} USD`;
-
-    openExpModal();
-    setTimeout(() => {
-      document.getElementById('exp-desc-in').value     = data.description || file.name;
-      document.getElementById('exp-orig-in').value     = data.totalUSD || 0;
-      document.getElementById('exp-currency-in').value = 'USD';
-      document.getElementById('exp-usd-in').value      = parseFloat(data.totalUSD).toFixed(2) || 0;
-      document.getElementById('exp-notes-in').value    = notes.substring(0, 120);
-    }, 100);
-
-  } catch (err) {
-    console.error(err);
-    statusEl.style.color = 'var(--red)';
-    statusEl.textContent = `❌ ${err.message}`;
-    openExpModal();
-  } finally {
-    event.target.value = '';
-  }
-}
-
-async function handleCertScan(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const statusEl = document.getElementById('scan-status');
-  statusEl.style.display = 'block';
-  statusEl.style.color = 'var(--gold)';
-  statusEl.textContent = '⏳ Scanning... (JPG/PNG/PDF — may take a few seconds)';
-
-  try {
-    const base64Data = await fileToBase64(file);
-    const mediaType = file.type;
-
-    const CLOUD_FUNCTION_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/scanCert";
-
-    const response = await fetch(CLOUD_FUNCTION_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        image: base64Data,
-        mediaType: mediaType
-      })
-    });
-
-    if (!response.ok) throw new Error("Connection error");
-
-    const aiData = await response.json();
-
-    document.getElementById('cert-name-in').value = aiData.name || '';
-    document.getElementById('cert-issuer-in').value = aiData.issuer || '';
-    document.getElementById('cert-number-in').value = aiData.number || '';
-    document.getElementById('cert-issue-in').value = aiData.issued || '';
-    document.getElementById('cert-expiry-in').value = aiData.expiry || '';
-
-    statusEl.style.color = 'var(--green)';
-    statusEl.textContent = '✅ Done! Review the data and click Save.';
-
-  } catch (error) {
-    console.error(error);
-    statusEl.style.color = 'var(--red)';
-    statusEl.textContent = '❌ Scan failed. Please enter details manually.';
-  } finally {
-    event.target.value = '';
-  }
-}
-
-// ═══ TRAINING RATE MODAL ═════════════════════════════════════════════
-function closeTrainingRateModal() {
-  document.getElementById('training-rate-modal').classList.remove('open');
-}
-
-function handleTrainingRateOverlay(e) {
-  if (e.target === document.getElementById('training-rate-modal')) closeTrainingRateModal();
-}
-
-function editTrainingRate(start, end) {
-  const modal = document.getElementById('training-rate-modal');
-  const existing = (trainingRates || []).find(r => r.start === start && r.end === end);
-  const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
-  const fmt2 = ds => { if (!ds) return '—'; const [y,m,d] = ds.split('-'); return `${d}/${m}`; };
-  document.getElementById('training-rate-sub').textContent =
-    `Training: ${fmt2(start)} → ${fmt2(end)} (${days} days). Enter the daily rate:`;
-  document.getElementById('training-rate-input').value = existing ? existing.rate : '';
-  modal.dataset.start = start;
-  modal.dataset.end   = end;
-  modal.classList.add('open');
-}
-
-function saveTrainingRate() {
-  const modal = document.getElementById('training-rate-modal');
-  const rate  = parseFloat(document.getElementById('training-rate-input').value) || 0;
-  const start = modal.dataset.start;
-  const end   = modal.dataset.end;
-
-  if (!start || !end) { closeTrainingRateModal(); return; }
-
-  const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
-
-  trainingRates = trainingRates.filter(r => !(r.start === start && r.end === end));
-  trainingRates.push({ start, end, rate, days });
-  trainingRates.sort((a,b) => a.start.localeCompare(b.start));
-  saveTrainingRates();
-
-  closeTrainingRateModal();
-  renderPayroll();
-}
-
-// ═══ ADMIN EMAIL SETTINGS ════════════════════════════════════════════
-const EMAIL_SETTINGS_KEY = 'crewxEmailSettings';
-const TEST_EMAIL_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/sendTestCertEmail";
-const SAVE_SETTINGS_URL = "https://us-central1-crewx-17f23.cloudfunctions.net/saveEmailSettings";
-
-function loadEmailSettings() {
-  if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
-
-  db.collection('adminSettings').doc('emailNotifications').get().then(doc => {
-    const settings = doc.exists ? doc.data() : {
-      enabled: true,
-      thresholds: [60, 30, 7],
-      customThreshold: null,
-      fromEmail: 'rafal.pietrzak.pl@gmail.com'
-    };
-
-    document.getElementById('alert-enabled').checked    = settings.enabled !== false;
-    document.getElementById('alert-60').checked         = settings.thresholds?.includes(60) !== false;
-    document.getElementById('alert-30').checked         = settings.thresholds?.includes(30) !== false;
-    document.getElementById('alert-7').checked          = settings.thresholds?.includes(7)  !== false;
-    document.getElementById('alert-custom').value       = settings.customThreshold || '';
-    document.getElementById('alert-from-email').value   = settings.fromEmail || 'rafal.pietrzak.pl@gmail.com';
-
-    updateSchedulePreview(settings);
-  }).catch(() => updateSchedulePreview(null));
-}
-
-function updateSchedulePreview(settings) {
-  const previewEl = document.getElementById('email-schedule-preview');
-  if (!previewEl) return;
-
-  const enabled = document.getElementById('alert-enabled')?.checked;
-  if (!enabled) {
-    previewEl.innerHTML = '<span style="color:var(--red)">⏸ Notifications are paused</span>';
-    return;
-  }
-
-  const thresholds = getSelectedThresholds();
-  if (thresholds.length === 0) {
-    previewEl.innerHTML = '<span style="color:var(--amber)">⚠️ No thresholds selected — no emails will be sent</span>';
-    return;
-  }
-
-  const lines = thresholds.sort((a,b) => b-a).map(d => {
-    const color = d <= 7 ? 'var(--red)' : d <= 30 ? 'var(--amber)' : 'var(--gold)';
-    return `<div>📧 Email sent when <strong style="color:${color}">${d} days</strong> remain before expiry</div>`;
-  });
-  lines.push('<div style="margin-top:6px;color:var(--gray400)">⏰ Runs daily at 08:00 Warsaw time</div>');
-  previewEl.innerHTML = lines.join('');
-}
-
-function getSelectedThresholds() {
-  const thresholds = [];
-  if (document.getElementById('alert-60')?.checked) thresholds.push(60);
-  if (document.getElementById('alert-30')?.checked) thresholds.push(30);
-  if (document.getElementById('alert-7')?.checked)  thresholds.push(7);
-  const custom = parseInt(document.getElementById('alert-custom')?.value);
-  if (!isNaN(custom) && custom > 0 && custom <= 365) thresholds.push(custom);
-  return [...new Set(thresholds)]; // remove duplicates
-}
-
-async function saveEmailSettings() {
-  const msgEl = document.getElementById('email-settings-msg');
-  if (!msgEl) return;
-
-  const settings = {
-    enabled:         document.getElementById('alert-enabled').checked,
-    thresholds:      getSelectedThresholds(),
-    customThreshold: parseInt(document.getElementById('alert-custom').value) || null,
-    fromEmail:       document.getElementById('alert-from-email').value.trim(),
-    updatedAt:       new Date().toISOString(),
-    updatedBy:       currentUser.email,
-  };
-
-  updateSchedulePreview(settings);
-
-  try {
-    await db.collection('adminSettings').doc('emailNotifications').set(settings);
-    msgEl.style.color   = 'var(--green)';
-    msgEl.textContent   = '✅ Settings saved!';
-    setTimeout(() => { msgEl.textContent = ''; }, 3000);
-  } catch (err) {
-    msgEl.style.color   = 'var(--red)';
-    msgEl.textContent   = '❌ Error: ' + err.message;
-  }
-}
-
-async function sendTestEmail() {
-  const msgEl = document.getElementById('email-settings-msg');
-  msgEl.style.color   = 'var(--gold)';
-  msgEl.textContent   = '⏳ Sending test email...';
-
-  try {
-    const token = await currentUser.getIdToken();
-    const fromEmail = document.getElementById('alert-from-email').value.trim();
-
-    const resp = await fetch(TEST_EMAIL_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ fromEmail })
-    });
-
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-
-    msgEl.style.color   = 'var(--green)';
-    msgEl.textContent   = `✅ Test email sent to ${currentUser.email}!`;
-  } catch (err) {
-    msgEl.style.color   = 'var(--red)';
-    msgEl.textContent   = '❌ ' + err.message;
-  }
-}
-
-// ═══ RENDER ADMIN PANEL ══════════════════════════════════════════
-async function renderAdminPanel() {
-  if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
-  const wrap = document.getElementById('admin-users-list');
-  if (!wrap) return;
-  wrap.innerHTML = '<div style="color:var(--gray400);font-size:13px">Loading users...</div>';
-
-  try {
-    const token = await currentUser.getIdToken(true);
-    const resp  = await fetch(ADMIN_FUNCTION_URL + '?action=list', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-
-    if (!data.users || data.users.length === 0) {
-      wrap.innerHTML = '<div class="exp-empty">No users yet.</div>';
-    } else {
-      wrap.innerHTML = data.users.map(u => `
-        <div class="admin-user-card">
-          <div class="admin-user-info">
-            <div class="admin-user-email">${u.email}</div>
-            <div class="admin-user-meta">
-              Created: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB') : '—'}
-              &nbsp;·&nbsp;
-              Last login: ${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-GB') : 'Never'}
-              ${u.disabled ? ' &nbsp;·&nbsp; <span style="color:var(--red)">DISABLED</span>' : ''}
-            </div>
-          </div>
-          <div class="admin-user-actions">
-            ${u.disabled
-              ? `<button class="admin-btn-enable" onclick="adminEnableUser('${u.uid}')">Enable</button>`
-              : `<button class="admin-btn-disable" onclick="adminDisableUser('${u.uid}')">Disable</button>`}
-            <button class="admin-btn-del" onclick="adminDeleteUser('${u.uid}', '${u.email}')">Delete</button>
-          </div>
-        </div>`).join('');
-    }
-  } catch (err) {
-    wrap.innerHTML = `<div style="color:var(--red);font-size:13px">❌ Error: ${err.message}</div>`;
-  }
-
-  loadEmailSettings();
-}
-
-// ═══ PWA SETUP ═══════════════════════════════════════════════════
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').then(reg => {
-      console.log('PWA Service Worker registered.', reg);
-    }).catch(err => {
-      console.error('PWA SW Registration failed:', err);
-    });
-  });
-}
+  if (!confirm('
