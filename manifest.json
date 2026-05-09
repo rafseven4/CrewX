@@ -1,0 +1,21 @@
+{
+  "name": "CrewX",
+  "short_name": "CrewX",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#0a1628",
+  "description": "Crew rotation, rest hours, certificates and payroll tracker",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
