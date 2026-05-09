@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CrewX Offline</title>
+  <meta name="theme-color" content="#0a1628"/>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0a1628;
+      color: #ffffff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .card {
+      max-width: 420px;
+      background: #112240;
+      border: 1px solid #1a3a5c;
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+    }
+
+    .logo {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0 0 8px;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0 0 20px;
+    }
+
+    button {
+      background: #1d6fa4;
+      color: white;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">⚓</div>
+    <h1>CrewX is offline</h1>
+    <p>
+      The app shell is available, but login, cloud sync, AI scanning and Firebase data require internet connection.
+    </p>
+    <button onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>
