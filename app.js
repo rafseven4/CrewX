@@ -66,6 +66,18 @@ const MONTHS_FULL = [
   'July','August','September','October','November','December'
 ];
 
+// ═══ LOCAL DATE HELPER (fixes UTC off-by-one bug) ═════════════════
+function localDateStr(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function todayStr() {
+  return localDateStr(new Date());
+}
+
 // ═══ AUTH STATE OBSERVER ══════════════════════════════════════════
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -406,6 +418,7 @@ function getTrainingPeriods() {
   return getPairs('training-start', 'training-end');
 }
 
+// ✅ FIX: używamy lokalnej daty zamiast toISOString() (który zwraca UTC i przesuwa dzień)
 function getRangeDates(pairs, calendarOnly = false) {
   const set = new Set();
 
@@ -416,7 +429,7 @@ function getRangeDates(pairs, calendarOnly = false) {
     const e = p.end ? new Date(p.end + 'T00:00:00') : new Date();
 
     for (let c = new Date(s); c <= e; c.setDate(c.getDate() + 1)) {
-      set.add(c.toISOString().slice(0, 10));
+      set.add(localDateStr(c));
     }
   }
 
@@ -527,8 +540,9 @@ function renderPayroll() {
     return;
   }
 
+  // ✅ FIX: używamy localDateStr zamiast toISOString()
   const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
+  const currentTodayStr = localDateStr(today);
   const endOfYear = new Date(today.getFullYear(), 11, 31);
   const awayDates = getRangeDates(getTrips());
   const allTrainingDates = getRangeDates(getTrainingPeriods());
@@ -561,7 +575,8 @@ function renderPayroll() {
     const e = new Date(periodEnd + 'T00:00:00');
 
     for (let c = new Date(s); c <= e; c.setDate(c.getDate() + 1)) {
-      const ds = c.toISOString().slice(0, 10);
+      // ✅ FIX: lokalny string daty
+      const ds = localDateStr(c);
 
       if (awayDates.has(ds) && !allTrainingDates.has(ds)) {
         days++;
@@ -585,7 +600,7 @@ function renderPayroll() {
     }
   }
 
-  const visible = periods.filter(p => p.days > 0 || p.periodEnd >= todayStr);
+  const visible = periods.filter(p => p.days > 0 || p.periodEnd >= currentTodayStr);
 
   if (visible.length === 0) {
     body.innerHTML = '<div class="empty-state">Log trip events to calculate earnings</div>';
@@ -606,7 +621,7 @@ function renderPayroll() {
   let grandTotal = 0;
 
   const cards = visible.map(p => {
-    const isCurrent = todayStr >= p.periodStart && todayStr <= p.periodEnd;
+    const isCurrent = currentTodayStr >= p.periodStart && currentTodayStr <= p.periodEnd;
 
     const periodExps = (expenses || []).filter(e => e.payrollPeriod === p.periodEnd);
     const expTotal = periodExps.reduce((s, e) => s + (parseFloat(e.usd) || 0), 0);
@@ -786,7 +801,8 @@ function updateStats() {
 
   setHtml('stat-trips', `${tripCount} <span id="stat-contracts" style="font-size:13px;color:var(--gray400)">/ ${contractCount}</span>`);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // ✅ FIX: używamy localDateStr zamiast toISOString()
+  const currentTodayStr = todayStr();
   const allAway = getRangeDates(trips);
   const allBrazil = getRangeDates(brazilStays);
   const allOnboard = getRangeDates(onboardStays);
@@ -794,14 +810,14 @@ function updateStats() {
   const dot = document.getElementById('status-dot');
   const text = document.getElementById('status-text');
 
-  const inBrazil = allBrazil.has(todayStr);
-  const isOnboard = allOnboard.has(todayStr);
+  const inBrazil = allBrazil.has(currentTodayStr);
+  const isOnboard = allOnboard.has(currentTodayStr);
 
   if (dot && text && currentUser) {
     if (isOnboard) {
       dot.style.background = '#f97316';
       text.textContent = '⚓ Onboard' + (inBrazil ? ' · 🇧🇷' : '');
-    } else if (allAway.has(todayStr)) {
+    } else if (allAway.has(currentTodayStr)) {
       dot.style.background = '#38bdf8';
       text.textContent = 'Away' + (inBrazil ? ' · 🇧🇷 Brazil' : '');
     } else {
@@ -1826,8 +1842,9 @@ function openExpModal(idx) {
     document.getElementById('exp-usd-in').value = '';
     document.getElementById('exp-notes-in').value = '';
 
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const currentPeriod = opts.find(o => o.value >= todayStr) || opts[0];
+    // ✅ FIX: używamy localDateStr zamiast toISOString()
+    const currentTodayStr = todayStr();
+    const currentPeriod = opts.find(o => o.value >= currentTodayStr) || opts[0];
 
     document.getElementById('exp-month-in').value = currentPeriod?.value || opts[0]?.value;
   }
