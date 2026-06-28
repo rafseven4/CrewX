@@ -4,7 +4,6 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CrewX</title>
-
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#0a1628"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -15,11 +14,12 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="description" content="Crew rotation, rest hours, certificates and payroll tracker"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
 
-<svg style="display: none;">
+<!-- ═══ SHARED SVG ICONS ══════════════════════════════════════════ -->
+<svg style="display:none;">
   <symbol id="logo-crewx" viewBox="0 0 28 28" fill="none">
     <path d="M4 18 Q14 22 24 18" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round"/>
     <path d="M4 18 L6 13 L22 13 L24 18" stroke="#38bdf8" stroke-width="1.6" stroke-linejoin="round"/>
@@ -30,19 +30,30 @@
   </symbol>
 </svg>
 
+<!-- ═══ CUSTOM CONFIRM DIALOG ════════════════════════════════════ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-msg"   id="confirm-msg"></div>
+    <div class="confirm-actions">
+      <button class="confirm-btn-cancel" id="confirm-cancel">Cancel</button>
+      <button class="confirm-btn-ok"     id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOGIN SCREEN ══════════════════════════════════════════════ -->
 <div id="login-screen" style="display:none">
   <div class="login-wrap">
     <div class="login-card">
       <div class="login-logo">
-        <svg width="36" height="36" viewBox="0 0 28 28" fill="none">
-          <use href="#logo-crewx"></use>
-        </svg>
+        <svg width="36" height="36" viewBox="0 0 28 28" fill="none"><use href="#logo-crewx"></use></svg>
         <span class="login-logo-text">CrewX</span>
       </div>
       <div class="login-title">Welcome back</div>
       <div class="login-sub">Sign in to access your crew tracker</div>
-      <input class="login-input" id="login-email" type="email" placeholder="Email address" autocomplete="email"/>
-      <input class="login-input" id="login-pass"  type="password" placeholder="Password" autocomplete="current-password"/>
+      <input class="login-input" id="login-email" type="email"    placeholder="Email address"  autocomplete="email"/>
+      <input class="login-input" id="login-pass"  type="password" placeholder="Password"        autocomplete="current-password"/>
       <div class="login-error" id="login-error"></div>
       <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
       <div class="login-footer">Access is by invitation only</div>
@@ -50,483 +61,416 @@
   </div>
 </div>
 
+<!-- ═══ APP ROOT ══════════════════════════════════════════════════ -->
 <div id="app-root" style="display:none">
 
-<div class="topbar">
-  <div style="display:flex;align-items:center;gap:4px">
-  <button class="hamburger" onclick="openSidebar()" title="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="logo">
-    <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
-          <use href="#logo-crewx"></use>
-        </svg>
-    <span class="logo-text">CrewX</span>
-    <span class="logo-sub">Crew rotation tracker</span>
-  </div>
-  </div>
-  <div class="topbar-right">
-    <div class="status-pill">
-      <div class="status-dot" id="status-dot" style="background:#94a3b8"></div>
-      <span id="status-text">At home</span>
-    </div>
-    <button onclick="doLogout()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:4px 10px;color:#94a3b8;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Sign out</button>
-  </div>
-</div>
-
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-
-<div class="sidebar" id="sidebar">
-  <div class="sidebar-head">
-    <div class="sidebar-logo">
-      <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-          <use href="#logo-crewx"></use>
-        </svg>
-      <span class="sidebar-logo-text">CrewX</span>
-    </div>
-    <button class="sidebar-close" onclick="closeSidebar()">✕</button>
-  </div>
-
-  <div class="sidebar-section-label">Navigation</div>
-  <nav class="sidebar-nav">
-    <button class="nav-item active" id="nav-rotation" onclick="showPage('rotation')">
-      <span class="nav-icon">📅</span> Rotation Calendar
-    </button>
-    <button class="nav-item" id="nav-certificates" onclick="showPage('certificates')">
-      <span class="nav-icon">📜</span> Certificates
-      <span class="nav-badge" id="cert-badge" style="display:none">!</span>
-    </button>
-    <button class="nav-item" id="nav-expenses" onclick="showPage('expenses')">
-      <span class="nav-icon">🧾</span> Travel Expenses
-    </button>
-    <button class="nav-item" id="nav-admin" onclick="showPage('admin')" style="display:none">
-      <span class="nav-icon">⚙️</span> Admin
-    </button>
-  </nav>
-
-  <div class="sidebar-footer">
-    v1.0 &nbsp;·&nbsp; Cloud Synced ☁️
-  </div>
-</div>
-
-<div class="page active" id="page-rotation">
-<div class="layout">
-
-  <div class="left-panel">
-
-    <div class="stats-row">
-      <div class="stat-card c-ocean">
-        <div class="stat-label">Days away <span class="stat-sublabel">(paid days)</span></div>
-        <div class="stat-value" id="stat-away">0 <span class="stat-unit">d</span></div>
-      </div>
-      <div class="stat-card c-green">
-        <div class="stat-label">🇧🇷 In Brazil <span class="stat-sublabel">(tax)</span></div>
-        <div class="stat-value" id="stat-brazil">0 <span class="stat-unit">d</span></div>
-      </div>
-      <div class="stat-card c-amber">
-        <div class="stat-label">⚓ Onboard <span class="stat-sublabel">(sea time)</span></div>
-        <div class="stat-value" id="stat-onboard">0 <span class="stat-unit">d</span></div>
-      </div>
-      <div class="stat-card c-purple">
-        <div class="stat-label">🎓 Training <span class="stat-sublabel">(days)</span></div>
-        <div class="stat-value" id="stat-training">0 <span class="stat-unit">d</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Travel days</div>
-        <div class="stat-value" id="stat-travel">0 <span class="stat-unit">d</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Trips / Contracts</div>
-        <div class="stat-value" id="stat-trips">0 <span id="stat-contracts" style="font-size:13px;color:var(--gray400)">/0</span></div>
-      </div>
-      <div class="stat-card stat-year-card">
-        <div class="stat-label">Filter year</div>
-        <select id="stat-year-filter" class="stat-year-select" onchange="updateStats()">
-          <option value="all">All years</option>
-        </select>
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="hamburger" onclick="openSidebar()" title="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 28 28" fill="none"><use href="#logo-crewx"></use></svg>
+        <span class="logo-text">CrewX</span>
+        <span class="logo-sub">Crew rotation tracker</span>
       </div>
     </div>
-
-    <div class="cal-card">
-      <div class="nav-row">
-        <button class="nav-btn" onclick="changeMonth(-1)">← prev</button>
-        <span class="month-label" id="month-label"></span>
-        <button class="nav-btn" onclick="changeMonth(1)">next →</button>
+    <div class="topbar-right">
+      <div class="status-pill">
+        <div class="status-dot" id="status-dot" style="background:#94a3b8"></div>
+        <span id="status-text">At home</span>
       </div>
-      <div class="weekdays">
-        <div class="weekday">Mo</div><div class="weekday">Tu</div>
-        <div class="weekday">We</div><div class="weekday">Th</div>
-        <div class="weekday">Fr</div><div class="weekday">Sa</div>
-        <div class="weekday">Su</div>
-      </div>
-      <div class="calendar" id="calendar"></div>
-
-      <div class="legend">
-        <div class="legend-item"><div class="ldot" style="background:rgba(29,111,164,0.4);border:1px solid rgba(56,189,248,0.4)"></div>Away</div>
-        <div class="legend-item"><div class="ldot" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4)"></div>Brazil</div>
-        <div class="legend-item"><div class="lstripe-l"></div>Away+BR</div>
-        <div class="legend-item"><div class="lstripe-r"></div>Onboard</div>
-        <div class="legend-item"><div class="ldot" style="background:rgba(139,92,246,0.4);border:1px solid #8b5cf6"></div>Training</div>
-        <div class="legend-item"><div class="ldot" style="background:rgba(245,158,11,0.5);border:1px solid #f59e0b"></div>Left home</div>
-        <div class="legend-item"><div class="ldot" style="background:rgba(56,189,248,0.4);border:1px solid #38bdf8"></div>Arrived</div>
-        <div class="legend-item"><div class="ldot" style="width:9px;height:6px;background:var(--gold);border-top:2px solid var(--gold)"></div>Payroll cut</div>
-      </div>
-
-      <div class="info-section" id="trips-info" style="display:none">
-        <div class="section-title">🏠 Trips away from home</div>
-        <div id="trips-list"></div>
-      </div>
-      <div class="info-section" id="brazil-info" style="display:none">
-        <div class="section-title">🇧🇷 Brazil stays</div>
-        <div id="brazil-list"></div>
-      </div>
-      <div class="info-section" id="onboard-info" style="display:none">
-        <div class="section-title">⚓ Onboard contracts</div>
-        <div id="onboard-list"></div>
-      </div>
-      <div class="info-section" id="training-info" style="display:none">
-        <div class="section-title">🎓 Training periods</div>
-        <div id="training-list"></div>
-      </div>
+      <button onclick="doLogout()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:4px 10px;color:#94a3b8;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Sign out</button>
     </div>
   </div>
 
-  <div class="right-panel">
-
-    <div class="panel-card">
-      <div class="panel-header">
-        <span class="panel-header-icon">💰</span>
-        <span class="panel-title">Day Rate Settings</span>
+  <!-- SIDEBAR -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><use href="#logo-crewx"></use></svg>
+        <span class="sidebar-logo-text">CrewX</span>
       </div>
-      <div class="panel-body">
-        <div class="form-row">
-          <label class="form-label">Day rate (USD)</label>
-          <input class="form-input" id="rate-amount" type="number" placeholder="e.g. 650" min="0" step="1"/>
-        </div>
-        <div class="form-row">
-          <label class="form-label">Valid from → to (dd/mm/yyyy)</label>
-          <div class="date-row">
-            <input class="form-input" id="rate-from" type="text" placeholder="dd/mm/yyyy" maxlength="10"/>
-            <input class="form-input" id="rate-to"   type="text" placeholder="dd/mm/yyyy or blank"/>
+      <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+    </div>
+    <div class="sidebar-section-label">Navigation</div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" id="nav-rotation"     onclick="showPage('rotation')">
+        <span class="nav-icon">📅</span> Rotation Calendar
+      </button>
+      <button class="nav-item"        id="nav-certificates" onclick="showPage('certificates')">
+        <span class="nav-icon">📜</span> Certificates
+        <span class="nav-badge" id="cert-badge" style="display:none">!</span>
+      </button>
+      <button class="nav-item"        id="nav-expenses"     onclick="showPage('expenses')">
+        <span class="nav-icon">🧾</span> Travel Expenses
+      </button>
+      <button class="nav-item"        id="nav-admin"        onclick="showPage('admin')" style="display:none">
+        <span class="nav-icon">⚙️</span> Admin
+      </button>
+    </nav>
+    <div class="sidebar-footer">v1.1 &nbsp;·&nbsp; Cloud Synced ☁️</div>
+  </div>
+
+  <!-- ═══ ROTATION PAGE ══════════════════════════════════════════ -->
+  <div class="page active" id="page-rotation">
+    <div class="layout">
+
+      <!-- LEFT: calendar -->
+      <div class="left-panel">
+        <div class="stats-row">
+          <div class="stat-card c-ocean">
+            <div class="stat-label">Days away <span class="stat-sublabel">(paid days)</span></div>
+            <div class="stat-value" id="stat-away">0 <span class="stat-unit">d</span></div>
           </div>
-          <div style="font-size:10px;color:var(--gray400);margin-top:3px">Leave "to" blank if rate is still active</div>
+          <div class="stat-card c-green">
+            <div class="stat-label">🇧🇷 In Brazil <span class="stat-sublabel">(tax)</span></div>
+            <div class="stat-value" id="stat-brazil">0 <span class="stat-unit">d</span></div>
+          </div>
+          <div class="stat-card c-amber">
+            <div class="stat-label">⚓ Onboard <span class="stat-sublabel">(sea time)</span></div>
+            <div class="stat-value" id="stat-onboard">0 <span class="stat-unit">d</span></div>
+          </div>
+          <div class="stat-card c-purple">
+            <div class="stat-label">🎓 Training <span class="stat-sublabel">(days)</span></div>
+            <div class="stat-value" id="stat-training">0 <span class="stat-unit">d</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Travel days</div>
+            <div class="stat-value" id="stat-travel">0 <span class="stat-unit">d</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Trips / Contracts</div>
+            <div class="stat-value" id="stat-trips">0 <span id="stat-contracts" style="font-size:13px;color:var(--gray400)">/0</span></div>
+          </div>
+          <div class="stat-card stat-year-card">
+            <div class="stat-label">Filter year</div>
+            <select id="stat-year-filter" class="stat-year-select" onchange="updateStats()">
+              <option value="all">All years</option>
+            </select>
+          </div>
         </div>
-        <button class="btn-add" onclick="addRate()">+ Add rate period</button>
-        <button onclick="clearAllRates()" style="width:100%;margin-top:6px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px;color:#f87171;font-size:11px;font-family:'Space Grotesk',sans-serif;cursor:pointer;">Clear all rates</button>
 
-        <div id="rates-list" style="margin-top:12px"></div>
-      </div>
-    </div>
+        <div class="cal-card">
+          <div class="nav-row">
+            <button class="nav-btn" onclick="changeMonth(-1)">← prev</button>
+            <span class="month-label" id="month-label"></span>
+            <button class="nav-btn" onclick="changeMonth(1)">next →</button>
+          </div>
+          <div class="weekdays">
+            <div class="weekday">Mo</div><div class="weekday">Tu</div>
+            <div class="weekday">We</div><div class="weekday">Th</div>
+            <div class="weekday">Fr</div><div class="weekday">Sa</div>
+            <div class="weekday">Su</div>
+          </div>
+          <div class="calendar" id="calendar"></div>
 
-    <div class="panel-card">
-      <div class="panel-header">
-        <span class="panel-header-icon">📊</span>
-        <span class="panel-title">Payroll — 21st → 20th</span>
-      </div>
-      <div class="panel-body" id="payroll-body">
-        <div class="empty-state">Add a day rate above to see payroll calculations</div>
-      </div>
-    </div>
+          <div class="legend">
+            <div class="legend-item"><div class="ldot" style="background:rgba(29,111,164,0.4);border:1px solid rgba(56,189,248,0.4)"></div>Away</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4)"></div>Brazil</div>
+            <div class="legend-item"><div class="lstripe-l"></div>Away+BR</div>
+            <div class="legend-item"><div class="lstripe-r"></div>Onboard</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(139,92,246,0.4);border:1px solid #8b5cf6"></div>Training</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(245,158,11,0.5);border:1px solid #f59e0b"></div>Left home</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(56,189,248,0.4);border:1px solid #38bdf8"></div>Arrived</div>
+            <div class="legend-item"><div class="ldot" style="width:9px;height:6px;background:var(--gold);border-top:2px solid var(--gold)"></div>Payroll cut</div>
+          </div>
 
-  </div>
-</div>
-</div><div class="page" id="page-certificates">
-<div class="page-wrap">
-  <div class="page-title">📜 Certificates</div>
-  <div class="page-sub">Track expiry dates — warnings at 90 and 30 days</div>
-
-  <div class="cert-grid" id="cert-grid"></div>
-</div>
-</div>
-
-<div class="modal-overlay" id="cert-modal" onclick="handleCertOverlay(event)">
-  <div class="modal cert-modal-form">
-    <div class="modal-title" id="cert-modal-title">Add Certificate</div>
-    <div class="modal-sub" style="margin-bottom:1rem">Enter certificate details</div>
-
-    <div class="form-row" style="background: rgba(56,189,248,0.1); padding: 14px; border-radius: var(--radius-sm); border: 1px dashed rgba(56,189,248,0.4); text-align: center; margin-bottom: 15px;">
-      <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-        <span style="font-size: 24px;">🤖</span>
-        <span style="font-size: 13px; font-weight: 600; color: var(--sky);">Scan certificate with AI</span>
-        <span style="font-size: 10px; color: var(--gray400);">Click to select image or PDF (JPG/PNG/PDF)</span>
-        <input type="file" id="cert-scan-input" accept="image/jpeg, image/png, application/pdf" style="display: none;" onchange="handleCertScan(event)">
-      </label>
-      <div id="scan-status" style="font-size: 11px; font-weight: 500; margin-top: 8px; display: none;"></div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Certificate name</label>
-      <input class="form-input" id="cert-name-in" type="text" placeholder="e.g. STCW Basic Safety"/>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Issuing authority</label>
-      <input class="form-input" id="cert-issuer-in" type="text" placeholder="e.g. Flag State Administration"/>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Certificate number</label>
-      <input class="form-input" id="cert-number-in" type="text" placeholder="e.g. PL-2024-001234"/>
-    </div>
-    <div class="form-row form-row-2col">
-      <div>
-        <label class="form-label">Issue date (dd/mm/yyyy)</label>
-        <input class="form-input" id="cert-issue-in" type="text" placeholder="dd/mm/yyyy"/>
-      </div>
-      <div>
-        <label class="form-label">Expiry date (dd/mm/yyyy)</label>
-        <input class="form-input" id="cert-expiry-in" type="text" placeholder="dd/mm/yyyy"/>
-      </div>
-    </div>
-    <button class="btn-add" onclick="saveCert()" style="margin-top:4px">Save certificate</button>
-    <button class="modal-close" onclick="closeCertModal()">cancel</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="training-rate-modal" onclick="handleTrainingRateOverlay(event)">
-  <div class="modal">
-    <div class="modal-title">🎓 Training completed!</div>
-    <div class="modal-sub" id="training-rate-sub">Enter the daily rate for this training period</div>
-    <div class="form-row" style="margin-top:16px">
-      <label class="form-label">Daily rate (USD)</label>
-      <input class="form-input" id="training-rate-input" type="number" placeholder="e.g. 400" min="0" step="1"/>
-      <div style="font-size:10px;color:var(--gray400);margin-top:4px">Leave 0 if training was unpaid</div>
-    </div>
-    <button class="btn-add" onclick="saveTrainingRate()" style="margin-top:12px">Save training rate</button>
-    <button class="modal-close" onclick="closeTrainingRateModal()">skip</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
-  <div class="modal">
-    <div class="modal-title" id="modal-title"></div>
-    <div class="modal-sub"   id="modal-sub"></div>
-
-    <div class="modal-section-label">Home rotation</div>
-    <div class="modal-actions">
-      <button class="action-btn" id="btn-depart" onclick="logEvent('depart')">
-        <div class="action-icon ai-depart">🏠</div> Left home
-      </button>
-      <button class="action-btn" id="btn-arrive" onclick="logEvent('arrive')">
-        <div class="action-icon ai-arrive">🏡</div> Arrived home
-      </button>
-    </div>
-
-    <div class="modal-section-label">Brazil</div>
-    <div class="modal-actions">
-      <button class="action-btn" id="btn-brazil-in"  onclick="logEvent('brazil-in')">
-        <div class="action-icon ai-brazil-in">🇧🇷</div> Entered Brazil
-      </button>
-      <button class="action-btn" id="btn-brazil-out" onclick="logEvent('brazil-out')">
-        <div class="action-icon ai-brazil-out">✈️</div> Left Brazil
-      </button>
-    </div>
-
-    <div class="modal-section-label">Ship</div>
-    <div class="modal-actions">
-      <button class="action-btn" id="btn-sign-on"  onclick="logEvent('sign-on')">
-        <div class="action-icon ai-sign-on">⚓</div> Sign On (joined ship)
-      </button>
-      <button class="action-btn" id="btn-sign-off" onclick="logEvent('sign-off')">
-        <div class="action-icon ai-sign-off">🔄</div> Sign Off (left ship)
-      </button>
-    </div>
-
-    <div class="modal-section-label">Training</div>
-    <div class="modal-actions">
-      <button class="action-btn" id="btn-training-start" onclick="logEvent('training-start')">
-        <div class="action-icon ai-training-start">🎓</div> Training start
-      </button>
-      <button class="action-btn" id="btn-training-end" onclick="logEvent('training-end')">
-        <div class="action-icon ai-training-end">✅</div> Training end
-      </button>
-    </div>
-
-    <button class="modal-clear" id="btn-clear" onclick="clearDay()" style="display:none">Remove all events from this day</button>
-    <button class="modal-close" onclick="closeModal()">cancel</button>
-  </div>
-</div>
-
-<div class="page" id="page-expenses">
-<div class="page-wrap">
-  <div class="page-title">🧾 Travel Expenses</div>
-  <div class="page-sub">Upload Word documents — AI extracts currency, amount and converts to USD</div>
-
-  <div class="exp-upload-zone" id="exp-upload-zone" onclick="document.getElementById('exp-file-input').click()">
-    <input type="file" id="exp-file-input" accept=".doc,.docx" style="display:none" onchange="handleExpenseScan(event)"/>
-    <div class="exp-upload-icon">🤖</div>
-    <div class="exp-upload-title">Scan Expense Document (AI)</div>
-    <div class="exp-upload-sub">Click to upload a .doc or .docx file — Claude extracts all items, currencies and converts to USD</div>
-    <div id="exp-scan-status" style="display:none;margin-top:10px;font-size:12px;font-weight:600;"></div>
-  </div>
-
-  <div id="exp-list-wrap" style="margin-top:24px"></div>
-</div>
-</div>
-
-<div class="modal-overlay" id="exp-modal" onclick="handleExpModalOverlay(event)">
-  <div class="modal cert-modal-form">
-    <div class="modal-title">💰 Add / Edit Expense</div>
-    <div class="modal-sub" style="margin-bottom:1rem">Review AI results and select payroll month</div>
-
-    <div class="form-row">
-      <label class="form-label">Description</label>
-      <input class="form-input" id="exp-desc-in" type="text" placeholder="e.g. Travel reimbursement Q2"/>
-    </div>
-    <div class="form-row form-row-2col">
-      <div>
-        <label class="form-label">Original amount</label>
-        <input class="form-input" id="exp-orig-in" type="number" placeholder="0.00" step="0.01"/>
-      </div>
-      <div>
-        <label class="form-label">Currency</label>
-        <select class="form-input" id="exp-currency-in">
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-          <option value="GBP">GBP</option>
-          <option value="BRL">BRL</option>
-          <option value="NOK">NOK</option>
-          <option value="SGD">SGD</option>
-          <option value="AED">AED</option>
-          <option value="JPY">JPY</option>
-          <option value="OTHER">Other</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Amount in USD</label>
-      <input class="form-input" id="exp-usd-in" type="number" placeholder="0.00" step="0.01"/>
-      <div style="font-size:10px;color:var(--gray400);margin-top:3px">AI will fill this — you can edit manually</div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Add to payroll period (cut-off 20th)</label>
-      <select class="form-input" id="exp-month-in"></select>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Notes (optional)</label>
-      <input class="form-input" id="exp-notes-in" type="text" placeholder="e.g. flight + hotel"/>
-    </div>
-    <input type="hidden" id="exp-editing-idx"/>
-    <button class="btn-add" onclick="saveExpense()" style="margin-top:4px">Save expense</button>
-    <button class="modal-close" onclick="closeExpModal()">cancel</button>
-  </div>
-</div>
-
-<div class="page" id="page-admin">
-<div class="page-wrap">
-  <div class="page-title">⚙️ Admin Panel</div>
-  <div class="page-sub">Manage users who can access CrewX</div>
-
-  <div class="panel-card" style="margin-bottom:20px">
-    <div class="panel-header">
-      <span class="panel-header-icon">➕</span>
-      <span class="panel-title">Create New User</span>
-    </div>
-    <div class="panel-body">
-      <div class="form-row">
-        <label class="form-label">Email address</label>
-        <input class="form-input" id="admin-new-email" type="email" placeholder="user@example.com"/>
-      </div>
-      <div class="form-row">
-        <label class="form-label">Password (min. 6 characters)</label>
-        <input class="form-input" id="admin-new-pass" type="password" placeholder="Temporary password"/>
-      </div>
-      <div style="font-size:10px;color:var(--gray400);margin-bottom:10px">The user can change their password after first login</div>
-      <button class="btn-add" onclick="adminCreateUser()">Create user</button>
-      <div id="admin-create-msg" style="font-size:12px;margin-top:8px;font-weight:600"></div>
-    </div>
-  </div>
-
-  <div class="panel-card">
-    <div class="panel-header">
-      <span class="panel-header-icon">👥</span>
-      <span class="panel-title">Active Users</span>
-      <button onclick="renderAdminPanel()" style="margin-left:auto;background:none;border:1px solid var(--navy3);border-radius:6px;padding:4px 10px;color:var(--gray400);font-size:11px;cursor:pointer;">↺ Refresh</button>
-    </div>
-    <div class="panel-body">
-      <div id="admin-users-list">
-        <div style="color:var(--gray400);font-size:13px">Loading...</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-card" style="margin-top:20px">
-    <div class="panel-header">
-      <span class="panel-header-icon">📧</span>
-      <span class="panel-title">Certificate Expiry Notifications</span>
-    </div>
-    <div class="panel-body">
-
-      <div style="font-size:12px;color:var(--gray400);margin-bottom:16px;line-height:1.6">
-        Emails are sent automatically every day at <strong style="color:var(--sky)">08:00 Warsaw time</strong>.
-        Users receive alerts when their certificates expire in exactly 60, 30, or 7 days.
-      </div>
-
-      <div class="form-row">
-        <label class="form-label">Alert thresholds (days before expiry)</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
-          <label class="admin-toggle-wrap">
-            <input type="checkbox" id="alert-60" checked onchange="saveEmailSettings()"/>
-            <span class="admin-toggle-label">60 days</span>
-          </label>
-          <label class="admin-toggle-wrap">
-            <input type="checkbox" id="alert-30" checked onchange="saveEmailSettings()"/>
-            <span class="admin-toggle-label">30 days</span>
-          </label>
-          <label class="admin-toggle-wrap">
-            <input type="checkbox" id="alert-7" checked onchange="saveEmailSettings()"/>
-            <span class="admin-toggle-label">7 days</span>
-          </label>
+          <div class="info-section" id="trips-info"    style="display:none"><div class="section-title">🏠 Trips away from home</div><div id="trips-list"></div></div>
+          <div class="info-section" id="brazil-info"   style="display:none"><div class="section-title">🇧🇷 Brazil stays</div><div id="brazil-list"></div></div>
+          <div class="info-section" id="onboard-info"  style="display:none"><div class="section-title">⚓ Onboard contracts</div><div id="onboard-list"></div></div>
+          <div class="info-section" id="training-info" style="display:none"><div class="section-title">🎓 Training periods</div><div id="training-list"></div></div>
         </div>
       </div>
 
-      <div class="form-row" style="margin-top:12px">
-        <label class="form-label">Custom threshold (optional)</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input class="form-input" id="alert-custom" type="number" placeholder="e.g. 14" min="1" max="365" style="width:100px"/>
-          <span style="font-size:12px;color:var(--gray400)">days before expiry</span>
+      <!-- RIGHT: rates + payroll -->
+      <div class="right-panel">
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-header-icon">💰</span>
+            <span class="panel-title">Day Rate Settings</span>
+          </div>
+          <div class="panel-body">
+            <div class="form-row">
+              <label class="form-label">Day rate (USD)</label>
+              <input class="form-input" id="rate-amount" type="number" placeholder="e.g. 650" min="0" step="1"/>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Valid from → to (dd/mm/yyyy)</label>
+              <div class="date-row">
+                <input class="form-input" id="rate-from" type="text" placeholder="dd/mm/yyyy" maxlength="10"/>
+                <input class="form-input" id="rate-to"   type="text" placeholder="dd/mm/yyyy or blank"/>
+              </div>
+              <div style="font-size:10px;color:var(--gray400);margin-top:3px">Leave "to" blank if rate is still active</div>
+            </div>
+            <button class="btn-add" onclick="addRate()">+ Add rate period</button>
+            <button onclick="clearAllRates()" style="width:100%;margin-top:6px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px;color:#f87171;font-size:11px;font-family:'Space Grotesk',sans-serif;cursor:pointer;">Clear all rates</button>
+            <div id="rates-list" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-header-icon">📊</span>
+            <span class="panel-title">Payroll — 21st → 20th</span>
+          </div>
+          <div class="panel-body" id="payroll-body">
+            <div class="empty-state">Add a day rate above to see payroll calculations</div>
+          </div>
         </div>
       </div>
 
-      <div class="form-row" style="margin-top:12px">
-        <label class="form-label">Send notifications from email</label>
-        <input class="form-input" id="alert-from-email" type="email" value="rafal.pietrzak.pl@gmail.com" placeholder="from@example.com"/>
-        <div style="font-size:10px;color:var(--gray400);margin-top:3px">Must match verified sender in SendGrid</div>
-      </div>
+    </div>
+  </div><!-- /page-rotation -->
 
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--navy3)">
-        <div>
-          <div style="font-size:13px;font-weight:600;color:var(--white)">Notifications enabled</div>
-          <div style="font-size:11px;color:var(--gray400);margin-top:2px">Turn off to pause all certificate emails</div>
-        </div>
-        <label class="admin-master-toggle">
-          <input type="checkbox" id="alert-enabled" checked onchange="saveEmailSettings()"/>
-          <div class="admin-master-slider"></div>
+  <!-- ═══ CERTIFICATES PAGE ════════════════════════════════════ -->
+  <div class="page" id="page-certificates">
+    <div class="page-wrap">
+      <div class="page-title">📜 Certificates</div>
+      <div class="page-sub">Track expiry dates — warnings at 90 and 30 days</div>
+      <div class="cert-grid" id="cert-grid"></div>
+    </div>
+  </div>
+
+  <!-- Certificate modal -->
+  <div class="modal-overlay" id="cert-modal" onclick="handleCertOverlay(event)">
+    <div class="modal cert-modal-form">
+      <div class="modal-title" id="cert-modal-title">Add Certificate</div>
+      <div class="modal-sub" style="margin-bottom:1rem">Enter certificate details</div>
+
+      <!-- AI scan zone -->
+      <div class="form-row" style="background:rgba(56,189,248,0.1);padding:14px;border-radius:var(--radius-sm);border:1px dashed rgba(56,189,248,0.4);text-align:center;margin-bottom:15px;">
+        <label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <span style="font-size:24px;">🤖</span>
+          <span style="font-size:13px;font-weight:600;color:var(--sky);">Scan certificate with AI</span>
+          <span style="font-size:10px;color:var(--gray400);">Click to select image or PDF (JPG/PNG/PDF)</span>
+          <input type="file" id="cert-scan-input" accept="image/jpeg,image/png,application/pdf" style="display:none;" onchange="handleCertScan(event)">
         </label>
+        <div id="scan-status" style="font-size:11px;font-weight:500;margin-top:8px;display:none;"></div>
       </div>
 
-      <div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px dashed rgba(255,255,255,0.1)">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400);margin-bottom:8px">Current schedule preview</div>
-        <div id="email-schedule-preview" style="font-size:12px;color:var(--gray400);line-height:1.8"></div>
+      <div class="form-row"><label class="form-label">Certificate name</label><input class="form-input" id="cert-name-in"   type="text" placeholder="e.g. STCW Basic Safety"/></div>
+      <div class="form-row"><label class="form-label">Issuing authority</label><input class="form-input" id="cert-issuer-in" type="text" placeholder="e.g. Flag State Administration"/></div>
+      <div class="form-row"><label class="form-label">Certificate number</label><input class="form-input" id="cert-number-in" type="text" placeholder="e.g. PL-2024-001234"/></div>
+      <div class="form-row form-row-2col">
+        <div><label class="form-label">Issue date (dd/mm/yyyy)</label><input class="form-input" id="cert-issue-in"  type="text" placeholder="dd/mm/yyyy"/></div>
+        <div><label class="form-label">Expiry date (dd/mm/yyyy)</label><input class="form-input" id="cert-expiry-in" type="text" placeholder="dd/mm/yyyy"/></div>
+      </div>
+      <button class="btn-add" onclick="saveCert()" style="margin-top:4px">Save certificate</button>
+      <button class="modal-close" onclick="closeCertModal()">cancel</button>
+    </div>
+  </div>
+
+  <!-- Training rate modal -->
+  <div class="modal-overlay" id="training-rate-modal" onclick="handleTrainingRateOverlay(event)">
+    <div class="modal">
+      <div class="modal-title">🎓 Training completed!</div>
+      <div class="modal-sub" id="training-rate-sub">Enter the daily rate for this training period</div>
+      <div class="form-row" style="margin-top:16px">
+        <label class="form-label">Daily rate (USD)</label>
+        <input class="form-input" id="training-rate-input" type="number" placeholder="e.g. 400" min="0" step="1"/>
+        <div style="font-size:10px;color:var(--gray400);margin-top:4px">Leave 0 if training was unpaid</div>
+      </div>
+      <button class="btn-add" onclick="saveTrainingRate()" style="margin-top:12px">Save training rate</button>
+      <button class="modal-close" onclick="closeTrainingRateModal()">skip</button>
+    </div>
+  </div>
+
+  <!-- Day event modal -->
+  <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-sub"   id="modal-sub"></div>
+
+      <div class="modal-section-label">Home rotation</div>
+      <div class="modal-actions">
+        <button class="action-btn" id="btn-depart" onclick="logEvent('depart')">
+          <div class="action-icon ai-depart">🏠</div> Left home
+        </button>
+        <button class="action-btn" id="btn-arrive" onclick="logEvent('arrive')">
+          <div class="action-icon ai-arrive">🏡</div> Arrived home
+        </button>
       </div>
 
-      <div style="margin-top:12px;padding:14px;background:var(--navy);border-radius:8px;border:1px solid var(--navy3)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400)">
-            ☁️ Saved in Firestore — adminSettings/emailNotifications
-          </div>
-          <button onclick="loadEmailSettings()" style="background:none;border:1px solid var(--navy3);border-radius:6px;padding:2px 8px;color:var(--gray400);font-size:10px;cursor:pointer;">↺ Reload</button>
+      <div class="modal-section-label">Brazil</div>
+      <div class="modal-actions">
+        <button class="action-btn" id="btn-brazil-in"  onclick="logEvent('brazil-in')">
+          <div class="action-icon ai-brazil-in">🇧🇷</div> Entered Brazil
+        </button>
+        <button class="action-btn" id="btn-brazil-out" onclick="logEvent('brazil-out')">
+          <div class="action-icon ai-brazil-out">✈️</div> Left Brazil
+        </button>
+      </div>
+
+      <div class="modal-section-label">Ship</div>
+      <div class="modal-actions">
+        <button class="action-btn" id="btn-sign-on"  onclick="logEvent('sign-on')">
+          <div class="action-icon ai-sign-on">⚓</div> Sign On (joined ship)
+        </button>
+        <button class="action-btn" id="btn-sign-off" onclick="logEvent('sign-off')">
+          <div class="action-icon ai-sign-off">🔄</div> Sign Off (left ship)
+        </button>
+      </div>
+
+      <div class="modal-section-label">Training</div>
+      <div class="modal-actions">
+        <button class="action-btn" id="btn-training-start" onclick="logEvent('training-start')">
+          <div class="action-icon ai-training-start">🎓</div> Training start
+        </button>
+        <button class="action-btn" id="btn-training-end" onclick="logEvent('training-end')">
+          <div class="action-icon ai-training-end">✅</div> Training end
+        </button>
+      </div>
+
+      <button class="modal-clear" id="btn-clear" onclick="clearDay()" style="display:none">Remove all events from this day</button>
+      <button class="modal-close" onclick="closeModal()">cancel</button>
+    </div>
+  </div>
+
+  <!-- ═══ EXPENSES PAGE ════════════════════════════════════════ -->
+  <div class="page" id="page-expenses">
+    <div class="page-wrap">
+      <div class="page-title">🧾 Travel Expenses</div>
+      <div class="page-sub">Upload Word documents — AI extracts currency, amount and converts to USD</div>
+      <div class="exp-upload-zone" id="exp-upload-zone" onclick="document.getElementById('exp-file-input').click()">
+        <input type="file" id="exp-file-input" accept=".doc,.docx" style="display:none" onchange="handleExpenseScan(event)"/>
+        <div class="exp-upload-icon">🤖</div>
+        <div class="exp-upload-title">Scan Expense Document (AI)</div>
+        <div class="exp-upload-sub">Click to upload a .doc or .docx file — Claude extracts all items, currencies and converts to USD</div>
+        <div id="exp-scan-status" style="display:none;margin-top:10px;font-size:12px;font-weight:600;"></div>
+      </div>
+      <div id="exp-list-wrap" style="margin-top:24px"></div>
+    </div>
+  </div>
+
+  <!-- Expense modal -->
+  <div class="modal-overlay" id="exp-modal" onclick="handleExpModalOverlay(event)">
+    <div class="modal cert-modal-form">
+      <div class="modal-title">💰 Add / Edit Expense</div>
+      <div class="modal-sub" style="margin-bottom:1rem">Review AI results and select payroll month</div>
+      <div class="form-row"><label class="form-label">Description</label><input class="form-input" id="exp-desc-in" type="text" placeholder="e.g. Travel reimbursement Q2"/></div>
+      <div class="form-row form-row-2col">
+        <div><label class="form-label">Original amount</label><input class="form-input" id="exp-orig-in" type="number" placeholder="0.00" step="0.01"/></div>
+        <div>
+          <label class="form-label">Currency</label>
+          <select class="form-input" id="exp-currency-in">
+            <option value="USD">USD</option><option value="EUR">EUR</option>
+            <option value="GBP">GBP</option><option value="BRL">BRL</option>
+            <option value="NOK">NOK</option><option value="SGD">SGD</option>
+            <option value="AED">AED</option><option value="JPY">JPY</option>
+            <option value="OTHER">Other</option>
+          </select>
         </div>
-        <div id="firestore-settings-status">
-          <div style="color:var(--gray400);font-size:12px">Loading from Firestore...</div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Amount in USD</label>
+        <input class="form-input" id="exp-usd-in" type="number" placeholder="0.00" step="0.01"/>
+        <div style="font-size:10px;color:var(--gray400);margin-top:3px">AI will fill this — you can edit manually</div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Add to payroll period (cut-off 20th)</label>
+        <select class="form-input" id="exp-month-in"></select>
+      </div>
+      <div class="form-row"><label class="form-label">Notes (optional)</label><input class="form-input" id="exp-notes-in" type="text" placeholder="e.g. flight + hotel"/></div>
+      <input type="hidden" id="exp-editing-idx"/>
+      <button class="btn-add" onclick="saveExpense()" style="margin-top:4px">Save expense</button>
+      <button class="modal-close" onclick="closeExpModal()">cancel</button>
+    </div>
+  </div>
+
+  <!-- ═══ ADMIN PAGE ════════════════════════════════════════════ -->
+  <div class="page" id="page-admin">
+    <div class="page-wrap">
+      <div class="page-title">⚙️ Admin Panel</div>
+      <div class="page-sub">Manage users who can access CrewX</div>
+
+      <div class="panel-card" style="margin-bottom:20px">
+        <div class="panel-header"><span class="panel-header-icon">➕</span><span class="panel-title">Create New User</span></div>
+        <div class="panel-body">
+          <div class="form-row"><label class="form-label">Email address</label><input class="form-input" id="admin-new-email" type="email" placeholder="user@example.com"/></div>
+          <div class="form-row">
+            <label class="form-label">Password (min. 6 characters)</label>
+            <input class="form-input" id="admin-new-pass" type="password" placeholder="Temporary password"/>
+            <div style="font-size:10px;color:var(--gray400);margin-bottom:10px">The user can change their password after first login</div>
+          </div>
+          <button class="btn-add" onclick="adminCreateUser()">Create user</button>
+          <div id="admin-create-msg" style="font-size:12px;margin-top:8px;font-weight:600"></div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="panel-header-icon">👥</span>
+          <span class="panel-title">Active Users</span>
+          <button onclick="renderAdminPanel()" style="margin-left:auto;background:none;border:1px solid var(--navy3);border-radius:6px;padding:4px 10px;color:var(--gray400);font-size:11px;cursor:pointer;">↺ Refresh</button>
+        </div>
+        <div class="panel-body"><div id="admin-users-list"><div style="color:var(--gray400);font-size:13px">Loading…</div></div></div>
+      </div>
+
+      <div class="panel-card" style="margin-top:20px">
+        <div class="panel-header"><span class="panel-header-icon">📧</span><span class="panel-title">Certificate Expiry Notifications</span></div>
+        <div class="panel-body">
+          <div style="font-size:12px;color:var(--gray400);margin-bottom:16px;line-height:1.6">
+            Emails are sent automatically every day at <strong style="color:var(--sky)">08:00 Warsaw time</strong>.
+            Users receive alerts when their certificates expire in exactly 60, 30, or 7 days.
+          </div>
+          <div class="form-row">
+            <label class="form-label">Alert thresholds (days before expiry)</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+              <label class="admin-toggle-wrap"><input type="checkbox" id="alert-60" checked onchange="saveEmailSettings()"/><span class="admin-toggle-label">60 days</span></label>
+              <label class="admin-toggle-wrap"><input type="checkbox" id="alert-30" checked onchange="saveEmailSettings()"/><span class="admin-toggle-label">30 days</span></label>
+              <label class="admin-toggle-wrap"><input type="checkbox" id="alert-7"  checked onchange="saveEmailSettings()"/><span class="admin-toggle-label">7 days</span></label>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:12px">
+            <label class="form-label">Custom threshold (optional)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="alert-custom" type="number" placeholder="e.g. 14" min="1" max="365" style="width:100px"/>
+              <span style="font-size:12px;color:var(--gray400)">days before expiry</span>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:12px">
+            <label class="form-label">Send notifications from email</label>
+            <input class="form-input" id="alert-from-email" type="email" placeholder="from@example.com"/>
+            <div style="font-size:10px;color:var(--gray400);margin-top:3px">Must match verified sender in SendGrid</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--navy3)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--white)">Notifications enabled</div>
+              <div style="font-size:11px;color:var(--gray400);margin-top:2px">Turn off to pause all certificate emails</div>
+            </div>
+            <label class="admin-master-toggle">
+              <input type="checkbox" id="alert-enabled" checked onchange="saveEmailSettings()"/>
+              <div class="admin-master-slider"></div>
+            </label>
+          </div>
+          <div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px dashed rgba(255,255,255,0.1)">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400);margin-bottom:8px">Current schedule preview</div>
+            <div id="email-schedule-preview" style="font-size:12px;color:var(--gray400);line-height:1.8"></div>
+          </div>
+          <div style="margin-top:12px;padding:14px;background:var(--navy);border-radius:8px;border:1px solid var(--navy3)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray400)">
+                ☁️ Saved in Firestore — adminSettings/emailNotifications
+              </div>
+              <button onclick="loadEmailSettings()" style="background:none;border:1px solid var(--navy3);border-radius:6px;padding:2px 8px;color:var(--gray400);font-size:10px;cursor:pointer;">↺ Reload</button>
+            </div>
+            <div id="firestore-settings-status"><div style="color:var(--gray400);font-size:12px">Loading from Firestore…</div></div>
+          </div>
+          <div id="email-settings-msg" style="font-size:12px;margin-top:8px;font-weight:600"></div>
         </div>
       </div>
 
     </div>
-  </div>
-</div>
-</div>
+  </div><!-- /page-admin -->
 
-</div><script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+</div><!-- /app-root -->
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-<script src="app.js?v=10"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>
