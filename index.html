@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CrewX</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#0a1628"/>
+<meta name="theme-color" content="#0a1715"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="CrewX"/>
@@ -13,20 +13,20 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="description" content="Crew rotation, rest hours, certificates and payroll tracker"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=10">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 
 <!-- ═══ SHARED SVG ICONS ══════════════════════════════════════════ -->
 <svg style="display:none;">
   <symbol id="logo-crewx" viewBox="0 0 28 28" fill="none">
-    <path d="M4 18 Q14 22 24 18" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round"/>
-    <path d="M4 18 L6 13 L22 13 L24 18" stroke="#38bdf8" stroke-width="1.6" stroke-linejoin="round"/>
-    <rect x="10" y="8" width="8" height="5" rx="1" stroke="#38bdf8" stroke-width="1.4"/>
-    <line x1="14" y1="3" x2="14" y2="8" stroke="#38bdf8" stroke-width="1.4" stroke-linecap="round"/>
-    <path d="M14 3 L17 6" stroke="#38bdf8" stroke-width="1.2" stroke-linecap="round"/>
-    <path d="M2 21 Q8 24 14 21 Q20 18 26 21" stroke="#38bdf8" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M4 18 Q14 22 24 18" stroke="#4fd1b5" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M4 18 L6 13 L22 13 L24 18" stroke="#4fd1b5" stroke-width="1.6" stroke-linejoin="round"/>
+    <rect x="10" y="8" width="8" height="5" rx="1" stroke="#4fd1b5" stroke-width="1.4"/>
+    <line x1="14" y1="3" x2="14" y2="8" stroke="#4fd1b5" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M14 3 L17 6" stroke="#4fd1b5" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M2 21 Q8 24 14 21 Q20 18 26 21" stroke="#4fd1b5" stroke-width="1.4" stroke-linecap="round"/>
   </symbol>
 </svg>
 
@@ -78,10 +78,10 @@
     </div>
     <div class="topbar-right">
       <div class="status-pill">
-        <div class="status-dot" id="status-dot" style="background:#94a3b8"></div>
+        <div class="status-dot" id="status-dot" style="background:#91a8a2"></div>
         <span id="status-text">At home</span>
       </div>
-      <button onclick="doLogout()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:4px 10px;color:#94a3b8;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Sign out</button>
+      <button onclick="doLogout()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:4px 10px;color:#91a8a2;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif;">Sign out</button>
     </div>
   </div>
 
@@ -168,13 +168,13 @@
           <div class="calendar" id="calendar"></div>
 
           <div class="legend">
-            <div class="legend-item"><div class="ldot" style="background:rgba(29,111,164,0.4);border:1px solid rgba(56,189,248,0.4)"></div>Away</div>
-            <div class="legend-item"><div class="ldot" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4)"></div>Brazil</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(31,122,104,0.4);border:1px solid rgba(79,209,181,0.4)"></div>Away</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(62,207,142,0.2);border:1px solid rgba(62,207,142,0.4)"></div>Brazil</div>
             <div class="legend-item"><div class="lstripe-l"></div>Away+BR</div>
             <div class="legend-item"><div class="lstripe-r"></div>Onboard</div>
             <div class="legend-item"><div class="ldot" style="background:rgba(139,92,246,0.4);border:1px solid #8b5cf6"></div>Training</div>
-            <div class="legend-item"><div class="ldot" style="background:rgba(245,158,11,0.5);border:1px solid #f59e0b"></div>Left home</div>
-            <div class="legend-item"><div class="ldot" style="background:rgba(56,189,248,0.4);border:1px solid #38bdf8"></div>Arrived</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(224,164,88,0.5);border:1px solid #e0a458"></div>Left home</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(79,209,181,0.4);border:1px solid #4fd1b5"></div>Arrived</div>
             <div class="legend-item"><div class="ldot" style="width:9px;height:6px;background:var(--gold);border-top:2px solid var(--gold)"></div>Payroll cut</div>
           </div>
 
@@ -206,7 +206,7 @@
               <div style="font-size:10px;color:var(--gray400);margin-top:3px">Leave "to" blank if rate is still active</div>
             </div>
             <button class="btn-add" onclick="addRate()">+ Add rate period</button>
-            <button onclick="clearAllRates()" style="width:100%;margin-top:6px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px;color:#f87171;font-size:11px;font-family:'Space Grotesk',sans-serif;cursor:pointer;">Clear all rates</button>
+            <button onclick="clearAllRates()" style="width:100%;margin-top:6px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px;color:#f87171;font-size:11px;font-family:'Sora',sans-serif;cursor:pointer;">Clear all rates</button>
             <div id="rates-list" style="margin-top:12px"></div>
           </div>
         </div>
@@ -241,7 +241,7 @@
       <div class="modal-sub" style="margin-bottom:1rem">Enter certificate details</div>
 
       <!-- AI scan zone -->
-      <div class="form-row" style="background:rgba(56,189,248,0.1);padding:14px;border-radius:var(--radius-sm);border:1px dashed rgba(56,189,248,0.4);text-align:center;margin-bottom:15px;">
+      <div class="form-row" style="background:rgba(79,209,181,0.1);padding:14px;border-radius:var(--radius-sm);border:1px dashed rgba(79,209,181,0.4);text-align:center;margin-bottom:15px;">
         <label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
           <span style="font-size:24px;">🤖</span>
           <span style="font-size:13px;font-weight:600;color:var(--sky);">Scan certificate with AI</span>
@@ -471,6 +471,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-<script src="app.js?v=11"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>
