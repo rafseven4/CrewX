@@ -428,8 +428,25 @@ function clearAllRates() {
     });
 }
 
-// Build payroll period list covering ALL data (not just current year)
-function getAllPayrollPeriods() {
+// Build payroll period list covering ALL data (not just current year).
+// Pass a year (e.g. '2026') to get every period ENDING in that year: Jan 20 → Dec 20.
+function getAllPayrollPeriods(filterYear = 'all') {
+  // Specific year selected → full 12 periods of that year
+  if (filterYear !== 'all' && /^\d{4}$/.test(String(filterYear))) {
+    const fy = parseInt(filterYear, 10);
+    const periods = [];
+    for (let m = 0; m < 12; m++) {           // period ends on the 20th of month m
+      const prevM = m === 0 ? 11 : m - 1;
+      const prevY = m === 0 ? fy - 1 : fy;
+      periods.push({
+        start:  dateStr(prevY, prevM, 21),
+        end:    dateStr(fy, m, 20),
+        label:  `${MONTHS_S[prevM]} 21 – ${MONTHS_S[m]} 20, ${fy}`
+      });
+    }
+    return periods;
+  }
+
   const allDates = [
     ...events.map(e => e.date),
     ...rates.map(r => r.from)
@@ -439,14 +456,16 @@ function getAllPayrollPeriods() {
 
   const today     = new Date();
   const earliest  = new Date(allDates[0] + 'T00:00:00');
+  const latest    = new Date(allDates[allDates.length - 1] + 'T00:00:00');
 
   // Start one period before the earliest date
   let y = earliest.getFullYear();
   let m = earliest.getMonth();
   if (m === 0) { m = 11; y--; } else { m--; }
 
-  const endY = today.getFullYear();
-  const endM = today.getMonth() + 1; // one period ahead of today
+  // Run through December of the latest relevant year (data or today)
+  const endY = Math.max(today.getFullYear(), latest.getFullYear());
+  const endM = 11;
 
   const periods = [];
   while (y < endY || (y === endY && m <= endM)) {
@@ -471,7 +490,9 @@ function renderPayroll() {
     return;
   }
 
-  const periods = getAllPayrollPeriods();
+  // Follow the "Filter year" selector — a specific year shows all 12 periods of that year
+  const yearFilter = document.getElementById('stat-year-filter')?.value || 'all';
+  const periods = getAllPayrollPeriods(yearFilter);
   if (periods.length === 0) {
     body.innerHTML = '<div class="empty-state">Log trip events to calculate earnings</div>';
     return;
@@ -501,7 +522,8 @@ function renderPayroll() {
     }
 
     const isCurrent = todayS >= p.start && todayS <= p.end;
-    const isVisible  = days > 0 || p.end >= todayS;
+    // With a specific year selected, show the whole year; on "All years" hide empty past periods
+    const isVisible = yearFilter !== 'all' || days > 0 || p.end >= todayS;
     if (!isVisible) return '';
 
     // Expenses for this period
