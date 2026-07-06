@@ -374,7 +374,7 @@ function renderRates() {
   el.innerHTML = sorted.map(r => `
     <div class="rate-item">
       <div>
-        <div class="rate-amount">$${Number(r.amount).toLocaleString()}<span style="font-size:10px;color:var(--gray400);font-weight:400;font-family:'Sora',sans-serif"> /day</span></div>
+        <div class="rate-amount">$${Number(r.amount).toLocaleString()}<span style="font-size:10px;color:var(--gray400);font-weight:400;font-family:'Archivo',sans-serif"> /day</span></div>
         <div class="rate-period">${fmtDate(r.from)} → ${fmtDate(r.to)}</div>
       </div>
       <button class="rate-delete" onclick="deleteRate(${r.originalIdx})" title="Remove">✕</button>
@@ -636,19 +636,21 @@ function renderPayroll() {
   const diffSign  = grandDiff > 0 ? '+' : (grandDiff < 0 ? '−' : '');
 
   body.innerHTML = cards +
-    `<div class="pc-grand-total">
-       <span>🏦 Grand total — received in bank</span>
-       <span>${usd(grandBank, 2)}</span>
+    `<div class="pc-grand-wrap">
+       <div class="pc-grand-total">
+         <span>🏦 Grand total — received in bank</span>
+         <span>${usd(grandBank, 2)}</span>
+       </div>
+       <div class="pc-grand-sub">
+         <span>Calculated (${yearFilter === 'all' ? 'all periods' : yearFilter})</span>
+         <span>${usd(grandTotal)}</span>
+       </div>
+       <div class="pc-grand-sub">
+         <span>Difference ${bankCount > 0 ? `· ${bankCount} period${bankCount !== 1 ? 's' : ''} entered` : ''}</span>
+         <span class="${diffCls}">${bankCount > 0 ? diffSign + usd(Math.abs(grandDiff), 2) : '—'}</span>
+       </div>
      </div>
-     <div class="pc-grand-sub">
-       <span>Calculated (all periods)</span>
-       <span>${usd(grandTotal)}</span>
-     </div>
-     <div class="pc-grand-sub">
-       <span>Difference ${bankCount > 0 ? `· ${bankCount} period${bankCount !== 1 ? 's' : ''} entered` : ''}</span>
-       <span class="${diffCls}">${bankCount > 0 ? diffSign + usd(Math.abs(grandDiff), 2) : '—'}</span>
-     </div>
-     <div style="font-size:10px;color:var(--gray400);margin-top:8px;text-align:center">
+     <div class="pc-footnote">
        Cut-off: 20th each month &nbsp;·&nbsp; Enter bank amounts under each period — grand total sums what actually hit your account
      </div>`;
 }
@@ -729,10 +731,10 @@ function updateStats() {
       dot.style.background = '#f97316';
       text.textContent = '⚓ Onboard' + (inBrazil ? ' · 🇧🇷' : '');
     } else if (allAway.has(todaySt)) {
-      dot.style.background = '#4fd1b5';
+      dot.style.background = '#38cfe8';
       text.textContent = 'Away' + (inBrazil ? ' · 🇧🇷 Brazil' : '');
     } else {
-      dot.style.background = '#91a8a2';
+      dot.style.background = '#9c9ca6';
       text.textContent = currentUser.email.split('@')[0];
     }
   }
@@ -780,6 +782,14 @@ function updateStats() {
         </div>`;
       }).join('');
     }
+  }
+
+  // Voyage Log placeholder — hide it as soon as any section has content
+  const voyageEmpty = document.getElementById('voyage-empty');
+  if (voyageEmpty) {
+    const anyVisible = ['trips-info','brazil-info','onboard-info','training-info']
+      .some(id => document.getElementById(id)?.style.display !== 'none');
+    voyageEmpty.style.display = anyVisible ? 'none' : 'block';
   }
 }
 
