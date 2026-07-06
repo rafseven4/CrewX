@@ -6,8 +6,8 @@
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
-  "background_color": "#0a1628",
-  "theme_color": "#0a1628",
+  "background_color": "#0a1715",
+  "theme_color": "#0a1715",
   "orientation": "portrait",
   "categories": ["productivity", "business", "utilities"],
   "icons": [
