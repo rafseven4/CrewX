@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CrewX</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#0a1715"/>
+<meta name="theme-color" content="#0b0b0e"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="CrewX"/>
@@ -13,20 +13,20 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="description" content="Crew rotation, rest hours, certificates and payroll tracker"/>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=12">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 
 <!-- ═══ SHARED SVG ICONS ══════════════════════════════════════════ -->
 <svg style="display:none;">
   <symbol id="logo-crewx" viewBox="0 0 28 28" fill="none">
-    <path d="M4 18 Q14 22 24 18" stroke="#4fd1b5" stroke-width="1.6" stroke-linecap="round"/>
-    <path d="M4 18 L6 13 L22 13 L24 18" stroke="#4fd1b5" stroke-width="1.6" stroke-linejoin="round"/>
-    <rect x="10" y="8" width="8" height="5" rx="1" stroke="#4fd1b5" stroke-width="1.4"/>
-    <line x1="14" y1="3" x2="14" y2="8" stroke="#4fd1b5" stroke-width="1.4" stroke-linecap="round"/>
-    <path d="M14 3 L17 6" stroke="#4fd1b5" stroke-width="1.2" stroke-linecap="round"/>
-    <path d="M2 21 Q8 24 14 21 Q20 18 26 21" stroke="#4fd1b5" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M4 18 Q14 22 24 18" stroke="#ff7a3d" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M4 18 L6 13 L22 13 L24 18" stroke="#ff7a3d" stroke-width="1.6" stroke-linejoin="round"/>
+    <rect x="10" y="8" width="8" height="5" rx="1" stroke="#ff7a3d" stroke-width="1.4"/>
+    <line x1="14" y1="3" x2="14" y2="8" stroke="#ff7a3d" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M14 3 L17 6" stroke="#ff7a3d" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M2 21 Q8 24 14 21 Q20 18 26 21" stroke="#ff7a3d" stroke-width="1.4" stroke-linecap="round"/>
   </symbol>
 </svg>
 
@@ -78,10 +78,10 @@
     </div>
     <div class="topbar-right">
       <div class="status-pill">
-        <div class="status-dot" id="status-dot" style="background:#91a8a2"></div>
+        <div class="status-dot" id="status-dot" style="background:#9c9ca6"></div>
         <span id="status-text">At home</span>
       </div>
-      <button onclick="doLogout()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:4px 10px;color:#91a8a2;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif;">Sign out</button>
+      <button onclick="doLogout()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:4px 10px;color:#9c9ca6;font-size:11px;cursor:pointer;font-family:'Archivo',sans-serif;">Sign out</button>
     </div>
   </div>
 
@@ -168,24 +168,31 @@
           <div class="calendar" id="calendar"></div>
 
           <div class="legend">
-            <div class="legend-item"><div class="ldot" style="background:rgba(31,122,104,0.4);border:1px solid rgba(79,209,181,0.4)"></div>Away</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(226,84,43,0.4);border:1px solid rgba(255,122,61,0.4)"></div>Away</div>
             <div class="legend-item"><div class="ldot" style="background:rgba(62,207,142,0.2);border:1px solid rgba(62,207,142,0.4)"></div>Brazil</div>
             <div class="legend-item"><div class="lstripe-l"></div>Away+BR</div>
             <div class="legend-item"><div class="lstripe-r"></div>Onboard</div>
             <div class="legend-item"><div class="ldot" style="background:rgba(139,92,246,0.4);border:1px solid #8b5cf6"></div>Training</div>
-            <div class="legend-item"><div class="ldot" style="background:rgba(224,164,88,0.5);border:1px solid #e0a458"></div>Left home</div>
-            <div class="legend-item"><div class="ldot" style="background:rgba(79,209,181,0.4);border:1px solid #4fd1b5"></div>Arrived</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(242,177,78,0.5);border:1px solid #f2b14e"></div>Left home</div>
+            <div class="legend-item"><div class="ldot" style="background:rgba(56,207,232,0.4);border:1px solid #38cfe8"></div>Arrived</div>
             <div class="legend-item"><div class="ldot" style="width:9px;height:6px;background:var(--gold);border-top:2px solid var(--gold)"></div>Payroll cut</div>
           </div>
 
-          <div class="info-section" id="trips-info"    style="display:none"><div class="section-title">🏠 Trips away from home</div><div id="trips-list"></div></div>
-          <div class="info-section" id="brazil-info"   style="display:none"><div class="section-title">🇧🇷 Brazil stays</div><div id="brazil-list"></div></div>
-          <div class="info-section" id="onboard-info"  style="display:none"><div class="section-title">⚓ Onboard contracts</div><div id="onboard-list"></div></div>
-          <div class="info-section" id="training-info" style="display:none"><div class="section-title">🎓 Training periods</div><div id="training-list"></div></div>
+        </div>
+
+      <!-- PAYROLL — tile grid under the calendar -->
+      <div class="payroll-section">
+        <div class="payroll-section-head">
+          <span class="payroll-section-title">📊 Payroll</span>
+          <span class="payroll-section-sub">Period: 21st → 20th · hover a tile for details</span>
+        </div>
+        <div id="payroll-body">
+          <div class="empty-state">Add a day rate to see payroll calculations</div>
         </div>
       </div>
+      </div><!-- /left-panel -->
 
-      <!-- RIGHT: rates + payroll -->
+      <!-- RIGHT: rates + voyage log -->
       <div class="right-panel">
         <div class="panel-card">
           <div class="panel-header">
@@ -206,18 +213,22 @@
               <div style="font-size:10px;color:var(--gray400);margin-top:3px">Leave "to" blank if rate is still active</div>
             </div>
             <button class="btn-add" onclick="addRate()">+ Add rate period</button>
-            <button onclick="clearAllRates()" style="width:100%;margin-top:6px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px;color:#f87171;font-size:11px;font-family:'Sora',sans-serif;cursor:pointer;">Clear all rates</button>
+            <button onclick="clearAllRates()" style="width:100%;margin-top:6px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px;color:#f87171;font-size:11px;font-family:'Archivo',sans-serif;cursor:pointer;">Clear all rates</button>
             <div id="rates-list" style="margin-top:12px"></div>
           </div>
         </div>
 
         <div class="panel-card">
           <div class="panel-header">
-            <span class="panel-header-icon">📊</span>
-            <span class="panel-title">Payroll — 21st → 20th</span>
+            <span class="panel-header-icon">🧭</span>
+            <span class="panel-title">Voyage Log</span>
           </div>
-          <div class="panel-body" id="payroll-body">
-            <div class="empty-state">Add a day rate above to see payroll calculations</div>
+          <div class="panel-body">
+            <div class="info-section" id="trips-info"    style="display:none"><div class="section-title">🏠 Trips away from home</div><div id="trips-list"></div></div>
+            <div class="info-section" id="brazil-info"   style="display:none"><div class="section-title">🇧🇷 Brazil stays</div><div id="brazil-list"></div></div>
+            <div class="info-section" id="onboard-info"  style="display:none"><div class="section-title">⚓ Onboard contracts</div><div id="onboard-list"></div></div>
+            <div class="info-section" id="training-info" style="display:none"><div class="section-title">🎓 Training periods</div><div id="training-list"></div></div>
+            <div class="empty-state" id="voyage-empty">Log events on the calendar to build your voyage history</div>
           </div>
         </div>
       </div>
@@ -241,7 +252,7 @@
       <div class="modal-sub" style="margin-bottom:1rem">Enter certificate details</div>
 
       <!-- AI scan zone -->
-      <div class="form-row" style="background:rgba(79,209,181,0.1);padding:14px;border-radius:var(--radius-sm);border:1px dashed rgba(79,209,181,0.4);text-align:center;margin-bottom:15px;">
+      <div class="form-row" style="background:rgba(255,122,61,0.1);padding:14px;border-radius:var(--radius-sm);border:1px dashed rgba(255,122,61,0.4);text-align:center;margin-bottom:15px;">
         <label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
           <span style="font-size:24px;">🤖</span>
           <span style="font-size:13px;font-weight:600;color:var(--sky);">Scan certificate with AI</span>
@@ -471,6 +482,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>
