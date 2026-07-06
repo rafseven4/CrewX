@@ -55,6 +55,7 @@ let rates         = [];
 let certs         = [];
 let expenses      = [];
 let trainingRates = [];
+let bankAmounts   = {};   // { '<period end YYYY-MM-DD>': number } — actual amount received in bank
 
 let currentYear  = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
@@ -70,7 +71,7 @@ function scheduleSave() {
 }
 function _flushSave() {
   if (!syncDoc || !currentUser) return;
-  syncDoc.set({ events, rates, certs, expenses, trainingRates }, { merge: true })
+  syncDoc.set({ events, rates, certs, expenses, trainingRates, bankAmounts }, { merge: true })
     .catch(err => console.error("Save error:", err));
 }
 // Immediate save for critical operations (logout, etc.)
@@ -247,7 +248,7 @@ function doLogout() {
     .then(ok => {
       if (!ok) return;
       saveNow();
-      events = []; rates = []; certs = []; expenses = []; trainingRates = [];
+      events = []; rates = []; certs = []; expenses = []; trainingRates = []; bankAmounts = {};
       if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
       auth.signOut();
     });
@@ -277,6 +278,7 @@ function initCloudSync() {
     certs         = Array.isArray(data.certs)         ? data.certs         : [];
     expenses      = Array.isArray(data.expenses)      ? data.expenses      : [];
     trainingRates = Array.isArray(data.trainingRates) ? data.trainingRates : [];
+    bankAmounts   = (data.bankAmounts && typeof data.bankAmounts === 'object' && !Array.isArray(data.bankAmounts)) ? data.bankAmounts : {};
 
     _hideCalendarSkeleton();
     _safeRender();
@@ -316,6 +318,7 @@ function saveRates()         { scheduleSave(); }
 function saveCerts()         { scheduleSave(); }
 function saveExpenses()      { scheduleSave(); }
 function saveTrainingRates() { scheduleSave(); }
+function saveBankAmounts()   { scheduleSave(); }
 
 // ═══ PAIRS & RANGES ═══════════════════════════════════════════
 function getPairs(inType, outType) {
@@ -371,7 +374,7 @@ function renderRates() {
   el.innerHTML = sorted.map(r => `
     <div class="rate-item">
       <div>
-        <div class="rate-amount">$${Number(r.amount).toLocaleString()}<span style="font-size:10px;color:var(--gray400);font-weight:400;font-family:'Space Grotesk',sans-serif"> /day</span></div>
+        <div class="rate-amount">$${Number(r.amount).toLocaleString()}<span style="font-size:10px;color:var(--gray400);font-weight:400;font-family:'Sora',sans-serif"> /day</span></div>
         <div class="rate-period">${fmtDate(r.from)} → ${fmtDate(r.to)}</div>
       </div>
       <button class="rate-delete" onclick="deleteRate(${r.originalIdx})" title="Remove">✕</button>
@@ -482,6 +485,8 @@ function renderPayroll() {
   });
 
   let grandTotal = 0;
+  let grandBank  = 0;
+  let bankCount  = 0;
 
   const cards = periods.map(p => {
     // Count away days (excluding training days) and earnings
@@ -513,6 +518,24 @@ function renderPayroll() {
 
     const total = earnings + expTotal + trainingTotal;
     grandTotal += total;
+
+    // Actual amount received in bank for this period (user input)
+    const bankRaw = bankAmounts[p.end];
+    const bankSet = bankRaw !== undefined && bankRaw !== null && bankRaw !== '' && !isNaN(parseFloat(bankRaw));
+    const bankVal = bankSet ? parseFloat(bankRaw) : null;
+    if (bankSet) { grandBank += bankVal; bankCount++; }
+
+    let diffBadge = '';
+    if (bankSet && total > 0) {
+      const diff = bankVal - total;
+      if (Math.abs(diff) < 0.005) {
+        diffBadge = `<span class="pc-bank-diff pc-diff-even" title="Matches calculated total">= match</span>`;
+      } else {
+        const cls  = diff > 0 ? 'pc-diff-plus' : 'pc-diff-minus';
+        const sign = diff > 0 ? '+' : '−';
+        diffBadge = `<span class="pc-bank-diff ${cls}" title="Difference vs calculated total">${sign}${usd(Math.abs(diff), 2)}</span>`;
+      }
+    }
 
     const expRows   = periodExps.map(e => `
       <div class="pc-line">
@@ -574,17 +597,51 @@ function renderPayroll() {
           <span>Total payout</span>
           <span class="pc-total-amount">${usd(total)}</span>
         </div>
+        <div class="pc-bank">
+          <div class="pc-bank-left">
+            <span class="pc-bank-label">🏦 Received in bank</span>
+            ${diffBadge}
+          </div>
+          <input class="pc-bank-input" type="number" inputmode="decimal" step="0.01" min="0"
+                 placeholder="0.00" value="${bankSet ? bankVal : ''}"
+                 onchange="setBankAmount('${p.end}', this.value)"/>
+        </div>
       </div>`;
   }).join('');
 
+  const grandDiff = grandBank - grandTotal;
+  const diffCls   = grandDiff > 0.005 ? 'gs-plus' : (grandDiff < -0.005 ? 'gs-minus' : '');
+  const diffSign  = grandDiff > 0 ? '+' : (grandDiff < 0 ? '−' : '');
+
   body.innerHTML = cards +
     `<div class="pc-grand-total">
-       <span>Grand total (all periods)</span>
+       <span>🏦 Grand total — received in bank</span>
+       <span>${usd(grandBank, 2)}</span>
+     </div>
+     <div class="pc-grand-sub">
+       <span>Calculated (all periods)</span>
        <span>${usd(grandTotal)}</span>
      </div>
+     <div class="pc-grand-sub">
+       <span>Difference ${bankCount > 0 ? `· ${bankCount} period${bankCount !== 1 ? 's' : ''} entered` : ''}</span>
+       <span class="${diffCls}">${bankCount > 0 ? diffSign + usd(Math.abs(grandDiff), 2) : '—'}</span>
+     </div>
      <div style="font-size:10px;color:var(--gray400);margin-top:8px;text-align:center">
-       Cut-off: 20th each month &nbsp;·&nbsp; Blue border = current period
+       Cut-off: 20th each month &nbsp;·&nbsp; Enter bank amounts under each period — grand total sums what actually hit your account
      </div>`;
+}
+
+// ─── Bank received amounts ─────────────────────────────────────
+function setBankAmount(periodEnd, value) {
+  const v = String(value).trim();
+  if (v === '' || isNaN(parseFloat(v))) {
+    // null (not delete) so the cleared value also syncs to Firestore under merge:true
+    bankAmounts[periodEnd] = null;
+  } else {
+    bankAmounts[periodEnd] = Math.round(parseFloat(v) * 100) / 100;
+  }
+  saveBankAmounts();
+  renderPayroll();
 }
 
 // ═══ STATS ════════════════════════════════════════════════════
@@ -650,10 +707,10 @@ function updateStats() {
       dot.style.background = '#f97316';
       text.textContent = '⚓ Onboard' + (inBrazil ? ' · 🇧🇷' : '');
     } else if (allAway.has(todaySt)) {
-      dot.style.background = '#38bdf8';
+      dot.style.background = '#4fd1b5';
       text.textContent = 'Away' + (inBrazil ? ' · 🇧🇷 Brazil' : '');
     } else {
-      dot.style.background = '#94a3b8';
+      dot.style.background = '#91a8a2';
       text.textContent = currentUser.email.split('@')[0];
     }
   }
