@@ -1468,9 +1468,9 @@ function loadEmailSettings() {
       };
       const set = (id, val) => { const el = document.getElementById(id); if(el) el[typeof val === 'boolean' ? 'checked' : 'value'] = val ?? ''; };
       set('alert-enabled',    s.enabled !== false);
-      set('alert-60',         s.thresholds?.includes(60) !== false);
-      set('alert-30',         s.thresholds?.includes(30) !== false);
-      set('alert-7',          s.thresholds?.includes(7)  !== false);
+      set('alert-60',         Array.isArray(s.thresholds) ? s.thresholds.includes(60) : true);
+      set('alert-30',         Array.isArray(s.thresholds) ? s.thresholds.includes(30) : true);
+      set('alert-7',          Array.isArray(s.thresholds) ? s.thresholds.includes(7)  : false);
       set('alert-custom',     s.customThreshold || '');
       set('alert-from-email', s.fromEmail || ADMIN_EMAIL);
       updateSchedulePreview(s);
@@ -1556,3 +1556,4 @@ if ('serviceWorker' in navigator) {
 // ═══ INITIAL RENDER ═══════════════════════════════════════════
 renderRates();
 renderCalendar();
+Claude finished the response
