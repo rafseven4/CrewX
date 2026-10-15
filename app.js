@@ -1556,4 +1556,3 @@ if ('serviceWorker' in navigator) {
 // ═══ INITIAL RENDER ═══════════════════════════════════════════
 renderRates();
 renderCalendar();
-Claude finished the response
