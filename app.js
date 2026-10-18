@@ -10,7 +10,31 @@
 //  7. Native confirm() replaced with custom dialog everywhere
 //  8. adminSettings loaded once per panel open, not on every refresh
 //  9. All render functions wrapped in try/catch
+// 10. Day/night theme toggle (top-right corner)
 // ═══════════════════════════════════════════════════════════════
+
+// ═══ THEME ════════════════════════════════════════════════════
+(function initTheme() {
+  const saved = localStorage.getItem('crewx-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  // Button icon will be set after DOM ready — see applyThemeIcon()
+})();
+
+function applyThemeIcon() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  btn.textContent = isDark ? '🌙' : '☀️';
+  btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+}
+
+function toggleTheme() {
+  const root = document.documentElement;
+  const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  root.setAttribute('data-theme', next);
+  localStorage.setItem('crewx-theme', next);
+  applyThemeIcon();
+}
 
 // ═══ FIREBASE CONFIG ══════════════════════════════════════════
 const firebaseConfig = {
@@ -259,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const emailEl = document.getElementById('login-email');
   if (passEl)  passEl.addEventListener('keydown',  e => { if (e.key === 'Enter') doLogin(); });
   if (emailEl) emailEl.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  applyThemeIcon();
 });
 
 // ═══ CLOUD SYNC ═══════════════════════════════════════════════
