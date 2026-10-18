@@ -685,6 +685,8 @@ function updateStats() {
     for (const d of ds) if (d.startsWith(fy)) out.add(d);
     return out;
   };
+  const filterPairs = pairs => fy === 'all' ? pairs :
+    pairs.filter(p => (p.start && p.start.startsWith(fy)) || (p.end && p.end.startsWith(fy)));
 
   const trips           = getTrips();
   const brazilStays     = getBrazilStays();
@@ -752,18 +754,19 @@ function updateStats() {
     }).join('');
   }
 
-  renderList('trips-list',   'trips-info',   trips,       (t,i) => `Trip ${i+1} &nbsp; ${fmtShort(t.start)} → ${t.end ? fmtShort(t.end) : '…'}`,       'ibadge-blue');
-  renderList('brazil-list',  'brazil-info',  brazilStays, (b,i) => `Stay ${i+1} &nbsp; ${fmtShort(b.start)} → ${b.end ? fmtShort(b.end) : '…'}`,        'ibadge-green');
-  renderList('onboard-list', 'onboard-info', onboardStays,(o,i) => `Contract ${i+1} &nbsp; ${fmtShort(o.start)} → ${o.end ? fmtShort(o.end) : '…'}`,    'ibadge-amber');
+  renderList('trips-list',   'trips-info',   filterPairs(trips),        (t,i) => `Trip ${i+1} &nbsp; ${fmtShort(t.start)} → ${t.end ? fmtShort(t.end) : '…'}`,       'ibadge-blue');
+  renderList('brazil-list',  'brazil-info',  filterPairs(brazilStays),  (b,i) => `Stay ${i+1} &nbsp; ${fmtShort(b.start)} → ${b.end ? fmtShort(b.end) : '…'}`,        'ibadge-green');
+  renderList('onboard-list', 'onboard-info', filterPairs(onboardStays), (o,i) => `Contract ${i+1} &nbsp; ${fmtShort(o.start)} → ${o.end ? fmtShort(o.end) : '…'}`,    'ibadge-amber');
 
   const trainingInfo = document.getElementById('training-info');
   const trainingList = document.getElementById('training-list');
   if (trainingInfo && trainingList) {
-    if (trainingPeriods.length === 0) {
+    const filteredTraining = filterPairs(trainingPeriods);
+    if (filteredTraining.length === 0) {
       trainingInfo.style.display = 'none';
     } else {
       trainingInfo.style.display = 'block';
-      trainingList.innerHTML = trainingPeriods.map((t, i) => {
+      trainingList.innerHTML = filteredTraining.map((t, i) => {
         const re   = (trainingRates || []).find(r => r.start === t.start && r.end === t.end);
         const rate = re ? re.rate : null;
         const days = durDays(t) || '?';
