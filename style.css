@@ -31,6 +31,95 @@
   --acc-grad: linear-gradient(120deg, var(--acc1), var(--acc2));
 }
 
+/* ═══ LIGHT MODE ══════════════════════════════════════════════ */
+[data-theme="light"] {
+  --navy:   #f0f2f5;
+  --navy2:  #ffffff;
+  --navy3:  #e2e5ea;
+  --steel:  #c8cdd6;
+  --white:  #0f0f13;
+  --gray50: #1d1d24;
+  --gray100:#2a2a33;
+  --gray200:#3a3a46;
+  --gray400:#56565f;
+  --gray600:#8a8a96;
+  --gray800:#f1f3f6;
+  --text:   #0f0f13;
+}
+[data-theme="light"] body {
+  background:
+    radial-gradient(1000px 460px at 88% -12%, rgba(255,106,43,0.07), transparent 60%),
+    radial-gradient(760px 420px at 108% 32%, rgba(224,51,143,0.05), transparent 58%),
+    radial-gradient(900px 500px at -12% 110%, rgba(255,106,43,0.04), transparent 55%),
+    #f0f2f5;
+}
+[data-theme="light"] .stat-card             { background: #fff;    border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .stat-card:hover        { border-color: rgba(255,122,61,0.5); }
+[data-theme="light"] .cal-card              { background: #fff;    border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .day                   { background: rgba(0,0,0,0.02); border-color: rgba(0,0,0,0.07); }
+[data-theme="light"] .day:hover             { background: rgba(255,122,61,0.06); }
+[data-theme="light"] .day.empty             { background: transparent; }
+[data-theme="light"] .day-num               { color: #56565f; }
+[data-theme="light"] .panel-card            { background: #fff;    border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .panel-header          { border-color: rgba(0,0,0,0.07); }
+[data-theme="light"] .topbar                { background: #fff;    border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .sidebar               { background: #fff;    border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .sidebar-head          { border-color: rgba(0,0,0,0.07); }
+[data-theme="light"] .sidebar-footer        { border-color: rgba(0,0,0,0.07); }
+[data-theme="light"] .nav-item              { color: #56565f; }
+[data-theme="light"] .nav-item:hover        { background: rgba(0,0,0,0.04); color: #0f0f13; }
+[data-theme="light"] .nav-item.active       { background: rgba(255,122,61,0.08); }
+[data-theme="light"] .status-pill           { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .modal                 { background: #fff;    border-color: rgba(0,0,0,0.12); }
+[data-theme="light"] .modal-overlay         { background: rgba(0,0,0,0.35); }
+[data-theme="light"] .action-btn            { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.1); color: #0f0f13; }
+[data-theme="light"] .action-btn:hover      { background: rgba(0,0,0,0.07); }
+[data-theme="light"] .form-input            { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); color: #0f0f13; }
+[data-theme="light"] .form-input:focus      { border-color: var(--sky); }
+[data-theme="light"] .form-input::placeholder { color: #9c9ca6; }
+[data-theme="light"] select.form-input,
+[data-theme="light"] select.stat-year-select { color: #0f0f13 !important; background: rgba(0,0,0,0.04) !important; -webkit-text-fill-color: #0f0f13 !important; }
+[data-theme="light"] select.form-input option,
+[data-theme="light"] select.stat-year-select option { color: #0f0f13 !important; background: #fff !important; -webkit-text-fill-color: #0f0f13 !important; }
+[data-theme="light"] .stat-year-select      { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: #0f0f13; }
+[data-theme="light"] .pc-card              { background: #fff; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .pc-card:hover        { box-shadow: 0 14px 44px rgba(255,106,43,0.10), 0 4px 16px rgba(0,0,0,0.12); }
+[data-theme="light"] .pc-header            { border-color: rgba(0,0,0,0.07); }
+[data-theme="light"] .pc-row               { border-color: rgba(0,0,0,0.05); }
+[data-theme="light"] .pc-total             { background: rgba(0,0,0,0.02); border-color: rgba(242,177,78,0.5); }
+[data-theme="light"] .pc-bank              { background: rgba(242,177,78,0.05); border-color: rgba(242,177,78,0.2); }
+[data-theme="light"] .pc-bank-input        { background: #f8f9fa; border-color: rgba(242,177,78,0.4); }
+[data-theme="light"] .pc-grand-wrap        { background: linear-gradient(120deg, rgba(255,106,43,0.06), rgba(224,51,143,0.04)); }
+[data-theme="light"] .pc-grand-sub         { background: rgba(0,0,0,0.04); border-color: rgba(242,177,78,0.2); }
+[data-theme="light"] .cert-card            { background: #fff; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .confirm-box          { background: #fff; border-color: rgba(0,0,0,0.12); }
+[data-theme="light"] .info-row             { border-color: rgba(0,0,0,0.05); color: #56565f; }
+[data-theme="light"] .info-section         { border-color: rgba(0,0,0,0.07); }
+[data-theme="light"] .right-panel          { background: #f0f2f5; }
+[data-theme="light"] .payroll-section-head { border-left: 3px solid transparent; }
+[data-theme="light"] .exp-card             { background: #fff; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .admin-user-card      { background: #f8f9fa; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .admin-toggle-wrap    { background: #f8f9fa; border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .admin-master-slider  { background: #dde1e7; }
+[data-theme="light"] #login-screen         { background: #f0f2f5; }
+[data-theme="light"] .login-card           { background: #fff; border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .login-input          { background: #f8f9fa; border-color: rgba(0,0,0,0.12); color: #0f0f13; }
+
+/* ═══ THEME TOGGLE BUTTON ════════════════════════════════════ */
+.theme-toggle {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s, transform 0.2s;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,122,61,0.4); transform: scale(1.1); }
+[data-theme="light"] .theme-toggle { border-color: rgba(0,0,0,0.15); }
+[data-theme="light"] .theme-toggle:hover { background: rgba(0,0,0,0.06); }
+
 body {
   font-family: 'Archivo', sans-serif;
   background:
