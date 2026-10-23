@@ -11,6 +11,9 @@
 //  8. adminSettings loaded once per panel open, not on every refresh
 //  9. All render functions wrapped in try/catch
 // 10. Day/night theme toggle (top-right corner)
+// 11. HTML escaping of user / AI data (XSS), customAlert() instead of alert()
+// 12. Training days count as days away; overlapping rate periods rejected
+// 13. Pending local edits are not overwritten by incoming snapshots
 // ═══════════════════════════════════════════════════════════════
 
 // ═══ THEME ════════════════════════════════════════════════════
@@ -94,15 +97,17 @@ function scheduleSave() {
   _saveTimer = setTimeout(() => _flushSave(), 1000);
 }
 function _flushSave() {
-  if (!syncDoc || !currentUser) return;
-  syncDoc.set({ events, rates, certs, expenses, trainingRates, bankAmounts }, { merge: true })
+  _saveTimer = null;
+  if (!syncDoc || !currentUser) return Promise.resolve();
+  return syncDoc.set({ events, rates, certs, expenses, trainingRates, bankAmounts }, { merge: true })
     .catch(err => console.error("Save error:", err));
 }
-// Immediate save for critical operations (logout, etc.)
+// Immediate save for critical operations (logout, etc.) — returns a promise
 function saveNow() {
   clearTimeout(_saveTimer);
-  _flushSave();
+  return _flushSave();
 }
+function _hasPendingSave() { return _saveTimer !== null; }
 
 // ─── Local helpers ─────────────────────────────────────────────
 function localDateStr(dateObj) {
@@ -126,13 +131,39 @@ function fmtShort(ds) {
   return `${d}/${m}`;
 }
 
-// Validates dd/mm/yyyy — also checks sane day and month ranges
+// Escapes text before it is inserted into HTML (prevents XSS from
+// user input or AI-scanned documents)
+const _HTML_ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => _HTML_ESC[c]);
+}
+
+// Validates a date and returns ISO yyyy-mm-dd (or null).
+// Accepts dd/mm/yyyy, dd.mm.yyyy, dd-mm-yyyy and ISO yyyy-mm-dd.
 function parseDMY(str) {
-  if (!str || !str.trim()) return null;
-  const parts = str.trim().split('/');
-  if (parts.length !== 3) return null;
-  const [d, m, y] = parts;
+  if (!str || !String(str).trim()) return null;
+  const s = String(str).trim();
+  let d, m, y;
+  const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (iso) {
+    [, y, m, d] = iso;
+  } else {
+    const parts = s.split(/[\/.\-]/);
+    if (parts.length !== 3) return null;
+    [d, m, y] = parts;
+  }
+  return _validateYMD(d, m, y);
+}
+
+// Converts any accepted date format to dd/mm/yyyy for form fields
+function toDMY(str) {
+  const iso = parseDMY(str);
+  return iso ? fmtDate(iso) : (str || '');
+}
+
+function _validateYMD(d, m, y) {
   if (!d || !m || !y || y.length !== 4) return null;
+  if (!/^\d+$/.test(d) || !/^\d+$/.test(m) || !/^\d+$/.test(y)) return null;
 
   const dd = parseInt(d, 10);
   const mm = parseInt(m, 10);
@@ -174,7 +205,7 @@ function fileToBase64(file) {
 // ═══ CUSTOM CONFIRM DIALOG ════════════════════════════════════
 // Replaces native confirm() with a styled modal.
 // Usage: customConfirm('Title', 'Message text').then(ok => { if(ok) ... });
-function customConfirm(title, message, okLabel = 'Delete', okClass = '') {
+function customConfirm(title, message, okLabel = 'Delete', okClass = '', hideCancel = false) {
   return new Promise(resolve => {
     const overlay = document.getElementById('confirm-overlay');
     const titleEl = document.getElementById('confirm-title');
@@ -186,21 +217,34 @@ function customConfirm(title, message, okLabel = 'Delete', okClass = '') {
     msgEl.textContent   = message;
     okBtn.textContent   = okLabel;
     okBtn.className     = 'confirm-btn-ok' + (okClass ? ' ' + okClass : '');
+    cancelBtn.style.display = hideCancel ? 'none' : '';
 
     overlay.classList.add('open');
+    okBtn.focus();
 
     const cleanup = (result) => {
       overlay.classList.remove('open');
       okBtn.removeEventListener('click', onOk);
       cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlay);
+      overlay._cancel = null;
+      cancelBtn.style.display = '';
       resolve(result);
     };
-    const onOk     = () => cleanup(true);
-    const onCancel = () => cleanup(false);
+    const onOk      = () => cleanup(true);
+    const onCancel  = () => cleanup(hideCancel);   // an alert has only one outcome
+    const onOverlay = e => { if (e.target === overlay) onCancel(); };
 
     okBtn.addEventListener('click', onOk);
     cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlay);
+    overlay._cancel = onCancel;                    // used by the Esc key handler
   });
+}
+
+// Styled replacement for native alert()
+function customAlert(title, message) {
+  return customConfirm(title, message, 'OK', 'confirm-primary', true);
 }
 
 // ═══ AUTH ═════════════════════════════════════════════════════
@@ -269,11 +313,11 @@ async function doLogin() {
 
 function doLogout() {
   customConfirm('Sign out', 'Are you sure you want to sign out?', 'Sign out', 'confirm-primary')
-    .then(ok => {
+    .then(async ok => {
       if (!ok) return;
-      saveNow();
-      events = []; rates = []; certs = []; expenses = []; trainingRates = []; bankAmounts = {};
+      await saveNow();   // make sure the last edits reach Firestore before signing out
       if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+      events = []; rates = []; certs = []; expenses = []; trainingRates = []; bankAmounts = {};
       auth.signOut();
     });
 }
@@ -286,6 +330,25 @@ document.addEventListener('DOMContentLoaded', () => {
   applyThemeIcon();
 });
 
+// Esc closes the top-most dialog (confirm first, then modals, then sidebar)
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const confirmOverlay = document.getElementById('confirm-overlay');
+  if (confirmOverlay?.classList.contains('open') && confirmOverlay._cancel) {
+    confirmOverlay._cancel(); return;
+  }
+  const closers = [
+    ['training-rate-modal', closeTrainingRateModal],
+    ['cert-modal',          closeCertModal],
+    ['exp-modal',           closeExpModal],
+    ['modal',               closeModal]
+  ];
+  for (const [id, close] of closers) {
+    if (document.getElementById(id)?.classList.contains('open')) { close(); return; }
+  }
+  if (document.getElementById('sidebar')?.classList.contains('open')) closeSidebar();
+});
+
 // ═══ CLOUD SYNC ═══════════════════════════════════════════════
 function initCloudSync() {
   if (!syncDoc) return;
@@ -295,7 +358,11 @@ function initCloudSync() {
   _showCalendarSkeleton();
 
   unsubscribeSnapshot = syncDoc.onSnapshot(doc => {
-    if (!doc.exists) { _hideCalendarSkeleton(); return; }
+    if (!doc.exists) { _hideCalendarSkeleton(); _safeRender(); return; }
+
+    // Local edits are waiting for the debounced save — don't let an incoming
+    // snapshot overwrite them. The pending save will push local state shortly.
+    if (_hasPendingSave()) return;
 
     const data = doc.data() || {};
     events        = Array.isArray(data.events)        ? data.events        : [];
@@ -317,8 +384,8 @@ function initCloudSync() {
 
 function _safeRender() {
   try { renderRates();    } catch(e) { console.error('renderRates:', e); }
+  // renderCalendar() also refreshes stats and payroll
   try { renderCalendar(); } catch(e) { console.error('renderCalendar:', e); }
-  try { updateStats();    } catch(e) { console.error('updateStats:', e); }
 
   if (document.getElementById('page-certificates')?.classList.contains('active')) {
     try { renderCerts(); } catch(e) { console.error('renderCerts:', e); }
@@ -377,8 +444,11 @@ function getRangeDates(pairs, calendarOnly = false) {
 }
 
 // ═══ RATES & PAYROLL ══════════════════════════════════════════
-function getRateForDate(ds) {
-  const sorted = [...rates].sort((a, b) => a.from.localeCompare(b.from));
+function sortedRates() {
+  return [...rates].sort((a, b) => a.from.localeCompare(b.from));
+}
+// Pass a pre-sorted list when calling in a loop (avoids sorting for every day)
+function getRateForDate(ds, sorted = sortedRates()) {
   for (const r of sorted) {
     if (ds >= r.from && (!r.to || ds <= r.to)) return Number(r.amount) || 0;
   }
@@ -414,8 +484,20 @@ function addRate() {
   const from    = parseDMY(fromRaw);
   const to      = parseDMY(toRaw);
 
-  if (!amount || !from) { alert('Enter amount and a valid "from" date (dd/mm/yyyy).'); return; }
-  if (toRaw.trim() && !to) { alert('"To" date is not valid. Use dd/mm/yyyy or leave blank.'); return; }
+  if (!amount || amount < 0 || !from) { customAlert('Missing data', 'Enter amount and a valid "from" date (dd/mm/yyyy).'); return; }
+  if (toRaw.trim() && !to) { customAlert('Invalid date', '"To" date is not valid. Use dd/mm/yyyy or leave blank.'); return; }
+  if (to && to < from)     { customAlert('Invalid period', '"To" date must be on or after the "from" date.'); return; }
+
+  // Rate periods must not overlap — otherwise it is unclear which rate applies
+  const END_OPEN = '9999-12-31';
+  const clash = rates.find(r => from <= (r.to || END_OPEN) && r.from <= (to || END_OPEN));
+  if (clash) {
+    customAlert('Overlapping period',
+      `This period overlaps the $${Number(clash.amount).toLocaleString()}/day rate ` +
+      `(${fmtDate(clash.from)} → ${fmtDate(clash.to)}). ` +
+      'Set an end date on the existing rate or remove it first.');
+    return;
+  }
 
   rates.push({ amount, from, to });
   rates.sort((a, b) => a.from.localeCompare(b.from));
@@ -524,8 +606,9 @@ function renderPayroll() {
   }
 
   const todayS         = todayStr();
-  const awayDates      = getRangeDates(getTrips());
   const trainingDates  = getRangeDates(getTrainingPeriods());
+  const awayDates      = getAwayDates();          // trips + training days
+  const rateList       = sortedRates();
   const usd = (v, dec = 0) => '$' + parseFloat(v || 0).toLocaleString(undefined, {
     minimumFractionDigits: dec, maximumFractionDigits: dec
   });
@@ -535,15 +618,17 @@ function renderPayroll() {
   let bankCount  = 0;
 
   const cards = periods.map(p => {
-    // Count away days (excluding training days) and earnings
-    let days = 0, earnings = 0;
+    // Training days count as days away, but they are paid at the training
+    // rate (see Training row below), not at the regular day rate.
+    let days = 0, trainDays = 0, earnings = 0;
     const s = new Date(p.start + 'T00:00:00');
     const e = new Date(p.end   + 'T00:00:00');
     for (let c = new Date(s); c <= e; c.setDate(c.getDate() + 1)) {
       const ds = localDateStr(c);
-      if (awayDates.has(ds) && !trainingDates.has(ds)) {
-        days++; earnings += getRateForDate(ds);
-      }
+      if (!awayDates.has(ds)) continue;
+      days++;
+      if (trainingDates.has(ds)) trainDays++;
+      else earnings += getRateForDate(ds, rateList);
     }
 
     const isCurrent = todayS >= p.start && todayS <= p.end;
@@ -586,7 +671,7 @@ function renderPayroll() {
 
     const expRows   = periodExps.map(e => `
       <div class="pc-line">
-        <span class="pc-line-label">↳ ${e.desc}</span>
+        <span class="pc-line-label">↳ ${escapeHtml(e.desc)}</span>
         <span class="pc-line-val">${usd(e.usd, 2)}</span>
       </div>`).join('');
 
@@ -615,7 +700,9 @@ function renderPayroll() {
             <div class="pc-row-left">
               <span class="pc-row-icon">📅</span>
               <span class="pc-row-name">Days away</span>
-              <span class="pc-row-sub">${days} days × rate</span>
+              <span class="pc-row-sub">${trainDays > 0
+                ? `${days} days (${days - trainDays} × rate + ${trainDays} training)`
+                : `${days} days × rate`}</span>
             </div>
             <span class="pc-row-amount ${days > 0 ? 'pc-amount-main' : ''}">${usd(earnings)}</span>
           </div>
@@ -694,10 +781,23 @@ function setBankAmount(periodEnd, value) {
 }
 
 // ═══ STATS ════════════════════════════════════════════════════
+// Days away from home = trip days + training days (training counts as away)
+function getAwayDates(calendarOnly = false) {
+  const set = getRangeDates(getTrips(), calendarOnly);
+  for (const d of getRangeDates(getTrainingPeriods(), calendarOnly)) set.add(d);
+  return set;
+}
+
 function updateStats() {
   const sel = document.getElementById('stat-year-filter');
   if (sel) {
-    const years = [...new Set(events.map(e => e.date?.slice(0,4)).filter(Boolean))].sort();
+    const years = [...new Set([
+      ...events.map(e => e.date),
+      ...rates.map(r => r.from),
+      ...rates.map(r => r.to),
+      ...expenses.map(e => e.payrollPeriod)
+    ].map(d => (typeof d === 'string' ? d.slice(0, 4) : null))
+     .filter(y => y && /^\d{4}$/.test(y)))].sort();
     const prev  = sel.value || 'all';
     sel.innerHTML = '<option value="all">All years</option>' +
       years.map(y => `<option value="${y}" ${y === prev ? 'selected' : ''}>${y}</option>`).join('');
@@ -718,7 +818,7 @@ function updateStats() {
   const onboardStays    = getOnboardStays();
   const trainingPeriods = getTrainingPeriods();
 
-  const awayDates     = filterSet(getRangeDates(trips));
+  const awayDates     = filterSet(getAwayDates());
   const brazilDates   = filterSet(getRangeDates(brazilStays));
   const onboardDates  = filterSet(getRangeDates(onboardStays));
   const trainingDates = filterSet(getRangeDates(trainingPeriods));
@@ -752,11 +852,15 @@ function updateStats() {
   const text = document.getElementById('status-text');
   const inBrazil   = allBrazil.has(todaySt);
   const isOnboard  = allOnboard.has(todaySt);
+  const inTraining = getRangeDates(trainingPeriods).has(todaySt);
 
   if (dot && text && currentUser) {
     if (isOnboard) {
       dot.style.background = '#f97316';
       text.textContent = '⚓ Onboard' + (inBrazil ? ' · 🇧🇷' : '');
+    } else if (inTraining) {
+      dot.style.background = '#8b5cf6';
+      text.textContent = '🎓 Training' + (inBrazil ? ' · 🇧🇷' : '');
     } else if (allAway.has(todaySt)) {
       dot.style.background = '#38cfe8';
       text.textContent = 'Away' + (inBrazil ? ' · 🇧🇷 Brazil' : '');
@@ -793,9 +897,10 @@ function updateStats() {
       trainingInfo.style.display = 'block';
       trainingList.innerHTML = filteredTraining.map((t, i) => {
         const re   = (trainingRates || []).find(r => r.start === t.start && r.end === t.end);
-        const rate = re ? re.rate : null;
-        const days = durDays(t) || '?';
-        const earned = rate !== null ? `$${(rate * days).toLocaleString()}` : '—';
+        const rate = re ? Number(re.rate || 0) : null;
+        const dur  = durDays(t);
+        const days = dur || '?';
+        const earned = rate !== null && dur ? `$${(rate * dur).toLocaleString()}` : '—';
         return `<div class="info-row" style="align-items:center">
           <span>Training ${i+1} &nbsp; ${fmtShort(t.start)} → ${t.end ? fmtShort(t.end) : '…'}</span>
           <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
@@ -895,7 +1000,13 @@ function renderCalendar() {
     if (training && durDays(training)) html += `<span class="badge-training">🎓${durDays(training)}d</span>`;
 
     div.innerHTML = html;
+    div.tabIndex = 0;
+    div.setAttribute('role', 'button');
+    div.setAttribute('aria-label', `${d} ${MONTHS[currentMonth]} ${currentYear}`);
     div.addEventListener('click', () => openModal(ds));
+    div.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(ds); }
+    });
     cal.appendChild(div);
   }
 
@@ -1011,10 +1122,11 @@ function clearDay() {
     ? 'This day has an event that starts a period. Removing it may break trip or rotation data. Continue?'
     : 'Remove all events from this day?';
 
+  const day = selectedDate;   // capture — the modal may be closed before confirming
   customConfirm('Clear day', confirmMsg, 'Remove', '')
     .then(ok => {
       if (!ok) return;
-      events = events.filter(e => e.date !== selectedDate);
+      events = events.filter(e => e.date !== day);
       saveEvents();
       cleanOrphanedTrainingRates();
       closeModal();
@@ -1116,10 +1228,11 @@ function renderCerts() {
       ? `<span class="cert-days-left ${st.cls}">${st.days < 0 ? 'Expired ' + Math.abs(st.days) + 'd ago' : st.days + 'd left'}</span>`
       : '';
     return `<div class="cert-card ${st.cls}">
+      <button class="cert-edit"   onclick="openCertModal(${i})" title="Edit">✏️</button>
       <button class="cert-delete" onclick="deleteCert(${i})" title="Delete">✕</button>
-      <div class="cert-name">${c.name}</div>
-      <div class="cert-issuer">${c.issuer || ''}</div>
-      ${c.number ? `<div class="cert-num">${c.number}</div>` : ''}
+      <div class="cert-name">${escapeHtml(c.name)}</div>
+      <div class="cert-issuer">${escapeHtml(c.issuer)}</div>
+      ${c.number ? `<div class="cert-num">${escapeHtml(c.number)}</div>` : ''}
       <div class="cert-footer">
         <div>
           <div class="cert-exp-label">Expires</div>
@@ -1169,9 +1282,14 @@ function saveCert() {
   const name   = document.getElementById('cert-name-in').value.trim();
   const issuer = document.getElementById('cert-issuer-in').value.trim();
   const number = document.getElementById('cert-number-in').value.trim();
-  const issued = parseDMY(document.getElementById('cert-issue-in').value);
-  const expiry = parseDMY(document.getElementById('cert-expiry-in').value);
-  if (!name) { alert('Certificate name is required.'); return; }
+  const issuedRaw = document.getElementById('cert-issue-in').value.trim();
+  const expiryRaw = document.getElementById('cert-expiry-in').value.trim();
+  const issued = parseDMY(issuedRaw);
+  const expiry = parseDMY(expiryRaw);
+  if (!name) { customAlert('Missing name', 'Certificate name is required.'); return; }
+  // A mistyped date must not be saved silently as "no expiry" — that would stop alerts
+  if (issuedRaw && !issued) { customAlert('Invalid date', `Issue date "${issuedRaw}" is not valid. Use dd/mm/yyyy.`); return; }
+  if (expiryRaw && !expiry) { customAlert('Invalid date', `Expiry date "${expiryRaw}" is not valid. Use dd/mm/yyyy.`); return; }
   const cert = { name, issuer, number, issued, expiry };
   if (editingCertIdx !== null) {
     certs[editingCertIdx] = cert;
@@ -1209,8 +1327,9 @@ async function handleCertScan(event) {
     document.getElementById('cert-name-in').value   = aiData.name    || '';
     document.getElementById('cert-issuer-in').value = aiData.issuer  || '';
     document.getElementById('cert-number-in').value = aiData.number  || '';
-    document.getElementById('cert-issue-in').value  = aiData.issued  || '';
-    document.getElementById('cert-expiry-in').value = aiData.expiry  || '';
+    // AI may return ISO or dotted dates — normalise to dd/mm/yyyy
+    document.getElementById('cert-issue-in').value  = toDMY(aiData.issued);
+    document.getElementById('cert-expiry-in').value = toDMY(aiData.expiry);
     statusEl.style.color   = 'var(--green)';
     statusEl.textContent   = '✅ Done! Review the data and click Save.';
   } catch (err) {
@@ -1265,13 +1384,13 @@ function renderExpenses() {
   wrap.innerHTML = Object.entries(grouped).map(([period, items]) => {
     const total = items.reduce((s,e) => s + (parseFloat(e.usd)||0), 0);
     return `<div class="exp-group">
-      <div class="exp-group-title">📅 ${labelFor(period)}
+      <div class="exp-group-title">📅 ${escapeHtml(labelFor(period))}
         <span style="float:right;color:var(--green)">Total: $${total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
       </div>
       ${items.map(e => `<div class="exp-card">
         <div class="exp-card-left">
-          <div class="exp-card-desc">${e.desc}</div>
-          <div class="exp-card-meta">${e.origAmount} ${e.currency} → <strong style="color:var(--green)">$${parseFloat(e.usd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} USD</strong>${e.notes ? ' · '+e.notes : ''}</div>
+          <div class="exp-card-desc">${escapeHtml(e.desc)}</div>
+          <div class="exp-card-meta">${escapeHtml(e.origAmount)} ${escapeHtml(e.currency)} → <strong style="color:var(--green)">$${(parseFloat(e.usd) || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} USD</strong>${e.notes ? ' · ' + escapeHtml(e.notes) : ''}</div>
         </div>
         <div class="exp-card-actions">
           <button class="exp-btn-edit" onclick="openExpModal(${e._idx})">✏️ Edit</button>
@@ -1321,10 +1440,10 @@ function saveExpense() {
   const period  = document.getElementById('exp-month-in').value;
   const idxStr  = document.getElementById('exp-editing-idx').value;
 
-  if (!desc)           { alert('Description is required.');        return; }
-  if (isNaN(orig))     { alert('Enter a valid original amount.');   return; }
-  if (isNaN(usdVal))   { alert('Enter a valid USD amount.');        return; }
-  if (!period)         { alert('Select a payroll period.');         return; }
+  if (!desc)           { customAlert('Missing data', 'Description is required.');      return; }
+  if (isNaN(orig))     { customAlert('Missing data', 'Enter a valid original amount.'); return; }
+  if (isNaN(usdVal))   { customAlert('Missing data', 'Enter a valid USD amount.');      return; }
+  if (!period)         { customAlert('Missing data', 'Select a payroll period.');       return; }
 
   const entry = { desc, origAmount: orig, currency, usd: usdVal, notes, payrollPeriod: period };
   if (idxStr !== '') { expenses[parseInt(idxStr)] = entry; } else { expenses.push(entry); }
@@ -1369,21 +1488,34 @@ async function handleExpenseScan(event) {
       statusEl.textContent = '⚠️ Partial read — check and fill manually.';
       openExpModal(); return;
     }
-    const notesStr = (data.subtotals || [])
-      .map(s => `${s.currency} ${s.total} = $${parseFloat(s.usd).toFixed(2)}`).join(' · ')
+    const subtotals = Array.isArray(data.subtotals) ? data.subtotals : [];
+    const notesStr = subtotals
+      .map(s => {
+        const u = parseFloat(s.usd);
+        return `${s.currency} ${s.total}` + (isNaN(u) ? '' : ` = $${u.toFixed(2)}`);
+      }).join(' · ')
       || data.notes || '';
 
-    statusEl.style.color = 'var(--green)';
-    statusEl.textContent = `✅ Found ${(data.items||[]).length} items · Total $${parseFloat(data.totalUSD).toFixed(2)} USD`;
+    const totalUSD = parseFloat(data.totalUSD);
+    const hasTotal = !isNaN(totalUSD);
 
-    openExpModal();
-    setTimeout(() => {
-      document.getElementById('exp-desc-in').value     = data.description || file.name;
-      document.getElementById('exp-orig-in').value     = data.totalUSD || 0;
-      document.getElementById('exp-currency-in').value = 'USD';
-      document.getElementById('exp-usd-in').value      = parseFloat(data.totalUSD).toFixed(2) || 0;
-      document.getElementById('exp-notes-in').value    = notesStr.substring(0,120);
-    }, 100);
+    // Keep the original currency when the whole document is in one currency
+    // that the form supports; otherwise fall back to the USD total.
+    const currencyOpts = [...document.getElementById('exp-currency-in').options].map(o => o.value);
+    const single = subtotals.length === 1 && currencyOpts.includes(String(subtotals[0].currency).toUpperCase())
+      && !isNaN(parseFloat(subtotals[0].total)) ? subtotals[0] : null;
+
+    statusEl.style.color = hasTotal ? 'var(--green)' : 'var(--amber)';
+    statusEl.textContent = hasTotal
+      ? `✅ Found ${(data.items||[]).length} items · Total $${totalUSD.toFixed(2)} USD`
+      : `⚠️ Found ${(data.items||[]).length} items but no USD total — please fill it in.`;
+
+    openExpModal();   // synchronous — fields can be filled right away
+    document.getElementById('exp-desc-in').value     = data.description || file.name;
+    document.getElementById('exp-orig-in').value     = single ? parseFloat(single.total) : (hasTotal ? totalUSD.toFixed(2) : '');
+    document.getElementById('exp-currency-in').value = single ? String(single.currency).toUpperCase() : 'USD';
+    document.getElementById('exp-usd-in').value      = hasTotal ? totalUSD.toFixed(2) : '';
+    document.getElementById('exp-notes-in').value    = notesStr.substring(0,120);
   } catch (err) {
     console.error(err);
     statusEl.style.color = 'var(--red)';
@@ -1430,17 +1562,17 @@ async function adminDeleteUser(uid, email) {
   try {
     await _adminFetch({ action: 'delete', uid });
     renderAdminPanel();
-  } catch (err) { alert('Error: ' + err.message); }
+  } catch (err) { customAlert('Error', err.message); }
 }
 
 async function adminDisableUser(uid) {
   try { await _adminFetch({ action: 'disable', uid }); renderAdminPanel(); }
-  catch (err) { alert('Error: ' + err.message); }
+  catch (err) { customAlert('Error', err.message); }
 }
 
 async function adminEnableUser(uid) {
   try { await _adminFetch({ action: 'enable', uid }); renderAdminPanel(); }
-  catch (err) { alert('Error: ' + err.message); }
+  catch (err) { customAlert('Error', err.message); }
 }
 
 async function renderAdminPanel() {
@@ -1462,7 +1594,7 @@ async function renderAdminPanel() {
       wrap.innerHTML = data.users.map(u => `
         <div class="admin-user-card">
           <div class="admin-user-info">
-            <div class="admin-user-email">${u.email}</div>
+            <div class="admin-user-email">${escapeHtml(u.email)}</div>
             <div class="admin-user-meta">
               Created: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB') : '—'}
               &nbsp;·&nbsp; Last login: ${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-GB') : 'Never'}
@@ -1471,14 +1603,15 @@ async function renderAdminPanel() {
           </div>
           <div class="admin-user-actions">
             ${u.disabled
-              ? `<button class="admin-btn-enable"  onclick="adminEnableUser('${u.uid}')">Enable</button>`
-              : `<button class="admin-btn-disable" onclick="adminDisableUser('${u.uid}')">Disable</button>`}
-            <button class="admin-btn-del" onclick="adminDeleteUser('${u.uid}','${u.email}')">Delete</button>
+              ? `<button class="admin-btn-enable"  data-uid="${escapeHtml(u.uid)}" onclick="adminEnableUser(this.dataset.uid)">Enable</button>`
+              : `<button class="admin-btn-disable" data-uid="${escapeHtml(u.uid)}" onclick="adminDisableUser(this.dataset.uid)">Disable</button>`}
+            <button class="admin-btn-del" data-uid="${escapeHtml(u.uid)}" data-email="${escapeHtml(u.email)}"
+                    onclick="adminDeleteUser(this.dataset.uid, this.dataset.email)">Delete</button>
           </div>
         </div>`).join('');
     }
   } catch (err) {
-    wrap.innerHTML = `<div style="color:var(--red);font-size:13px">❌ Error: ${err.message}</div>`;
+    wrap.innerHTML = `<div style="color:var(--red);font-size:13px">❌ Error: ${escapeHtml(err.message)}</div>`;
   }
 
   // Load email settings only once per panel visit
@@ -1498,7 +1631,7 @@ function loadEmailSettings() {
       set('alert-enabled',    s.enabled !== false);
       set('alert-60',         Array.isArray(s.thresholds) ? s.thresholds.includes(60) : true);
       set('alert-30',         Array.isArray(s.thresholds) ? s.thresholds.includes(30) : true);
-      set('alert-7',          Array.isArray(s.thresholds) ? s.thresholds.includes(7)  : false);
+      set('alert-7',          Array.isArray(s.thresholds) ? s.thresholds.includes(7)  : true);
       set('alert-custom',     s.customThreshold || '');
       set('alert-from-email', s.fromEmail || ADMIN_EMAIL);
       updateSchedulePreview(s);
@@ -1547,7 +1680,7 @@ async function saveEmailSettings() {
     if (status) status.innerHTML = '<div style="color:var(--green);font-size:12px">✅ Saved in Firestore</div>';
   } catch (err) {
     const status = document.getElementById('firestore-settings-status');
-    if (status) status.innerHTML = `<div style="color:var(--red);font-size:12px">❌ ${err.message}</div>`;
+    if (status) status.innerHTML = `<div style="color:var(--red);font-size:12px">❌ ${escapeHtml(err.message)}</div>`;
   }
 }
 
