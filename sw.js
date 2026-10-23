@@ -1,16 +1,19 @@
-const CACHE_VERSION = 'crewx-cache-v12';
+const CACHE_VERSION = 'crewx-cache-v13';
 
 const APP_SHELL = [
   './',
   './index.html',
-  './style.css?v=14',
-  './app.js?v=14',
+  './style.css?v=15',
+  './app.js?v=16',
   './manifest.json',
   './offline.html',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './icons/icon-192-maskable.png',
+  './icons/icon-512-maskable.png'
 ];
+// Keep the ?v= numbers above in sync with index.html and bump CACHE_VERSION.
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -47,8 +50,11 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request)
         .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_VERSION).then(cache => cache.put('./index.html', copy));
+          // Only cache a real page — never an error response
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_VERSION).then(cache => cache.put('./index.html', copy));
+          }
           return response;
         })
         .catch(async () => {

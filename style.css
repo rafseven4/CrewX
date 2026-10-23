@@ -771,6 +771,13 @@ select.stat-year-select option {
   cursor: pointer; font-size: 14px; padding: 2px 5px; border-radius: 4px;
 }
 .cert-delete:hover { color: #f87171; background: rgba(239,68,68,0.1); }
+.cert-edit {
+  position: absolute; top: 10px; right: 36px;
+  background: none; border: none; opacity: 0.35;
+  cursor: pointer; font-size: 12px; padding: 2px 5px; border-radius: 4px;
+}
+.cert-edit:hover { opacity: 1; background: rgba(255,122,61,0.12); }
+.day:focus-visible { outline: 2px solid var(--sky); outline-offset: 1px; }
 .cert-add-btn {
   background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.15);
   border-radius: var(--radius); padding: 14px; cursor: pointer;
