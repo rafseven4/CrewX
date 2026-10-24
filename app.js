@@ -712,7 +712,7 @@ function renderPayroll() {
               <div class="pc-row-left">
                 <span class="pc-row-icon">🎓</span>
                 <span class="pc-row-name">Training</span>
-                <span class="pc-row-sub">${trainingDaysCnt} days</span>
+                <span class="pc-row-sub">${trainingDaysCnt} day${trainingDaysCnt !== 1 ? 's' : ''}</span>
               </div>
               <span class="pc-row-amount pc-amount-training">${usd(trainingTotal)}</span>
             </div>
