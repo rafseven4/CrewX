@@ -362,6 +362,18 @@ body {
 .ev-sign-off   { background: rgba(249,115,22,0.15); color: #fed7aa; border: 1px solid rgba(249,115,22,0.3); }
 .ev-training   { background: rgba(139,92,246,0.25) !important; color: #c4b5fd !important; border-left: 2px solid #8b5cf6 !important; }
 
+/* Light mode — the pale dark-mode text colours are unreadable on white */
+[data-theme="light"] .ev-depart     { background: rgba(242,177,78,0.35); color: #7a4a00; }
+[data-theme="light"] .ev-arrive     { background: rgba(56,207,232,0.3);  color: #0b5566; }
+[data-theme="light"] .ev-brazil-in  { background: rgba(62,207,142,0.35); color: #0d6b43; }
+[data-theme="light"] .ev-brazil-out { background: rgba(62,207,142,0.15); color: #0d6b43; border-color: rgba(13,107,67,0.35); }
+[data-theme="light"] .ev-sign-on    { background: rgba(249,115,22,0.3);  color: #8a3a06; }
+[data-theme="light"] .ev-sign-off   { background: rgba(249,115,22,0.12); color: #8a3a06; border-color: rgba(138,58,6,0.35); }
+[data-theme="light"] .ev-training   { background: rgba(139,92,246,0.2) !important; color: #5b2bb5 !important; }
+[data-theme="light"] .badge-away    { color: #9a3412; background: rgba(255,122,61,0.22); }
+[data-theme="light"] .badge-onboard { color: #8a3a06; background: rgba(249,115,22,0.25); }
+[data-theme="light"] .badge-training { color: #5b2bb5; background: rgba(139,92,246,0.2); }
+
 /* badges */
 .badge-away   { position:absolute; bottom:14px; right:3px; font-size:8px; font-weight:700; color:#ffd3ba; background:rgba(255,122,61,0.2); border-radius:3px; padding:1px 3px; }
 .badge-onboard{ position:absolute; top:3px; right:3px; font-size:8px; font-weight:700; color:#fed7aa; background:rgba(249,115,22,0.25); border-radius:3px; padding:1px 3px; }
@@ -402,6 +414,9 @@ body {
 .ibadge-green  { color: #7fe8bd;       background: rgba(62,207,142,0.15); }
 .ibadge-amber  { color: #fdba74;       background: rgba(249,115,22,0.15); }
 .ibadge-purple { background: rgba(139,92,246,0.2); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.4); }
+[data-theme="light"] .ibadge-green  { color: #0d6b43; }
+[data-theme="light"] .ibadge-amber  { color: #9a3412; }
+[data-theme="light"] .ibadge-purple { color: #5b2bb5; }
 
 /* ═══ RIGHT PANEL (settings) ═══════════════════════════════════════════════════ */
 .right-panel {
