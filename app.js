@@ -870,6 +870,10 @@ function updateStats() {
     }
   }
 
+  // Voyage Log title follows the year filter
+  const voyageTitle = document.getElementById('voyage-title');
+  if (voyageTitle) voyageTitle.textContent = fy === 'all' ? 'Voyage Log' : `Voyage Log ${fy}`;
+
   // Lists
   function renderList(listId, infoId, items, labelFn, badgeClass) {
     const info = document.getElementById(infoId);
@@ -883,9 +887,9 @@ function updateStats() {
     }).join('');
   }
 
-  renderList('trips-list',   'trips-info',   filterPairs(trips),        (t,i) => `Trip ${i+1} &nbsp; ${fmtShort(t.start)} → ${t.end ? fmtShort(t.end) : '…'}`,       'ibadge-blue');
-  renderList('brazil-list',  'brazil-info',  filterPairs(brazilStays),  (b,i) => `Stay ${i+1} &nbsp; ${fmtShort(b.start)} → ${b.end ? fmtShort(b.end) : '…'}`,        'ibadge-green');
-  renderList('onboard-list', 'onboard-info', filterPairs(onboardStays), (o,i) => `Contract ${i+1} &nbsp; ${fmtShort(o.start)} → ${o.end ? fmtShort(o.end) : '…'}`,    'ibadge-amber');
+  renderList('trips-list',   'trips-info',   filterPairs(trips),        (t,i) => `Trip ${i+1} &nbsp; ${fmtDate(t.start)} → ${t.end ? fmtDate(t.end) : '…'}`,       'ibadge-blue');
+  renderList('brazil-list',  'brazil-info',  filterPairs(brazilStays),  (b,i) => `Stay ${i+1} &nbsp; ${fmtDate(b.start)} → ${b.end ? fmtDate(b.end) : '…'}`,        'ibadge-green');
+  renderList('onboard-list', 'onboard-info', filterPairs(onboardStays), (o,i) => `Contract ${i+1} &nbsp; ${fmtDate(o.start)} → ${o.end ? fmtDate(o.end) : '…'}`,    'ibadge-amber');
 
   const trainingInfo = document.getElementById('training-info');
   const trainingList = document.getElementById('training-list');
@@ -902,7 +906,7 @@ function updateStats() {
         const days = dur || '?';
         const earned = rate !== null && dur ? `$${(rate * dur).toLocaleString()}` : '—';
         return `<div class="info-row" style="align-items:center">
-          <span>Training ${i+1} &nbsp; ${fmtShort(t.start)} → ${t.end ? fmtShort(t.end) : '…'}</span>
+          <span>Training ${i+1} &nbsp; ${fmtDate(t.start)} → ${t.end ? fmtDate(t.end) : '…'}</span>
           <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
             <span style="font-size:11px;color:var(--gray400)">
               ${rate !== null
