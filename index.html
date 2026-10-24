@@ -14,7 +14,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="description" content="Crew rotation, rest hours, certificates and payroll tracker"/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
 
@@ -157,16 +157,25 @@
         <div class="cal-card">
           <div class="nav-row">
             <button class="nav-btn" onclick="changeMonth(-1)">← prev</button>
-            <span class="month-label" id="month-label"></span>
+            <div class="nav-center">
+              <span class="month-label" id="month-label"></span>
+              <div class="view-toggle" role="group" aria-label="Calendar view">
+                <button class="view-btn" id="view-month" onclick="setCalView('month')">Month</button>
+                <button class="view-btn" id="view-year"  onclick="setCalView('year')">Year</button>
+              </div>
+            </div>
             <button class="nav-btn" onclick="changeMonth(1)">next →</button>
           </div>
-          <div class="weekdays">
-            <div class="weekday">Mo</div><div class="weekday">Tu</div>
-            <div class="weekday">We</div><div class="weekday">Th</div>
-            <div class="weekday">Fr</div><div class="weekday">Sa</div>
-            <div class="weekday">Su</div>
+          <div id="month-view">
+            <div class="weekdays">
+              <div class="weekday">Mo</div><div class="weekday">Tu</div>
+              <div class="weekday">We</div><div class="weekday">Th</div>
+              <div class="weekday">Fr</div><div class="weekday">Sa</div>
+              <div class="weekday">Su</div>
+            </div>
+            <div class="calendar" id="calendar"></div>
           </div>
-          <div class="calendar" id="calendar"></div>
+          <div class="year-grid" id="year-grid" style="display:none"></div>
 
           <div class="legend">
             <div class="legend-item"><div class="ldot" style="background:rgba(226,84,43,0.4);border:1px solid rgba(255,122,61,0.4)"></div>Away</div>
@@ -177,6 +186,7 @@
             <div class="legend-item"><div class="ldot" style="background:rgba(242,177,78,0.5);border:1px solid #f2b14e"></div>Left home</div>
             <div class="legend-item"><div class="ldot" style="background:rgba(56,207,232,0.4);border:1px solid #38cfe8"></div>Arrived</div>
             <div class="legend-item"><div class="ldot" style="width:9px;height:6px;background:var(--gold);border-top:2px solid var(--gold)"></div>Payroll cut</div>
+            <div class="legend-item legend-year-only"><div class="ldot-event"></div>Event logged</div>
           </div>
 
         </div>
@@ -486,6 +496,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

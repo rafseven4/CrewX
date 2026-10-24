@@ -87,6 +87,7 @@ let bankAmounts   = {};   // { '<period end YYYY-MM-DD>': number } — actual am
 let currentYear  = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 let selectedDate = null;
+let calView      = (() => { try { return localStorage.getItem('crewx-cal-view') === 'year' ? 'year' : 'month'; } catch { return 'month'; } })();
 let editingCertIdx = null;
 let emailSettingsLoaded = false;   // load once per admin panel open
 
@@ -931,7 +932,27 @@ function updateStats() {
 }
 
 // ═══ CALENDAR ═════════════════════════════════════════════════
+function setCalView(view) {
+  calView = view === 'year' ? 'year' : 'month';
+  try { localStorage.setItem('crewx-cal-view', calView); } catch {}
+  renderCalendar();
+}
+
+function _applyCalView() {
+  const isYear = calView === 'year';
+  const mv = document.getElementById('month-view');
+  const yg = document.getElementById('year-grid');
+  if (mv) mv.style.display = isYear ? 'none' : '';
+  if (yg) yg.style.display = isYear ? '' : 'none';
+  document.getElementById('view-month')?.classList.toggle('active', !isYear);
+  document.getElementById('view-year')?.classList.toggle('active', isYear);
+  document.querySelector('.cal-card')?.classList.toggle('year-mode', isYear);
+}
+
 function renderCalendar() {
+  _applyCalView();
+  if (calView === 'year') { renderYearOverview(); return; }
+
   const monthLabel = document.getElementById('month-label');
   const cal        = document.getElementById('calendar');
   if (!monthLabel || !cal) return;
@@ -1018,7 +1039,76 @@ function renderCalendar() {
   renderPayroll();
 }
 
+// ─── Year overview: 12 mini-months ─────────────────────────────
+function renderYearOverview() {
+  const monthLabel = document.getElementById('month-label');
+  const grid       = document.getElementById('year-grid');
+  if (!monthLabel || !grid) return;
+  monthLabel.textContent = String(currentYear);
+
+  const awayDates     = getRangeDates(getTrips(),           true);
+  const brazilDates   = getRangeDates(getBrazilStays(),     true);
+  const onboardDates  = getRangeDates(getOnboardStays(),    true);
+  const trainingDates = getRangeDates(getTrainingPeriods(), true);
+  const todayS        = todayStr();
+
+  const EV_NAME = {
+    depart: 'Left home', arrive: 'Arrived home',
+    'brazil-in': 'Entered Brazil', 'brazil-out': 'Left Brazil',
+    'sign-on': 'Sign on', 'sign-off': 'Sign off',
+    'training-start': 'Training start', 'training-end': 'Training end'
+  };
+  const evByDate = {};
+  for (const e of events) (evByDate[e.date] ||= []).push(EV_NAME[e.type] || e.type);
+
+  let html = '';
+  for (let m = 0; m < 12; m++) {
+    const firstDay    = new Date(currentYear, m, 1).getDay();
+    const offset      = firstDay === 0 ? 6 : firstDay - 1;
+    const daysInMonth = new Date(currentYear, m + 1, 0).getDate();
+    let away = 0, cells = '';
+
+    for (let i = 0; i < offset; i++) cells += '<div class="yd yd-empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds  = dateStr(currentYear, m, d);
+      const cls = ['yd'];
+      const tip = [`${d} ${MONTHS_S[m]} ${currentYear}`];
+      if (trainingDates.has(ds))      { cls.push('yd-training'); tip.push('Training'); }
+      else if (awayDates.has(ds))     { cls.push('yd-away');     tip.push('Away'); }
+      else if (onboardDates.has(ds))  { cls.push('yd-onboard');  }
+      else if (brazilDates.has(ds))   { cls.push('yd-brazil');   }
+      if (onboardDates.has(ds)) tip.push('Onboard');
+      if (brazilDates.has(ds))  { tip.push('Brazil'); if (awayDates.has(ds) || trainingDates.has(ds)) cls.push('yd-br-mark'); }
+      if (awayDates.has(ds) || trainingDates.has(ds)) away++;
+      if (evByDate[ds]) { cls.push('yd-event'); tip.push(...evByDate[ds]); }
+      if (ds === todayS) cls.push('yd-today');
+      if (d === 20)      cls.push('yd-pay');
+      cells += `<div class="${cls.join(' ')}" title="${escapeHtml(tip.join(' · '))}" onclick="openModal('${ds}')">${d}</div>`;
+    }
+
+    html += `
+      <div class="ym ${currentYear === new Date().getFullYear() && m === new Date().getMonth() ? 'ym-current' : ''}">
+        <button class="ym-head" onclick="openMonthFromYear(${m})" title="Open ${MONTHS[m]}">
+          <span class="ym-name">${MONTHS[m]}</span>
+          ${away ? `<span class="ym-away">${away}d away</span>` : ''}
+        </button>
+        <div class="ym-week"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div class="ym-days">${cells}</div>
+      </div>`;
+  }
+  grid.innerHTML = html;
+
+  updateStats();
+  renderPayroll();
+}
+
+function openMonthFromYear(m) {
+  currentMonth = m;
+  setCalView('month');
+}
+
 function changeMonth(dir) {
+  if (calView === 'year') { currentYear += dir; renderCalendar(); return; }
   currentMonth += dir;
   if (currentMonth > 11) { currentMonth = 0; currentYear++; }
   if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
