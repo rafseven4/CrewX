@@ -14,7 +14,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="description" content="Crew rotation, rest hours, certificates and payroll tracker"/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
 
@@ -163,6 +163,7 @@
                 <button class="view-btn" id="view-month" onclick="setCalView('month')">Month</button>
                 <button class="view-btn" id="view-year"  onclick="setCalView('year')">Year</button>
               </div>
+              <button class="pdf-btn" id="pdf-btn" onclick="exportYearPdf()" title="Download the year calendar as PDF">📄 PDF</button>
             </div>
             <button class="nav-btn" onclick="changeMonth(1)">next →</button>
           </div>
@@ -496,6 +497,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-<script src="app.js?v=19"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>

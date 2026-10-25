@@ -1276,6 +1276,229 @@ function saveTrainingRate() {
   renderPayroll();
 }
 
+// ═══ YEAR PDF EXPORT ══════════════════════════════════════════
+// Builds an A4 landscape PDF of the year rotation (12 months + trip list)
+// that the user can save or share. jsPDF is loaded on first use.
+const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+let _jspdfPromise = null;
+function _loadJsPdf() {
+  if (window.jspdf?.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+  if (!_jspdfPromise) {
+    _jspdfPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = JSPDF_URL;
+      s.onload  = () => window.jspdf?.jsPDF ? resolve(window.jspdf.jsPDF) : reject(new Error('PDF library failed to load'));
+      s.onerror = () => { _jspdfPromise = null; reject(new Error('Could not load the PDF library — check your internet connection.')); };
+      document.head.appendChild(s);
+    });
+  }
+  return _jspdfPromise;
+}
+
+// Standard PDF fonts only cover basic Latin — strip what they can't draw
+function _pdfText(s) {
+  return String(s ?? '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[łŁ]/g, c => c === 'ł' ? 'l' : 'L')
+    .replace(/[→]/g, '-').replace(/[–—]/g, '-')
+    .replace(/[^\x20-\x7E]/g, '');
+}
+
+async function exportYearPdf() {
+  const btn = document.getElementById('pdf-btn');
+  const year = currentYear;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ PDF…'; }
+  try {
+    const jsPDF = await _loadJsPdf();
+    const doc = _buildYearPdf(jsPDF, year);
+    const owner = (currentUser?.email || 'crew').split('@')[0].replace(/[^a-z0-9._-]/gi, '');
+    const fileName = `CrewX-rotation-${year}-${owner}.pdf`;
+    const blob = doc.output('blob');
+    const file = new File([blob], fileName, { type: 'application/pdf' });
+
+    // Phones/tablets: open the share sheet (WhatsApp, Mail, Files…). Desktop: download.
+    const touch = window.matchMedia?.('(pointer: coarse)').matches;
+    if (touch && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: `Rotation ${year}` });
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;   // user closed the share sheet
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: fileName });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch (err) {
+    console.error('PDF export:', err);
+    customAlert('PDF export failed', err.message || String(err));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📄 PDF'; }
+  }
+}
+
+function _buildYearPdf(jsPDF, year) {
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const W = 297, H = 210, M = 12;
+  const Y = String(year);
+
+  const trips    = getTrips();
+  const brazil   = getBrazilStays();
+  const onboard  = getOnboardStays();
+  const training = getTrainingPeriods();
+  const awayD    = getRangeDates(trips, true);
+  const brazilD  = getRangeDates(brazil, true);
+  const onboardD = getRangeDates(onboard, true);
+  const trainD   = getRangeDates(training, true);
+  const evDates  = new Set(events.map(e => e.date));
+  const inYear   = set => [...set].filter(d => d.startsWith(Y)).length;
+  const touches  = p => p.start.startsWith(Y) || (p.end && p.end.startsWith(Y)) ||
+                        (p.start < `${Y}-01-01` && (!p.end || p.end > `${Y}-12-31`));
+  const awayAll  = new Set([...awayD, ...trainD]);
+
+  const C = {
+    text: [20, 20, 26], muted: [110, 110, 120], line: [225, 225, 230], empty: [244, 244, 246],
+    away: [248, 196, 178], training: [216, 202, 250], onboard: [253, 224, 196], brazil: [190, 236, 228],
+    brMark: [13, 148, 136], dot: [180, 83, 9], accent: [226, 84, 43]
+  };
+  const fill = c => doc.setFillColor(c[0], c[1], c[2]);
+  const ink  = c => doc.setTextColor(c[0], c[1], c[2]);
+  const draw = c => doc.setDrawColor(c[0], c[1], c[2]);
+
+  // ── Header ──
+  const owner = _pdfText((currentUser?.email || '').split('@')[0]);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(18); ink(C.text);
+  doc.text(`Rotation ${Y}`, M, M + 6);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); ink(C.muted);
+  doc.text(`${owner ? owner + '  ·  ' : ''}CrewX  ·  generated ${fmtDate(todayStr())}`.replace(/·/g, '-'), M, M + 11.5);
+
+  const stats = [
+    ['Days away', inYear(awayAll)], ['Onboard', inYear(onboardD)], ['In Brazil', inYear(brazilD)],
+    ['Training', inYear(trainD)], ['Trips', trips.filter(t => t.end && touches(t)).length]
+  ];
+  doc.setFontSize(8);
+  let sx = W - M;
+  for (let i = stats.length - 1; i >= 0; i--) {
+    const [label, val] = stats[i];
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); ink(C.text);
+    const vw = doc.getTextWidth(String(val));
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+    const lw = doc.getTextWidth(label);
+    const bw = Math.max(vw, lw);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); ink(C.text);
+    doc.text(String(val), sx - bw, M + 6);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); ink(C.muted);
+    doc.text(label, sx - bw, M + 11);
+    sx -= bw + 9;
+  }
+  draw(C.line); doc.setLineWidth(0.3); doc.line(M, M + 15, W - M, M + 15);
+
+  // ── 12 months, 4 × 3 ──
+  const cols = 4, gapX = 7, gapY = 5;
+  const top = M + 20, legendH = 10;
+  const mw = (W - 2 * M - gapX * (cols - 1)) / cols;
+  const mh = (H - top - M - legendH - gapY * 2) / 3;
+  const cw = mw / 7;
+  const ch = (mh - 10) / 6;
+  const WD = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  for (let m = 0; m < 12; m++) {
+    const x0 = M + (m % cols) * (mw + gapX);
+    const y0 = top + Math.floor(m / cols) * (mh + gapY);
+    let awayCnt = 0;
+    const firstDay = new Date(year, m, 1).getDay();
+    const offset   = firstDay === 0 ? 6 : firstDay - 1;
+    const dim      = new Date(year, m + 1, 0).getDate();
+    for (let d = 1; d <= dim; d++) if (awayAll.has(dateStr(year, m, d))) awayCnt++;
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); ink(C.text);
+    doc.text(MONTHS[m], x0, y0 + 4);
+    if (awayCnt) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); ink(C.accent);
+      doc.text(`${awayCnt}d away`, x0 + mw, y0 + 4, { align: 'right' });
+    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); ink(C.muted);
+    WD.forEach((w, i) => doc.text(w, x0 + i * cw + cw / 2, y0 + 8.3, { align: 'center' }));
+
+    for (let d = 1; d <= dim; d++) {
+      const idx = offset + d - 1;
+      const cx = x0 + (idx % 7) * cw, cy = y0 + 10 + Math.floor(idx / 7) * ch;
+      const ds = dateStr(year, m, d);
+      let bg = C.empty;
+      if (trainD.has(ds))        bg = C.training;
+      else if (awayD.has(ds))    bg = C.away;
+      else if (onboardD.has(ds)) bg = C.onboard;
+      else if (brazilD.has(ds))  bg = C.brazil;
+      fill(bg);
+      doc.roundedRect(cx + 0.35, cy + 0.35, cw - 0.7, ch - 0.7, 0.8, 0.8, 'F');
+      if (brazilD.has(ds) && (awayD.has(ds) || trainD.has(ds))) {
+        fill(C.brMark); doc.rect(cx + 0.6, cy + ch - 1.2, cw - 1.2, 0.6, 'F');
+      }
+      if (evDates.has(ds)) { fill(C.dot); doc.circle(cx + cw - 1.5, cy + 1.5, 0.45, 'F'); }
+      doc.setFont('helvetica', bg === C.empty ? 'normal' : 'bold'); doc.setFontSize(7);
+      ink(bg === C.empty ? C.muted : C.text);
+      doc.text(String(d), cx + cw / 2, cy + ch / 2 + 1.2, { align: 'center' });
+    }
+  }
+
+  // ── Legend ──
+  const ly = H - M - 2;
+  let lx = M;
+  const legend = [['Away', C.away], ['Training', C.training], ['Onboard', C.onboard], ['Brazil', C.brazil]];
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+  for (const [label, col] of legend) {
+    fill(col); doc.roundedRect(lx, ly - 3, 4, 4, 0.8, 0.8, 'F');
+    ink(C.text); doc.text(label, lx + 5.5, ly); lx += doc.getTextWidth(label) + 12;
+  }
+  fill(C.away); doc.roundedRect(lx, ly - 3, 4, 4, 0.8, 0.8, 'F');
+  fill(C.brMark); doc.rect(lx + 0.4, ly + 0.3, 3.2, 0.6, 'F');
+  ink(C.text); doc.text('Away in Brazil', lx + 5.5, ly); lx += doc.getTextWidth('Away in Brazil') + 12;
+  fill(C.empty); doc.roundedRect(lx, ly - 3, 4, 4, 0.8, 0.8, 'F');
+  fill(C.dot); doc.circle(lx + 3, ly - 2, 0.45, 'F');
+  ink(C.text); doc.text('Travel / sign on / sign off day', lx + 5.5, ly);
+
+  // ── Page 2: periods list ──
+  const sections = [
+    ['Trips away from home', trips], ['Onboard contracts', onboard],
+    ['Training', training], ['Brazil stays', brazil]
+  ].map(([t, list]) => [t, list.filter(touches)]).filter(([, list]) => list.length);
+
+  if (sections.length) {
+    doc.addPage('a4', 'landscape');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); ink(C.text);
+    doc.text(`Rotation ${Y} - periods`, M, M + 6);
+    draw(C.line); doc.line(M, M + 10, W - M, M + 10);
+
+    const colW = (W - 2 * M - 10) / 2;
+    let col = 0, y = M + 18;
+    const rowH = 5.6;
+    for (const [title, list] of sections) {
+      const need = 8 + list.length * rowH;
+      if (y + need > H - M && col === 0) { col = 1; y = M + 18; }
+      else if (y + need > H - M) { doc.addPage('a4', 'landscape'); col = 0; y = M + 12; }
+      const x = M + col * (colW + 10);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); ink(C.accent);
+      doc.text(title, x, y); y += 5;
+      doc.setFontSize(8.5);
+      list.forEach((p, i) => {
+        if (y > H - M) { doc.addPage('a4', 'landscape'); y = M + 12; }
+        const days = durDays(p);
+        doc.setFont('helvetica', 'normal'); ink(C.muted);
+        doc.text(String(i + 1) + '.', x, y);
+        ink(C.text);
+        doc.text(`${fmtDate(p.start)}  -  ${p.end ? fmtDate(p.end) : 'ongoing'}`, x + 7, y);
+        doc.setFont('helvetica', 'bold');
+        doc.text(days ? `${days} days` : '', x + colW, y, { align: 'right' });
+        draw(C.line); doc.setLineWidth(0.15); doc.line(x, y + 1.8, x + colW, y + 1.8);
+        y += rowH;
+      });
+      y += 6;
+    }
+  }
+  return doc;
+}
+
 // ═══ SIDEBAR / PAGES ══════════════════════════════════════════
 function openSidebar() {
   document.getElementById('sidebar')?.classList.add('open');
