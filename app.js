@@ -1348,12 +1348,11 @@ function _buildYearPdf(jsPDF, year) {
   const onboardD = getRangeDates(getOnboardStays(), true);
   const trainD   = getRangeDates(getTrainingPeriods(), true);
   const evDates  = new Set(events.map(e => e.date));
-  const awayAll  = new Set([...awayD, ...trainD]);
 
   const C = {
     text: [20, 20, 26], muted: [110, 110, 120], line: [225, 225, 230], empty: [244, 244, 246],
     away: [248, 196, 178], training: [216, 202, 250], onboard: [253, 224, 196], brazil: [190, 236, 228],
-    brMark: [13, 148, 136], dot: [180, 83, 9], accent: [226, 84, 43]
+    dot: [180, 83, 9]
   };
   const fill = c => doc.setFillColor(c[0], c[1], c[2]);
   const ink  = c => doc.setTextColor(c[0], c[1], c[2]);
@@ -1370,7 +1369,7 @@ function _buildYearPdf(jsPDF, year) {
 
   // ── 12 months, 4 × 3 ──
   const cols = 4, gapX = 7, gapY = 5;
-  const top = M + 20, legendH = 10;
+  const top = M + 20, legendH = 0;
   const mw = (W - 2 * M - gapX * (cols - 1)) / cols;
   const mh = (H - top - M - legendH - gapY * 2) / 3;
   const cw = mw / 7;
@@ -1380,18 +1379,12 @@ function _buildYearPdf(jsPDF, year) {
   for (let m = 0; m < 12; m++) {
     const x0 = M + (m % cols) * (mw + gapX);
     const y0 = top + Math.floor(m / cols) * (mh + gapY);
-    let awayCnt = 0;
     const firstDay = new Date(year, m, 1).getDay();
     const offset   = firstDay === 0 ? 6 : firstDay - 1;
     const dim      = new Date(year, m + 1, 0).getDate();
-    for (let d = 1; d <= dim; d++) if (awayAll.has(dateStr(year, m, d))) awayCnt++;
 
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); ink(C.text);
     doc.text(MONTHS[m], x0, y0 + 4);
-    if (awayCnt) {
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); ink(C.accent);
-      doc.text(`${awayCnt}d away`, x0 + mw, y0 + 4, { align: 'right' });
-    }
     doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); ink(C.muted);
     WD.forEach((w, i) => doc.text(w, x0 + i * cw + cw / 2, y0 + 8.3, { align: 'center' }));
 
@@ -1406,31 +1399,12 @@ function _buildYearPdf(jsPDF, year) {
       else if (brazilD.has(ds))  bg = C.brazil;
       fill(bg);
       doc.roundedRect(cx + 0.35, cy + 0.35, cw - 0.7, ch - 0.7, 0.8, 0.8, 'F');
-      if (brazilD.has(ds) && (awayD.has(ds) || trainD.has(ds))) {
-        fill(C.brMark); doc.rect(cx + 0.6, cy + ch - 1.2, cw - 1.2, 0.6, 'F');
-      }
       if (evDates.has(ds)) { fill(C.dot); doc.circle(cx + cw - 1.5, cy + 1.5, 0.45, 'F'); }
       doc.setFont('helvetica', bg === C.empty ? 'normal' : 'bold'); doc.setFontSize(7);
       ink(bg === C.empty ? C.muted : C.text);
       doc.text(String(d), cx + cw / 2, cy + ch / 2 + 1.2, { align: 'center' });
     }
   }
-
-  // ── Legend ──
-  const ly = H - M - 2;
-  let lx = M;
-  const legend = [['Away', C.away], ['Training', C.training], ['Onboard', C.onboard], ['Brazil', C.brazil]];
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
-  for (const [label, col] of legend) {
-    fill(col); doc.roundedRect(lx, ly - 3, 4, 4, 0.8, 0.8, 'F');
-    ink(C.text); doc.text(label, lx + 5.5, ly); lx += doc.getTextWidth(label) + 12;
-  }
-  fill(C.away); doc.roundedRect(lx, ly - 3, 4, 4, 0.8, 0.8, 'F');
-  fill(C.brMark); doc.rect(lx + 0.4, ly + 0.3, 3.2, 0.6, 'F');
-  ink(C.text); doc.text('Away in Brazil', lx + 5.5, ly); lx += doc.getTextWidth('Away in Brazil') + 12;
-  fill(C.empty); doc.roundedRect(lx, ly - 3, 4, 4, 0.8, 0.8, 'F');
-  fill(C.dot); doc.circle(lx + 3, ly - 2, 0.45, 'F');
-  ink(C.text); doc.text('Travel / sign on / sign off day', lx + 5.5, ly);
 
   return doc;
 }
