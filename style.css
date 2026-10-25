@@ -323,6 +323,15 @@ body {
 }
 .view-btn:hover  { color: var(--white); }
 .view-btn.active { background: var(--sky); color: #fff; }
+.pdf-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px; padding: 3px 11px; font-size: 11px; font-weight: 600;
+  color: var(--gray400); cursor: pointer; font-family: 'Archivo', sans-serif;
+  transition: color 0.15s, border-color 0.15s;
+}
+.pdf-btn:hover    { color: var(--sky); border-color: rgba(255,122,61,0.5); }
+.pdf-btn:disabled { opacity: 0.5; cursor: wait; }
+[data-theme="light"] .pdf-btn { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); }
 .legend-year-only { display: none; }
 .cal-card.year-mode .legend-year-only { display: flex; }
 .ldot-event { width: 9px; height: 9px; border-radius: 3px; background: rgba(255,255,255,0.06); position: relative; }

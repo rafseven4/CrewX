@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'crewx-cache-v16';
+const CACHE_VERSION = 'crewx-cache-v17';
 
 const APP_SHELL = [
   './',
   './index.html',
-  './style.css?v=18',
-  './app.js?v=19',
+  './style.css?v=19',
+  './app.js?v=20',
   './manifest.json',
   './offline.html',
   './icons/icon-192.png',
