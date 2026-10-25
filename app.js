@@ -1277,7 +1277,7 @@ function saveTrainingRate() {
 }
 
 // ═══ YEAR PDF EXPORT ══════════════════════════════════════════
-// Builds an A4 landscape PDF of the year rotation (12 months + trip list)
+// Builds a one-page A4 landscape PDF with the 12-month rotation calendar
 // that the user can save or share. jsPDF is loaded on first use.
 const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 let _jspdfPromise = null;
@@ -1343,18 +1343,11 @@ function _buildYearPdf(jsPDF, year) {
   const W = 297, H = 210, M = 12;
   const Y = String(year);
 
-  const trips    = getTrips();
-  const brazil   = getBrazilStays();
-  const onboard  = getOnboardStays();
-  const training = getTrainingPeriods();
-  const awayD    = getRangeDates(trips, true);
-  const brazilD  = getRangeDates(brazil, true);
-  const onboardD = getRangeDates(onboard, true);
-  const trainD   = getRangeDates(training, true);
+  const awayD    = getRangeDates(getTrips(), true);
+  const brazilD  = getRangeDates(getBrazilStays(), true);
+  const onboardD = getRangeDates(getOnboardStays(), true);
+  const trainD   = getRangeDates(getTrainingPeriods(), true);
   const evDates  = new Set(events.map(e => e.date));
-  const inYear   = set => [...set].filter(d => d.startsWith(Y)).length;
-  const touches  = p => p.start.startsWith(Y) || (p.end && p.end.startsWith(Y)) ||
-                        (p.start < `${Y}-01-01` && (!p.end || p.end > `${Y}-12-31`));
   const awayAll  = new Set([...awayD, ...trainD]);
 
   const C = {
@@ -1373,25 +1366,6 @@ function _buildYearPdf(jsPDF, year) {
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); ink(C.muted);
   doc.text(`${owner ? owner + '  ·  ' : ''}CrewX  ·  generated ${fmtDate(todayStr())}`.replace(/·/g, '-'), M, M + 11.5);
 
-  const stats = [
-    ['Days away', inYear(awayAll)], ['Onboard', inYear(onboardD)], ['In Brazil', inYear(brazilD)],
-    ['Training', inYear(trainD)], ['Trips', trips.filter(t => t.end && touches(t)).length]
-  ];
-  doc.setFontSize(8);
-  let sx = W - M;
-  for (let i = stats.length - 1; i >= 0; i--) {
-    const [label, val] = stats[i];
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); ink(C.text);
-    const vw = doc.getTextWidth(String(val));
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
-    const lw = doc.getTextWidth(label);
-    const bw = Math.max(vw, lw);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); ink(C.text);
-    doc.text(String(val), sx - bw, M + 6);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); ink(C.muted);
-    doc.text(label, sx - bw, M + 11);
-    sx -= bw + 9;
-  }
   draw(C.line); doc.setLineWidth(0.3); doc.line(M, M + 15, W - M, M + 15);
 
   // ── 12 months, 4 × 3 ──
@@ -1458,44 +1432,6 @@ function _buildYearPdf(jsPDF, year) {
   fill(C.dot); doc.circle(lx + 3, ly - 2, 0.45, 'F');
   ink(C.text); doc.text('Travel / sign on / sign off day', lx + 5.5, ly);
 
-  // ── Page 2: periods list ──
-  const sections = [
-    ['Trips away from home', trips], ['Onboard contracts', onboard],
-    ['Training', training], ['Brazil stays', brazil]
-  ].map(([t, list]) => [t, list.filter(touches)]).filter(([, list]) => list.length);
-
-  if (sections.length) {
-    doc.addPage('a4', 'landscape');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); ink(C.text);
-    doc.text(`Rotation ${Y} - periods`, M, M + 6);
-    draw(C.line); doc.line(M, M + 10, W - M, M + 10);
-
-    const colW = (W - 2 * M - 10) / 2;
-    let col = 0, y = M + 18;
-    const rowH = 5.6;
-    for (const [title, list] of sections) {
-      const need = 8 + list.length * rowH;
-      if (y + need > H - M && col === 0) { col = 1; y = M + 18; }
-      else if (y + need > H - M) { doc.addPage('a4', 'landscape'); col = 0; y = M + 12; }
-      const x = M + col * (colW + 10);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); ink(C.accent);
-      doc.text(title, x, y); y += 5;
-      doc.setFontSize(8.5);
-      list.forEach((p, i) => {
-        if (y > H - M) { doc.addPage('a4', 'landscape'); y = M + 12; }
-        const days = durDays(p);
-        doc.setFont('helvetica', 'normal'); ink(C.muted);
-        doc.text(String(i + 1) + '.', x, y);
-        ink(C.text);
-        doc.text(`${fmtDate(p.start)}  -  ${p.end ? fmtDate(p.end) : 'ongoing'}`, x + 7, y);
-        doc.setFont('helvetica', 'bold');
-        doc.text(days ? `${days} days` : '', x + colW, y, { align: 'right' });
-        draw(C.line); doc.setLineWidth(0.15); doc.line(x, y + 1.8, x + colW, y + 1.8);
-        y += rowH;
-      });
-      y += 6;
-    }
-  }
   return doc;
 }
 
